@@ -1,0 +1,47 @@
+root@vm-fx1:/var/www/farmxpert# psql -h localhost -U farmxpert_user -d farmxpert_db < farmxpert_backup_20260107.dump
+Password for user farmxpert_user:
+The input is a PostgreSQL custom-format dump.
+Use the pg_restore command-line client to restore this dump to a database.
+
+root@vm-fx1:/var/www/farmxpert# pg_restore -h localhost -U farmxpert_user -d farmxpert_db -c farmxpert_backup_20260107.dump
+Password:
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.cattle OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.email_verification_tokens OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.feed_items OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.feed_packages OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.feed_usage_log OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.password_reset_tokens OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.plan_features OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER SEQUENCE public.plan_features_id_seq OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.sessions OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.subscription_plans OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER SEQUENCE public.subscription_plans_id_seq OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.tenants OWNER TO postgres;
+
+pg_restore: error: could not execute query: ERROR:  must be able to SET ROLE "postgres"
+Command was: ALTER TABLE public.users OWNER TO postgres;
+
+pg_restore: warning: errors ignored on restore: 13

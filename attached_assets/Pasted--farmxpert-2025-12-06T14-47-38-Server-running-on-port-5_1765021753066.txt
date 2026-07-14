@@ -1,0 +1,47 @@
+|farmxpert  | 2025-12-06T14:47:38: Server running on port 5000
+0|farmxpert  | 2025-12-06T14:48:30: POST /api/feed/packages
+0|farmxpert  | 2025-12-06T14:48:30: POST /feed/packages - tenantId: cea257df-7305-4c72-bd51-f3f09b5f6d56 data: {
+0|farmxpert  | 2025-12-06T14:48:30:   id: 'pkg-1765021692489',
+0|farmxpert  | 2025-12-06T14:48:30:   name: 'asdass',
+0|farmxpert  | 2025-12-06T14:48:30:   dailyIntakePercent: 2.5,
+0|farmxpert  | 2025-12-06T14:48:30:   items: [
+0|farmxpert  | 2025-12-06T14:48:30:     {
+0|farmxpert  | 2025-12-06T14:48:30:       feedItemId: '4d0e012e-ef99-48fc-858b-a523c03895f5',
+0|farmxpert  | 2025-12-06T14:48:30:       ratioPercent: 50
+0|farmxpert  | 2025-12-06T14:48:30:     },
+0|farmxpert  | 2025-12-06T14:48:30:     {
+0|farmxpert  | 2025-12-06T14:48:30:       feedItemId: '77699bf1-0068-47d2-ad67-c8a734b18d3e',
+0|farmxpert  | 2025-12-06T14:48:30:       ratioPercent: 50
+0|farmxpert  | 2025-12-06T14:48:30:     }
+0|farmxpert  | 2025-12-06T14:48:30:   ],
+0|farmxpert  | 2025-12-06T14:48:30:   description: 'sadas'
+0|farmxpert  | 2025-12-06T14:48:30: }
+0|farmxpert  | 2025-12-06T14:48:30: Error creating package: error: column "daily_intake_percent" of relation "feed_packages" does not exist
+0|farmxpert  | 2025-12-06T14:48:30:     at E:\fx-rep\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-06T14:48:30:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-06T14:48:30:     at async E:\fx-rep\server\routes\feed.js:137:24 {
+0|farmxpert  | 2025-12-06T14:48:30:   length: 146,
+0|farmxpert  | 2025-12-06T14:48:30:   severity: 'ERROR',
+0|farmxpert  | 2025-12-06T14:48:30:   code: '42703',
+0|farmxpert  | 2025-12-06T14:48:30:   detail: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   hint: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   position: '58',
+0|farmxpert  | 2025-12-06T14:48:30:   internalPosition: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   internalQuery: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   where: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   schema: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   table: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   column: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   dataType: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   constraint: undefined,
+0|farmxpert  | 2025-12-06T14:48:30:   file: 'parse_target.c',
+0|farmxpert  | 2025-12-06T14:48:30:   line: '1073',
+0|farmxpert  | 2025-12-06T14:48:30:   routine: 'checkInsertTargets'
+0|farmxpert  | 2025-12-06T14:48:30: }
+0|farmxpert  | 2025-12-06T14:48:30: GET /api/cattle
+0|farmxpert  | 2025-12-06T14:48:30: GET /api/feed/packages
+0|farmxpert  | 2025-12-06T14:48:30: GET /feed/packages - tenantId: cea257df-7305-4c72-bd51-f3f09b5f6d56
+0|farmxpert  | 2025-12-06T14:48:30: GET /api/feed/items
+0|farmxpert  | 2025-12-06T14:48:30: GET /feed/items - tenantId: cea257df-7305-4c72-bd51-f3f09b5f6d56
+0|farmxpert  | 2025-12-06T14:48:30: Feed packages found: 0
+0|farmxpert  | 2025-12-06T14:48:30: Feed items found: 3

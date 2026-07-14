@@ -1,0 +1,37 @@
+0|farmxpert  | 2025-12-06T13:54:21: Error creating feed item: error: column "quantity_kg" of relation "feed_items" does not exist
+0|farmxpert  | 2025-12-06T13:54:21:     at E:\fx-rep\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-06T13:54:21:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-06T13:54:21:     at async E:\fx-rep\server\routes\feed.js:40:24 {
+0|farmxpert  | 2025-12-06T13:54:21:   length: 134,
+0|farmxpert  | 2025-12-06T13:54:21:   severity: 'ERROR',
+0|farmxpert  | 2025-12-06T13:54:21:   code: '42703',
+0|farmxpert  | 2025-12-06T13:54:21:   detail: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   hint: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   position: '59',
+0|farmxpert  | 2025-12-06T13:54:21:   internalPosition: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   internalQuery: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   where: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   schema: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   table: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   column: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   dataType: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   constraint: undefined,
+0|farmxpert  | 2025-12-06T13:54:21:   file: 'parse_target.c',
+0|farmxpert  | 2025-12-06T13:54:21:   line: '1073',
+0|farmxpert  | 2025-12-06T13:54:21:   routine: 'checkInsertTargets'
+0|farmxpert  | 2025-12-06T13:54:21: }
+0|farmxpert  | 2025-12-06T13:54:21: GET /api/cattle
+0|farmxpert  | 2025-12-06T13:54:21: GET /api/feed/items
+0|farmxpert  | 2025-12-06T13:54:21: GET /feed/items - tenantId: cea257df-7305-4c72-bd51-f3f09b5f6d56
+0|farmxpert  | 2025-12-06T13:54:21: GET /api/feed/packages
+0|farmxpert  | 2025-12-06T13:54:21: Feed items found: 0
+0|farmxpert  | 2025-12-06T13:54:30: GET /
+0|farmxpert  | 2025-12-06T13:54:30: GET /index.css
+0|farmxpert  | 2025-12-06T13:54:30: GET /assets/index-BhRccl5y.js
+0|farmxpert  | 2025-12-06T13:54:30: GET /api/auth/me
+0|farmxpert  | 2025-12-06T13:54:30: GET /api/cattle
+0|farmxpert  | 2025-12-06T13:54:30: GET /api/feed/items
+0|farmxpert  | 2025-12-06T13:54:30: GET /feed/items - tenantId: cea257df-7305-4c72-bd51-f3f09b5f6d56
+0|farmxpert  | 2025-12-06T13:54:30: Feed items found: 0
+0|farmxpert  | 2025-12-06T13:54:30: GET /api/feed/packages
+0|farmxpert  | 2025-12-06T13:54:31: GET /favicon.ico

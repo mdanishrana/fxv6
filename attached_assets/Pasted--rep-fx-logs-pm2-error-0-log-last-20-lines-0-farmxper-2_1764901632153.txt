@@ -1,0 +1,50 @@
+:\rep-fx\logs\pm2-error-0.log last 20 lines:
+0|farmxper | 2025-12-05T05:18:54:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxper | 2025-12-05T05:18:54:     at async E:\rep-fx\server\routes\cattle.js:18:24 {
+0|farmxper | 2025-12-05T05:18:54:   length: 134,
+0|farmxper | 2025-12-05T05:18:54:   severity: 'ERROR',
+0|farmxper | 2025-12-05T05:18:54:   code: '22P02',
+0|farmxper | 2025-12-05T05:18:54:   detail: undefined,
+0|farmxper | 2025-12-05T05:18:54:   hint: undefined,
+0|farmxper | 2025-12-05T05:18:54:   position: undefined,
+0|farmxper | 2025-12-05T05:18:54:   internalPosition: undefined,
+0|farmxper | 2025-12-05T05:18:54:   internalQuery: undefined,
+0|farmxper | 2025-12-05T05:18:54:   where: "unnamed portal parameter $1 = '...'",
+0|farmxper | 2025-12-05T05:18:54:   schema: undefined,
+0|farmxper | 2025-12-05T05:18:54:   table: undefined,
+0|farmxper | 2025-12-05T05:18:54:   column: undefined,
+0|farmxper | 2025-12-05T05:18:54:   dataType: undefined,
+0|farmxper | 2025-12-05T05:18:54:   constraint: undefined,
+0|farmxper | 2025-12-05T05:18:54:   file: 'uuid.c',
+0|farmxper | 2025-12-05T05:18:54:   line: '177',
+0|farmxper | 2025-12-05T05:18:54:   routine: 'string_to_uuid'
+0|farmxper | 2025-12-05T05:18:54: }
+
+E:\rep-fx\logs\pm2-out-0.log last 20 lines:
+0|farmxper | 2025-12-05T05:17:11: GET /api/feed/packages
+0|farmxper | 2025-12-05T05:17:21: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:21: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:22: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:37: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:37: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:40: GET /api/tenants
+0|farmxper | 2025-12-05T05:17:49: GET /api/cattle
+0|farmxper | 2025-12-05T05:17:49: GET /api/feed/items
+0|farmxper | 2025-12-05T05:17:49: GET /api/feed/packages
+0|farmxper | 2025-12-05T05:18:04: POST /api/cattle
+0|farmxper | 2025-12-05T05:18:04: GET /api/cattle
+0|farmxper | 2025-12-05T05:18:04: GET /api/feed/items
+0|farmxper | 2025-12-05T05:18:04: GET /api/feed/packages
+0|farmxper | 2025-12-05T05:18:52: GET /api/tenants
+0|farmxper | 2025-12-05T05:18:52: GET /api/tenants
+0|farmxper | 2025-12-05T05:18:54: GET /api/cattle
+0|farmxper | 2025-12-05T05:18:54: GET /api/feed/items
+0|farmxper | 2025-12-05T05:18:54: GET /api/feed/packages
+0|farmxper | 2025-12-05T05:25:51: Server running on port 5000
+
+0|farmxpert  | 2025-12-05T05:26:04: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:26:05: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:26:06: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:26:21: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:26:21: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:26:23: GET /api/tenants

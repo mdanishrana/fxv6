@@ -1,0 +1,168 @@
+root@vm-fx1:/var/www/farmxpert# psql -U farmxpert_user -d farmxpert_db -f scripts/schema.sql
+psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  Peer authentication failed for user "farmxpert_user"
+root@vm-fx1:/var/www/farmxpert# psql -h localhost -U farmxpert_user -d farmxpert_db -f scripts/schema.sql
+Password for user farmxpert_user:
+psql:scripts/schema.sql:16: NOTICE:  extension "uuid-ossp" already exists, skipping
+CREATE EXTENSION
+psql:scripts/schema.sql:39: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS tenants (
+                                   ^
+psql:scripts/schema.sql:53: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS users (
+                                   ^
+psql:scripts/schema.sql:62: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS sessions (
+                                   ^
+psql:scripts/schema.sql:72: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                                   ^
+psql:scripts/schema.sql:81: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS email_verification_tokens (
+                                   ^
+psql:scripts/schema.sql:103: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS subscription_plans (
+                                   ^
+psql:scripts/schema.sql:111: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS plan_features (
+                                   ^
+psql:scripts/schema.sql:130: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS tenant_subscriptions (
+                                   ^
+psql:scripts/schema.sql:152: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS subscription_invoices (
+                                   ^
+psql:scripts/schema.sql:174: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS feed_items (
+                                   ^
+psql:scripts/schema.sql:191: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS feed_packages (
+                                   ^
+psql:scripts/schema.sql:204: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS feed_usage_log (
+                                   ^
+psql:scripts/schema.sql:249: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS cattle (
+                                   ^
+psql:scripts/schema.sql:264: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS payments (
+                                   ^
+psql:scripts/schema.sql:284: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS suppliers (
+                                   ^
+psql:scripts/schema.sql:304: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS supplier_purchases (
+                                   ^
+psql:scripts/schema.sql:328: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS workers (
+                                   ^
+psql:scripts/schema.sql:343: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS attendance (
+                                   ^
+psql:scripts/schema.sql:363: ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS wage_payments (
+                                   ^
+psql:scripts/schema.sql:370: ERROR:  relation "tenants" does not exist
+psql:scripts/schema.sql:371: ERROR:  relation "tenants" does not exist
+psql:scripts/schema.sql:374: ERROR:  relation "users" does not exist
+psql:scripts/schema.sql:375: ERROR:  relation "users" does not exist
+psql:scripts/schema.sql:376: ERROR:  relation "users" does not exist
+psql:scripts/schema.sql:379: ERROR:  relation "sessions" does not exist
+psql:scripts/schema.sql:380: ERROR:  relation "sessions" does not exist
+psql:scripts/schema.sql:383: ERROR:  relation "password_reset_tokens" does not exist
+psql:scripts/schema.sql:386: ERROR:  relation "email_verification_tokens" does not exist
+psql:scripts/schema.sql:389: ERROR:  relation "tenant_subscriptions" does not exist
+psql:scripts/schema.sql:390: ERROR:  relation "tenant_subscriptions" does not exist
+psql:scripts/schema.sql:391: ERROR:  relation "subscription_invoices" does not exist
+psql:scripts/schema.sql:392: ERROR:  relation "subscription_invoices" does not exist
+psql:scripts/schema.sql:393: ERROR:  relation "subscription_invoices" does not exist
+psql:scripts/schema.sql:396: ERROR:  relation "feed_items" does not exist
+psql:scripts/schema.sql:397: ERROR:  relation "feed_packages" does not exist
+psql:scripts/schema.sql:398: ERROR:  relation "feed_usage_log" does not exist
+psql:scripts/schema.sql:401: ERROR:  relation "cattle" does not exist
+psql:scripts/schema.sql:402: ERROR:  relation "cattle" does not exist
+psql:scripts/schema.sql:403: ERROR:  relation "cattle" does not exist
+psql:scripts/schema.sql:404: ERROR:  relation "cattle" does not exist
+psql:scripts/schema.sql:407: ERROR:  relation "payments" does not exist
+psql:scripts/schema.sql:408: ERROR:  relation "payments" does not exist
+psql:scripts/schema.sql:409: ERROR:  relation "payments" does not exist
+psql:scripts/schema.sql:410: ERROR:  relation "payments" does not exist
+psql:scripts/schema.sql:413: ERROR:  relation "suppliers" does not exist
+psql:scripts/schema.sql:414: ERROR:  relation "supplier_purchases" does not exist
+psql:scripts/schema.sql:415: ERROR:  relation "supplier_purchases" does not exist
+psql:scripts/schema.sql:418: ERROR:  relation "workers" does not exist
+psql:scripts/schema.sql:419: ERROR:  relation "attendance" does not exist
+psql:scripts/schema.sql:420: ERROR:  relation "attendance" does not exist
+psql:scripts/schema.sql:421: ERROR:  relation "attendance" does not exist
+psql:scripts/schema.sql:422: ERROR:  relation "wage_payments" does not exist
+psql:scripts/schema.sql:423: ERROR:  relation "wage_payments" does not exist
+psql:scripts/schema.sql:435: ERROR:  relation "subscription_plans" does not exist
+LINE 1: INSERT INTO subscription_plans (code, name, price_pkr, billi...
+                    ^
+psql:scripts/schema.sql:438: ERROR:  relation "subscription_plans" does not exist
+LINE 1: UPDATE subscription_plans SET contact_email = 'Sales@farmxpe...
+               ^
+psql:scripts/schema.sql:443: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:446: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:449: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:452: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:457: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:460: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:463: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:466: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:469: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:474: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:477: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:480: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:483: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:486: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:489: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:494: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:497: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:500: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+psql:scripts/schema.sql:503: ERROR:  relation "plan_features" does not exist
+LINE 1: INSERT INTO plan_features (plan_id, feature_text, display_or...
+                    ^
+            status
+------------------------------
+ Schema created successfully!
+(1 row)
+
+ table_name
+------------
+(0 rows)

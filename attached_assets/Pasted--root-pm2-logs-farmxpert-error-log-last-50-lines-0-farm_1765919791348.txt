@@ -1,0 +1,51 @@
+/root/.pm2/logs/farmxpert-error.log last 50 lines:
+0|farmxper |   dataType: undefined,
+0|farmxper |   constraint: undefined,
+0|farmxper |   file: 'parse_relation.c',
+0|farmxper |   line: '3722',
+0|farmxper |   routine: 'errorMissingColumn'
+0|farmxper | }
+0|farmxper | Error updating tenant: error: column "smtp_settings" does not exist
+0|farmxper |     at /var/www/farmxpert/server/node_modules/pg-pool/index.js:45:11
+0|farmxper |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|farmxper |     at async /var/www/farmxpert/server/routes/tenants.js:78:24 {
+0|farmxper |   length: 114,
+0|farmxper |   severity: 'ERROR',
+0|farmxper |   code: '42703',
+0|farmxper |   detail: undefined,
+0|farmxper |   hint: undefined,
+0|farmxper |   position: '227',
+0|farmxper |   internalPosition: undefined,
+0|farmxper |   internalQuery: undefined,
+0|farmxper |   where: undefined,
+0|farmxper |   schema: undefined,
+0|farmxper |   table: undefined,
+0|farmxper |   column: undefined,
+0|farmxper |   dataType: undefined,
+0|farmxper |   constraint: undefined,
+0|farmxper |   file: 'parse_relation.c',
+0|farmxper |   line: '3722',
+0|farmxper |   routine: 'errorMissingColumn'
+0|farmxper | }
+0|farmxper | Error updating tenant: error: column "smtp_settings" does not exist
+0|farmxper |     at /var/www/farmxpert/server/node_modules/pg-pool/index.js:45:11
+0|farmxper |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|farmxper |     at async /var/www/farmxpert/server/routes/tenants.js:78:24 {
+0|farmxper |   length: 114,
+0|farmxper |   severity: 'ERROR',
+0|farmxper |   code: '42703',
+0|farmxper |   detail: undefined,
+0|farmxper |   hint: undefined,
+0|farmxper |   position: '227',
+0|farmxper |   internalPosition: undefined,
+0|farmxper |   internalQuery: undefined,
+0|farmxper |   where: undefined,
+0|farmxper |   schema: undefined,
+0|farmxper |   table: undefined,
+0|farmxper |   column: undefined,
+0|farmxper |   dataType: undefined,
+0|farmxper |   constraint: undefined,
+0|farmxper |   file: 'parse_relation.c',
+0|farmxper |   line: '3722',
+0|farmxper |   routine: 'errorMissingColumn'
+0|farmxper | }

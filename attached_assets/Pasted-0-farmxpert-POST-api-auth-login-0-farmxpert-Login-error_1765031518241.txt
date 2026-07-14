@@ -1,0 +1,46 @@
+0|farmxpert  | POST /api/auth/login
+0|farmxpert  | Login error: error: password authentication failed for user "farmxpert_user"
+0|farmxpert  |     at /var/www/farmxpert/server/node_modules/pg-pool/index.js:45:11
+0|farmxpert  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|farmxpert  |     at async /var/www/farmxpert/server/routes/auth.js:109:28 {
+0|farmxpert  |   length: 110,
+0|farmxpert  |   severity: 'FATAL',
+0|farmxpert  |   code: '28P01',
+0|farmxpert  |   detail: undefined,
+0|farmxpert  |   hint: undefined,
+0|farmxpert  |   position: undefined,
+0|farmxpert  |   internalPosition: undefined,
+0|farmxpert  |   internalQuery: undefined,
+0|farmxpert  |   where: undefined,
+0|farmxpert  |   schema: undefined,
+0|farmxpert  |   table: undefined,
+0|farmxpert  |   column: undefined,
+0|farmxpert  |   dataType: undefined,
+0|farmxpert  |   constraint: undefined,
+0|farmxpert  |   file: 'auth.c',
+0|farmxpert  |   line: '331',
+0|farmxpert  |   routine: 'auth_failed'
+0|farmxpert  | }
+0|farmxpert  | POST /api/auth/login
+0|farmxpert  | Login error: error: password authentication failed for user "farmxpert_user"
+0|farmxpert  |     at /var/www/farmxpert/server/node_modules/pg-pool/index.js:45:11
+0|farmxpert  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|farmxpert  |     at async /var/www/farmxpert/server/routes/auth.js:109:28 {
+0|farmxpert  |   length: 110,
+0|farmxpert  |   severity: 'FATAL',
+0|farmxpert  |   code: '28P01',
+0|farmxpert  |   detail: undefined,
+0|farmxpert  |   hint: undefined,
+0|farmxpert  |   position: undefined,
+0|farmxpert  |   internalPosition: undefined,
+0|farmxpert  |   internalQuery: undefined,
+0|farmxpert  |   where: undefined,
+0|farmxpert  |   schema: undefined,
+0|farmxpert  |   table: undefined,
+0|farmxpert  |   column: undefined,
+0|farmxpert  |   dataType: undefined,
+0|farmxpert  |   constraint: undefined,
+0|farmxpert  |   file: 'auth.c',
+0|farmxpert  |   line: '331',
+0|farmxpert  |   routine: 'auth_failed'
+0|farmxpert  | }

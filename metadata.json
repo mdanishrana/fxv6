@@ -1,0 +1,7 @@
+{
+  "name": "Danish Rana- Smart Cattle Fattening",
+  "description": "A comprehensive management system for cattle fattening farms. Features herd tracking, feed inventory management, weight gain analytics, and AI-powered veterinary and nutritional advice using Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

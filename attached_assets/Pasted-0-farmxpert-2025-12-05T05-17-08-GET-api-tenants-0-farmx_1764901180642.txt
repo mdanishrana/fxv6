@@ -1,0 +1,133 @@
+0|farmxpert  | 2025-12-05T05:17:08: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:08: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:11: GET /api/cattle
+0|farmxpert  | 2025-12-05T05:17:11: GET /api/feed/items
+0|farmxpert  | 2025-12-05T05:17:11: GET /api/feed/packages
+0|farmxpert  | 2025-12-05T05:17:11: error: invalid input syntax for type uuid: "t1"
+0|farmxpert  | 2025-12-05T05:17:11:     at E:\rep-fx\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-05T05:17:11:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-05T05:17:11:     at async E:\rep-fx\server\routes\cattle.js:18:24 {
+0|farmxpert  | 2025-12-05T05:17:11:   length: 134,
+0|farmxpert  | 2025-12-05T05:17:11:   severity: 'ERROR',
+0|farmxpert  | 2025-12-05T05:17:11:   code: '22P02',
+0|farmxpert  | 2025-12-05T05:17:11:   detail: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   hint: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   position: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   internalPosition: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   internalQuery: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   where: "unnamed portal parameter $1 = '...'",
+0|farmxpert  | 2025-12-05T05:17:11:   schema: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   table: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   column: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   dataType: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   constraint: undefined,
+0|farmxpert  | 2025-12-05T05:17:11:   file: 'uuid.c',
+0|farmxpert  | 2025-12-05T05:17:11:   line: '177',
+0|farmxpert  | 2025-12-05T05:17:11:   routine: 'string_to_uuid'
+0|farmxpert  | 2025-12-05T05:17:11: }
+0|farmxpert  | 2025-12-05T05:17:21: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:21: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:22: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:37: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:37: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:40: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:17:49: GET /api/cattle
+0|farmxpert  | 2025-12-05T05:17:49: GET /api/feed/items
+0|farmxpert  | 2025-12-05T05:17:49: GET /api/feed/packages
+0|farmxpert  | 2025-12-05T05:17:49: error: invalid input syntax for type uuid: "t1"
+0|farmxpert  | 2025-12-05T05:17:49:     at E:\rep-fx\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-05T05:17:49:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-05T05:17:49:     at async E:\rep-fx\server\routes\cattle.js:18:24 {
+0|farmxpert  | 2025-12-05T05:17:49:   length: 134,
+0|farmxpert  | 2025-12-05T05:17:49:   severity: 'ERROR',
+0|farmxpert  | 2025-12-05T05:17:49:   code: '22P02',
+0|farmxpert  | 2025-12-05T05:17:49:   detail: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   hint: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   position: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   internalPosition: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   internalQuery: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   where: "unnamed portal parameter $1 = '...'",
+0|farmxpert  | 2025-12-05T05:17:49:   schema: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   table: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   column: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   dataType: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   constraint: undefined,
+0|farmxpert  | 2025-12-05T05:17:49:   file: 'uuid.c',
+0|farmxpert  | 2025-12-05T05:17:49:   line: '177',
+0|farmxpert  | 2025-12-05T05:17:49:   routine: 'string_to_uuid'
+0|farmxpert  | 2025-12-05T05:17:49: }
+0|farmxpert  | 2025-12-05T05:18:04: POST /api/cattle
+0|farmxpert  | 2025-12-05T05:18:04: GET /api/cattle
+0|farmxpert  | 2025-12-05T05:18:04: GET /api/feed/items
+0|farmxpert  | 2025-12-05T05:18:04: GET /api/feed/packages
+0|farmxpert  | 2025-12-05T05:18:04: error: invalid input syntax for type uuid: "t1"
+0|farmxpert  | 2025-12-05T05:18:04:     at E:\rep-fx\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-05T05:18:04:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-05T05:18:04:     at async E:\rep-fx\server\routes\cattle.js:53:24 {
+0|farmxpert  | 2025-12-05T05:18:04:   length: 134,
+0|farmxpert  | 2025-12-05T05:18:04:   severity: 'ERROR',
+0|farmxpert  | 2025-12-05T05:18:04:   code: '22P02',
+0|farmxpert  | 2025-12-05T05:18:04:   detail: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   hint: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   position: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   internalPosition: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   internalQuery: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   where: "unnamed portal parameter $1 = '...'",
+0|farmxpert  | 2025-12-05T05:18:04:   schema: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   table: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   column: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   dataType: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   constraint: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   file: 'uuid.c',
+0|farmxpert  | 2025-12-05T05:18:04:   line: '177',
+0|farmxpert  | 2025-12-05T05:18:04:   routine: 'string_to_uuid'
+0|farmxpert  | 2025-12-05T05:18:04: }
+0|farmxpert  | 2025-12-05T05:18:04: error: invalid input syntax for type uuid: "t1"
+0|farmxpert  | 2025-12-05T05:18:04:     at E:\rep-fx\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-05T05:18:04:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-05T05:18:04:     at async E:\rep-fx\server\routes\cattle.js:18:24 {
+0|farmxpert  | 2025-12-05T05:18:04:   length: 134,
+0|farmxpert  | 2025-12-05T05:18:04:   severity: 'ERROR',
+0|farmxpert  | 2025-12-05T05:18:04:   code: '22P02',
+0|farmxpert  | 2025-12-05T05:18:04:   detail: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   hint: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   position: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   internalPosition: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   internalQuery: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   where: "unnamed portal parameter $1 = '...'",
+0|farmxpert  | 2025-12-05T05:18:04:   schema: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   table: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   column: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   dataType: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   constraint: undefined,
+0|farmxpert  | 2025-12-05T05:18:04:   file: 'uuid.c',
+0|farmxpert  | 2025-12-05T05:18:04:   line: '177',
+0|farmxpert  | 2025-12-05T05:18:04:   routine: 'string_to_uuid'
+0|farmxpert  | 2025-12-05T05:18:04: }
+0|farmxpert  | 2025-12-05T05:18:52: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:18:52: GET /api/tenants
+0|farmxpert  | 2025-12-05T05:18:54: GET /api/cattle
+0|farmxpert  | 2025-12-05T05:18:54: GET /api/feed/items
+0|farmxpert  | 2025-12-05T05:18:54: GET /api/feed/packages
+0|farmxpert  | 2025-12-05T05:18:54: error: invalid input syntax for type uuid: "t1"
+0|farmxpert  | 2025-12-05T05:18:54:     at E:\rep-fx\server\node_modules\pg-pool\index.js:45:11
+0|farmxpert  | 2025-12-05T05:18:54:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+0|farmxpert  | 2025-12-05T05:18:54:     at async E:\rep-fx\server\routes\cattle.js:18:24 {
+0|farmxpert  | 2025-12-05T05:18:54:   length: 134,
+0|farmxpert  | 2025-12-05T05:18:54:   severity: 'ERROR',
+0|farmxpert  | 2025-12-05T05:18:54:   code: '22P02',
+0|farmxpert  | 2025-12-05T05:18:54:   detail: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   hint: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   position: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   internalPosition: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   internalQuery: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   where: "unnamed portal parameter $1 = '...'",
+0|farmxpert  | 2025-12-05T05:18:54:   schema: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   table: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   column: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   dataType: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   constraint: undefined,
+0|farmxpert  | 2025-12-05T05:18:54:   file: 'uuid.c',
+0|farmxpert  | 2025-12-05T05:18:54:   line: '177',
+0|farmxpert  | 2025-12-05T05:18:54:   routine: 'string_to_uuid'
+0|farmxpert  | 2025-12-05T05:18:54: }

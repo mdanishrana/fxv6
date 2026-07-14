@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="FarmXpert - Livestock Management Platform">
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>FarmXpert</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              100: '#E6EDF3', // Soft White (Primary Text)
+              200: '#D0DCE8',
+              300: '#A9C0D6',
+              400: '#8FA7BF', // Muted version of Soft White
+              500: '#6B87A3',
+              600: '#325477',
+              700: '#0E2340', // Darker navy (Subtle borders)
+              800: '#142A45', // Secondary (Cards/Panels/Inputs/Tables)
+              900: '#0B1C34', // Deep Navy (Main Background)
+              950: '#071324',
+            },
+            emerald: {
+              400: '#4CE3C8',
+              500: '#22C7A9', // Primary Green (Accents / Links)
+              600: '#2ED3B7', // Button Green (CTA)
+              700: '#1BA088', // Hover (slightly darker shade)
+              800: '#137765',
+            },
+            teal: {
+              400: '#4CE3C8',
+              500: '#22C7A9',
+              600: '#2ED3B7',
+              700: '#1BA088',
+              800: '#137765',
+            },
+            blue: {
+              400: '#4CE3C8',
+              500: '#22C7A9',
+              600: '#2ED3B7',
+              700: '#1BA088',
+              800: '#137765',
+            },
+            indigo: {
+              400: '#4CE3C8',
+              500: '#22C7A9',
+              600: '#2ED3B7',
+              700: '#1BA088',
+              800: '#137765',
+            },
+            purple: {
+              400: '#4CE3C8',
+              500: '#22C7A9',
+              600: '#2ED3B7',
+              700: '#1BA088',
+              800: '#137765',
+            },
+            violet: {
+              400: '#4CE3C8',
+              500: '#22C7A9',
+              600: '#2ED3B7',
+              700: '#1BA088',
+              800: '#137765',
+            },
+            'theme-navy': '#0C2B4E',
+            'theme-blue': '#1A3D64',
+            'theme-teal': '#1D546C',
+            'theme-gray': '#F4F4F4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .dark ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    @font-face {
+      font-family: 'Noto Nastaliq Urdu';
+      font-style: normal;
+      font-weight: 400;
+      src: url('https://fonts.gstatic.com/s/notonastaliqurdu/v20/LhWNMUPbN-oZdNFcBy1-DJYsEoTq5pudQ9L940pGPkB3Qt_-DK2f.woff2') format('woff2');
+    }
+
+    [lang="ur"] {
+      font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', Arial, sans-serif;
+    }
+
+    [dir="rtl"] .rtl\:space-x-reverse> :not([hidden])~ :not([hidden]) {
+      --tw-space-x-reverse: 1;
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+
+    @keyframes pulse-slow {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 2s ease-in-out infinite;
+    }
+
+    /* Unified Light Mode & Button Enhancements */
+    
+    /* 1. Global Light Mode Theme Variables & Styling Overrides */
+    html:not(.dark) {
+      --bg-main: #f8fafc;        /* Soft premium light background */
+      --bg-card: #ffffff;        /* Pure high-contrast white for cards/panels */
+      --border-card: #e2e8f0;    /* Thin subtle border */
+      --text-main: #0f172a;      /* Deep slate primary text */
+      --text-muted: #475569;     /* Mid slate secondary text */
+    }
+
+    /* Enforce light background colors on page and container levels */
+    html:not(.dark) body,
+    html:not(.dark) .bg-theme-gray,
+    html:not(.dark) .bg-slate-50,
+    html:not(.dark) .bg-slate-900,
+    html:not(.dark) .bg-slate-950,
+    html:not(.dark) .bg-slate-100 {
+      background-color: var(--bg-main) !important;
+      color: var(--text-main) !important;
+    }
+
+    /* Enforce light background and borders on card/panel levels with soft premium shadow */
+    html:not(.dark) .bg-white,
+    html:not(.dark) .bg-slate-800,
+    html:not(.dark) .bg-slate-800\/80,
+    html:not(.dark) .bg-slate-900\/50,
+    html:not(.dark) .bg-white\/40,
+    html:not(.dark) .bg-white\/60,
+    html:not(.dark) .bg-white\/80,
+    html:not(.dark) .bg-white\/90,
+    html:not(.dark) .bg-white\/95,
+    html:not(.dark) header.bg-white\/80,
+    html:not(.dark) header.bg-slate-800\/80 {
+      background-color: var(--bg-card) !important;
+      border-color: var(--border-card) !important;
+      color: var(--text-main) !important;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -4px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+    }
+
+    /* Enforce thin borders in light mode */
+    html:not(.dark) .border-slate-700,
+    html:not(.dark) .border-slate-800,
+    html:not(.dark) .border-slate-700\/50,
+    html:not(.dark) .border-slate-200\/50,
+    html:not(.dark) .border-slate-100 {
+      border-color: var(--border-card) !important;
+    }
+
+    /* Enforce dark text contrast in light mode */
+    html:not(.dark) .text-white,
+    html:not(.dark) .text-slate-100,
+    html:not(.dark) .text-slate-200,
+    html:not(.dark) .text-slate-300 {
+      color: var(--text-main) !important;
+    }
+
+    html:not(.dark) .text-slate-400,
+    html:not(.dark) .text-slate-500 {
+      color: var(--text-muted) !important;
+    }
+
+    /* 2. Unified Primary Accent Buttons Styling (Light & Dark) */
+    button.bg-emerald-600,
+    button.bg-emerald-500,
+    button.bg-teal-600,
+    button.bg-teal-500,
+    button.bg-blue-600,
+    button.bg-blue-500,
+    button.bg-indigo-600,
+    button.bg-indigo-500,
+    button.bg-purple-600,
+    button.bg-purple-500,
+    button.bg-violet-600,
+    button.bg-violet-500,
+    button.from-emerald-600,
+    button.from-teal-600,
+    button.from-blue-600,
+    button.from-emerald-500,
+    a.bg-gradient-to-r.from-emerald-500 {
+      background-image: none !important;
+      background-color: #05B89A !important;  /* Unified premium emerald-teal color */
+      color: #ffffff !important;
+      border: none !important;
+      box-shadow: 0 4px 10px rgba(5, 184, 154, 0.15) !important;
+    }
+
+    button.bg-emerald-600:hover,
+    button.bg-emerald-500:hover,
+    button.bg-teal-600:hover,
+    button.bg-teal-500:hover,
+    button.bg-blue-600:hover,
+    button.bg-blue-500:hover,
+    button.bg-indigo-600:hover,
+    button.bg-indigo-500:hover,
+    button.bg-purple-600:hover,
+    button.bg-purple-500:hover,
+    button.bg-violet-600:hover,
+    button.bg-violet-500:hover,
+    button.from-emerald-600:hover,
+    button.from-teal-600:hover,
+    button.from-blue-600:hover,
+    button.from-emerald-500:hover,
+    a.bg-gradient-to-r.from-emerald-500:hover {
+      background-color: #049D83 !important;  /* Unified hover emerald-teal color */
+      color: #ffffff !important;
+      box-shadow: 0 4px 15px rgba(5, 184, 154, 0.25) !important;
+    }
+
+    /* Force all icon/child elements inside primary buttons to remain white */
+    button.bg-emerald-600 *,
+    button.bg-emerald-500 *,
+    button.bg-teal-600 *,
+    button.bg-teal-500 *,
+    button.bg-blue-600 *,
+    button.bg-blue-500 *,
+    button.bg-indigo-600 *,
+    button.bg-indigo-500 *,
+    button.bg-purple-600 *,
+    button.bg-purple-500 *,
+    button.bg-violet-600 *,
+    button.bg-violet-500 *,
+    button.from-emerald-600 *,
+    button.from-teal-600 *,
+    button.from-blue-600 * {
+      color: #ffffff !important;
+    }
+
+    /* 3. Unified Secondary / Neutral Buttons Styling */
+    /* Dark Mode Secondary Buttons */
+    .dark button.bg-slate-750,
+    .dark button.bg-slate-700,
+    .dark button.bg-slate-800,
+    .dark button.dark\:bg-slate-700,
+    .dark button.bg-slate-100,
+    .dark button.bg-slate-200 {
+      background-color: #1e293b !important;
+      color: #cbd5e1 !important;
+      border: 1px solid #334155 !important;
+    }
+    .dark button.bg-slate-750:hover,
+    .dark button.bg-slate-700:hover,
+    .dark button.bg-slate-800:hover,
+    .dark button.dark\:bg-slate-700:hover,
+    .dark button.bg-slate-100:hover,
+    .dark button.bg-slate-200:hover {
+      background-color: #334155 !important;
+      color: #ffffff !important;
+    }
+    .dark button.bg-slate-750 *,
+    .dark button.bg-slate-700 *,
+    .dark button.bg-slate-800 *,
+    .dark button.bg-slate-100 *,
+    .dark button.bg-slate-200 * {
+      color: #cbd5e1 !important;
+    }
+
+    /* Light Mode Secondary Buttons */
+    html:not(.dark) button.bg-slate-750,
+    html:not(.dark) button.bg-slate-700,
+    html:not(.dark) button.bg-slate-800,
+    html:not(.dark) button.dark\:bg-slate-700,
+    html:not(.dark) button.bg-slate-100,
+    html:not(.dark) button.bg-slate-200 {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    html:not(.dark) button.bg-slate-750:hover,
+    html:not(.dark) button.bg-slate-700:hover,
+    html:not(.dark) button.bg-slate-800:hover,
+    html:not(.dark) button.bg-slate-100:hover,
+    html:not(.dark) button.bg-slate-200:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    html:not(.dark) button.bg-slate-750 *,
+    html:not(.dark) button.bg-slate-700 *,
+    html:not(.dark) button.bg-slate-800 *,
+    html:not(.dark) button.bg-slate-100 *,
+    html:not(.dark) button.bg-slate-200 * {
+      color: #0f172a !important;
+    }
+
+    /* 4. Premium Micro-Transitions & Interactions */
+    button, a, input, select, textarea {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    /* Modern Light Mode Left Menu (Sidebar) & Dark Fonts Override */
+    
+    /* Enforce Light Mode Left Menu (Sidebar) styling */
+    html:not(.dark) aside,
+    html:not(.dark) aside.bg-gradient-to-b {
+      background-image: none !important;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      border-right: 1px solid #e2e8f0 !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01) !important;
+    }
+
+    /* Left Menu Title & Text in Light Mode */
+    html:not(.dark) aside h1,
+    html:not(.dark) aside span {
+      color: #0f172a !important;
+    }
+
+    /* Keep uppercase subheadings/headers (e.g. "INTELLIGENCE", "SETTINGS") styled correctly */
+    html:not(.dark) aside p.text-slate-500,
+    html:not(.dark) aside span.text-emerald-400\/80 {
+      color: #64748b !important;
+    }
+
+    /* Left Menu Nav buttons */
+    html:not(.dark) aside button {
+      color: #475569 !important;
+    }
+
+    /* Hover state for Left Menu Nav buttons */
+    html:not(.dark) aside button:hover {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+
+    /* Selected/Active Nav Button in Light Mode Sidebar */
+    html:not(.dark) aside button.text-emerald-400,
+    html:not(.dark) aside button.bg-emerald-500\/10 {
+      background-color: rgba(5, 184, 154, 0.08) !important;
+      color: #049D83 !important;
+    }
+
+    html:not(.dark) aside button.text-emerald-400 *,
+    html:not(.dark) aside button.bg-emerald-500\/10 * {
+      color: #049D83 !important;
+    }
+
+    /* Active state vertical line indicator */
+    html:not(.dark) aside .bg-emerald-500 {
+      background-color: #049D83 !important;
+    }
+
+    /* Farm Info box widget at the bottom of sidebar */
+    html:not(.dark) aside .bg-slate-800\/80 {
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+
+    html:not(.dark) aside .bg-slate-800\/80 p.text-white {
+      color: #0f172a !important;
+    }
+
+    html:not(.dark) aside .bg-slate-800\/80 p.text-slate-400 {
+      color: #64748b !important;
+    }
+
+    /* Ensure text colors are dark inside light mode header */
+    html:not(.dark) header span.text-slate-500 {
+      color: #64748b !important;
+    }
+    
+    html:not(.dark) header span.text-slate-800,
+    html:not(.dark) header h1.font-bold {
+      color: #0f172a !important;
+    }
+
+    /* Ensure white text is retained on colored badges (red, green, blue backgrounds) in light mode */
+    html:not(.dark) .bg-emerald-600 .text-white,
+    html:not(.dark) .bg-emerald-500 .text-white,
+    html:not(.dark) .bg-red-500 .text-white,
+    html:not(.dark) .bg-red-600 .text-white,
+    html:not(.dark) .bg-rose-500 .text-white,
+    html:not(.dark) .bg-rose-600 .text-white,
+    html:not(.dark) .bg-green-500 .text-white,
+    html:not(.dark) .bg-green-600 .text-white,
+    html:not(.dark) .bg-blue-500 .text-white,
+    html:not(.dark) .bg-blue-600 .text-white,
+    html:not(.dark) .bg-amber-500 .text-white,
+    html:not(.dark) .bg-amber-600 .text-white,
+    html:not(.dark) .bg-orange-500 .text-white,
+    html:not(.dark) .bg-orange-600 .text-white,
+    html:not(.dark) .bg-purple-500 .text-white,
+    html:not(.dark) .bg-purple-600 .text-white,
+    html:not(.dark) .bg-indigo-500 .text-white,
+    html:not(.dark) .bg-indigo-600 .text-white,
+    html:not(.dark) [class*="bg-emerald-"] .text-white,
+    html:not(.dark) [class*="bg-red-"] .text-white,
+    html:not(.dark) [class*="bg-green-"] .text-white,
+    html:not(.dark) [class*="bg-blue-"] .text-white,
+    html:not(.dark) [class*="bg-rose-"] .text-white,
+    html:not(.dark) [class*="bg-orange-"] .text-white,
+    html:not(.dark) [class*="bg-amber-"] .text-white,
+    html:not(.dark) [class*="bg-emerald-"] span,
+    html:not(.dark) [class*="bg-red-"] span,
+    html:not(.dark) [class*="bg-blue-"] span {
+      color: #ffffff !important;
+    }
+
+    /* Glow highlights for cards in dark mode */
+    .dark .bg-slate-800 {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+    .dark .bg-slate-800:hover {
+      border-color: rgba(5, 184, 154, 0.2) !important;
+    }
+
+    /* Prevent Light Mode Styles Leakage into Landing Page */
+    html:not(.dark) .landing-page-root {
+      background-color: #080d19 !important;
+      color: #cbd5e1 !important;
+    }
+    html:not(.dark) .landing-page-root nav {
+      background-color: rgba(2, 6, 23, 0.85) !important;
+      border-color: rgba(15, 23, 42, 0.6) !important;
+    }
+    html:not(.dark) .landing-page-root .bg-slate-950\/50,
+    html:not(.dark) .landing-page-root .bg-slate-950 {
+      background-color: #020617 !important;
+      border-color: rgba(30, 41, 59, 0.8) !important;
+    }
+    html:not(.dark) .landing-page-root .text-white,
+    html:not(.dark) .landing-page-root h1,
+    html:not(.dark) .landing-page-root h2,
+    html:not(.dark) .landing-page-root h3,
+    html:not(.dark) .landing-page-root span.text-white {
+      color: #ffffff !important;
+    }
+    html:not(.dark) .landing-page-root .text-slate-100 {
+      color: #f1f5f9 !important;
+    }
+    html:not(.dark) .landing-page-root .text-slate-200 {
+      color: #e2e8f0 !important;
+    }
+    html:not(.dark) .landing-page-root .text-slate-350,
+    html:not(.dark) .landing-page-root .text-slate-300,
+    html:not(.dark) .landing-page-root li.text-slate-300 {
+      color: #cbd5e1 !important;
+    }
+    html:not(.dark) .landing-page-root .text-slate-400,
+    html:not(.dark) .landing-page-root p.text-slate-400 {
+      color: #94a3b8 !important;
+    }
+    html:not(.dark) .landing-page-root button.text-slate-300 {
+      color: #cbd5e1 !important;
+    }
+    html:not(.dark) .landing-page-root button.text-slate-300:hover {
+      color: #ffffff !important;
+    }
+    html:not(.dark) .landing-page-root button.bg-gradient-to-r.from-emerald-500.to-teal-500,
+    html:not(.dark) .landing-page-root a.bg-gradient-to-r.from-emerald-500.to-teal-500 {
+      background-image: linear-gradient(to right, #10b981, #14b8a6) !important;
+      background-color: transparent !important;
+      color: #020617 !important;
+    }
+    html:not(.dark) .landing-page-root button.bg-slate-900,
+    html:not(.dark) .landing-page-root a.bg-slate-850 {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+      color: #ffffff !important;
+    }
+    html:not(.dark) .landing-page-root button.bg-slate-900:hover,
+    html:not(.dark) .landing-page-root a.bg-slate-850:hover {
+      background-color: #1e293b !important;
+    }
+    /* Fixed Pricing button showing white text on white bg issue */
+    html:not(.dark) .landing-page-root button.bg-slate-900 {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+    }
+    html:not(.dark) .landing-page-root button.bg-slate-900:hover {
+      background-color: #1e293b !important;
+    }
+
+    /* Hero section fadeInUp & Floating animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fadeInUp {
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    @keyframes floatCard {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+    .animate-float-slow-1 {
+      animation: floatCard 6s ease-in-out infinite;
+    }
+    .animate-float-slow-2 {
+      animation: floatCard 8s ease-in-out infinite 1.2s;
+    }
+    .animate-float-slow-3 {
+      animation: floatCard 7s ease-in-out infinite 2.4s;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.0"
+  }
+}
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/index.css">
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-theme-gray dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

@@ -1,0 +1,99 @@
+root@vmi2924371:/var/www/farmxpert# sudo -i -u postgres psql -d farmxpert_db -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+sudo -i -u postgres psql -d farmxpert_db -f /var/www/farmxpert/scripts/setup-database-linux.sql
+pm2 restart farmxpert
+CREATE EXTENSION
+psql:/var/www/farmxpert/scripts/setup-database-linux.sql:10: NOTICE:  extension "uuid-ossp" already exists, skipping
+CREATE EXTENSION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+INSERT 0 3
+INSERT 0 1
+INSERT 0 6
+INSERT 0 5
+INSERT 0 2
+INSERT 0 3
+psql:/var/www/farmxpert/scripts/setup-database-linux.sql:196: WARNING:  there is no transaction in progress
+COMMIT
+          status
+--------------------------
+ Database setup complete!
+(1 row)
+
+      ?column?
+--------------------
+ Tenants created: 3
+(1 row)
+
+     ?column?
+------------------
+ Users created: 7
+(1 row)
+
+       ?column?
+-----------------------
+ Feed items created: 5
+(1 row)
+
+         ?column?
+--------------------------
+ Feed packages created: 2
+(1 row)
+
+     ?column?
+-------------------
+ Cattle created: 3
+(1 row)
+
+
+                        -------------
+
+__/\\\\\\\\\\\\\____/\\\\____________/\\\\____/\\\\\\\\\_____
+ _\/\\\/////////\\\_\/\\\\\\________/\\\\\\__/\\\///////\\\___
+  _\/\\\_______\/\\\_\/\\\//\\\____/\\\//\\\_\///______\//\\\__
+   _\/\\\\\\\\\\\\\/__\/\\\\///\\\/\\\/_\/\\\___________/\\\/___
+    _\/\\\/////////____\/\\\__\///\\\/___\/\\\________/\\\//_____
+     _\/\\\_____________\/\\\____\///_____\/\\\_____/\\\//________
+      _\/\\\_____________\/\\\_____________\/\\\___/\\\/___________
+       _\/\\\_____________\/\\\_____________\/\\\__/\\\\\\\\\\\\\\\_
+        _\///______________\///______________\///__\///////////////__
+
+
+                          Runtime Edition
+
+        PM2 is a Production Process Manager for Node.js applications
+                     with a built-in Load Balancer.
+
+                Start and Daemonize any application:
+                $ pm2 start app.js
+
+                Load Balance 4 instances of api.js:
+                $ pm2 start api.js -i 4
+
+                Monitor in production:
+                $ pm2 monitor
+
+                Make pm2 auto-boot at server restart:
+                $ pm2 startup
+
+                To go further checkout:
+                http://pm2.io/
+
+
+                        -------------
+
+[PM2] Spawning PM2 daemon with pm2_home=/root/.pm2
+[PM2] PM2 Successfully daemonized
+Use --update-env to update environment variables
+[PM2][ERROR] Process or Namespace farmxpert not found
