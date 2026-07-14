@@ -456,7 +456,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ tenant, cattle, 
                         <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleViewDetails(summary)}
-                            className="p-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 rounded-lg transition-colors"
+                            className="p-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 rounded-lg transition-colors"
                             title="View Details"
                           >
                             <Eye size={18} />
@@ -685,7 +685,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ tenant, cattle, 
                               </div>
                             ) : (
                               <div className="flex justify-end gap-2">
-                                <button onClick={() => setEditingPayment(payment)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Edit">
+                                <button onClick={() => setEditingPayment(payment)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title="Edit">
                                   <Edit2 size={16} />
                                 </button>
                                 <button onClick={() => handleDeletePayment(payment.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete">

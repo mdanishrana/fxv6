@@ -701,7 +701,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         </div>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 md:px-6 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 text-sm md:text-base"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 md:px-6 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 text-sm md:text-base"
                         >
                             <Plus size={18} /> <span className="hidden sm:inline">Onboard New</span> Farm
                         </button>
@@ -770,7 +770,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 </button>
                                                 <button
                                                     onClick={() => openUserModal(tenant)}
-                                                    className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 transition-colors"
+                                                    className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-50 transition-colors"
                                                     title="Manage Users"
                                                 >
                                                     <Users size={16} />
@@ -845,7 +845,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     </button>
                                     <button
                                         onClick={() => openUserModal(tenant)}
-                                        className="p-2 rounded-lg text-indigo-500 bg-indigo-50"
+                                        className="p-2 rounded-lg text-emerald-500 bg-emerald-50"
                                     >
                                         <Users size={16} />
                                     </button>
@@ -1601,7 +1601,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <button
                                     onClick={sendBroadcast}
                                     disabled={sendingBroadcast || !broadcastTitle || !broadcastBody}
-                                    className="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {sendingBroadcast ? <Loader2 className="animate-spin" /> : <Bell size={20} />}
                                     Send Broadcast

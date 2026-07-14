@@ -605,7 +605,7 @@ export const QurbaniManager: React.FC<QurbaniManagerProps> = ({ cattle, setCattl
                                         <button onClick={handleCancelBooking} className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-xl text-sm font-bold transition-all">Cancel Booking</button>
                                         <button
                                             onClick={handlePrintInvoice}
-                                            className="text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-blue-400 hover:bg-emerald-50 dark:hover:bg-blue-900/20 px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold transition-all"
+                                            className="text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold transition-all"
                                             title="Print Invoice"
                                         >
                                             <Printer size={16} /> Print

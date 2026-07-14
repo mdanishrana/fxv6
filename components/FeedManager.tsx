@@ -497,14 +497,14 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                         )}
                         {activeTab === 'packages' && (
                             <button
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30 scale-100 whitespace-nowrap"
+                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-100 whitespace-nowrap"
                             >
                                 Packages
                             </button>
                         )}
                         {activeTab === 'daily' && (
                             <button
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-500/30 scale-100 whitespace-nowrap"
+                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 scale-100 whitespace-nowrap"
                             >
                                 Daily Feed
                             </button>
@@ -528,18 +528,18 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                                 {canManage && (
                                     <button
                                         onClick={() => handleOpenPackageModal()}
-                                        className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-5 py-3 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 font-bold hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+                                        className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-3 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 font-bold hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
                                     >
                                         <Plus size={18} /> Create Package
                                     </button>
                                 )}
                                 {hasFeedOptimizer && (
                                     <button onClick={() => setShowMixerModal(true)} className="flex-1 sm:flex-none bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border border-white/20 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-700 px-5 py-3 rounded-2xl flex justify-center items-center gap-2 shadow-sm transition-all duration-300 font-bold hover:shadow-md hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
-                                        <Beaker size={18} className="text-purple-500" /> <span className="hidden sm:inline">Mixer</span>
+                                        <Beaker size={18} className="text-emerald-500" /> <span className="hidden sm:inline">Mixer</span>
                                     </button>
                                 )}
                                 {hasAI && (
-                                    <button onClick={() => setShowRationModal(true)} className="flex-1 sm:flex-none bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-5 py-3 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-indigo-500/30 transition-all duration-300 font-bold hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
+                                    <button onClick={() => setShowRationModal(true)} className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-5 py-3 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-emerald-500/30 transition-all duration-300 font-bold hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
                                         <Sparkles size={18} /> <span className="hidden sm:inline">AI Ration</span>
                                     </button>
                                 )}
@@ -1103,12 +1103,12 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                                                     e.target.value = "";
                                                 }
                                             }}
-                                            className="w-full border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl px-4 py-3.5 focus:ring-0 focus:border-emerald-500 transition-all outline-none font-bold appearance-none cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-800 shadow-sm"
+                                            className="w-full border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl px-4 py-3.5 focus:ring-0 focus:border-emerald-500 transition-all outline-none font-bold appearance-none cursor-pointer hover:border-emerald-200 dark:hover:border-emerald-800 shadow-sm"
                                         >
                                             <option value="">-- Select Ingredient --</option>
                                             {feed.map(f => <option key={f.id} value={f.id}>{f.name} (Stock: {f.quantityKg}kg)</option>)}
                                         </select>
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-indigo-500 transition-colors">
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-emerald-500 transition-colors">
                                             <Plus size={20} />
                                         </div>
                                     </div>
@@ -1123,7 +1123,7 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                                         return (
                                             <div key={item.id} className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-transform hover:scale-[1.01] duration-200 group">
                                                 <div className="flex-1 font-bold text-slate-700 dark:text-slate-200 text-lg">{f?.name}</div>
-                                                <div className="w-40 flex items-center gap-3 bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                                                <div className="w-40 flex items-center gap-3 bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                                                     <input
                                                         type="number"
                                                         value={item.amount}
@@ -1145,7 +1145,7 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                                 <button
                                     onClick={handlePredictMix}
                                     disabled={loadingMix}
-                                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-bold flex justify-center items-center gap-3 transition-all transform hover:-translate-y-0.5 shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:shadow-none disabled:translate-y-0 text-lg tracking-wide"
+                                    className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl font-bold flex justify-center items-center gap-3 transition-all transform hover:-translate-y-0.5 shadow-lg shadow-emerald-500/25 disabled:opacity-70 disabled:shadow-none disabled:translate-y-0 text-lg tracking-wide"
                                 >
                                     {loadingMix ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
                                     Analyze Mix Performance
@@ -1312,7 +1312,7 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                                     <h4 className="font-bold text-slate-700 dark:text-slate-200 text-lg">Ingredients Mix</h4>
                                     <button
                                         onClick={handleAddIngredientToPackage}
-                                        className="text-sm bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-blue-400 font-bold hover:bg-blue-100 dark:hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                                        className="text-sm bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                                     >
                                         <Plus size={16} /> Add Item
                                     </button>
@@ -1441,7 +1441,7 @@ export const FeedManager: React.FC<FeedManagerProps> = ({ feed, setFeed, package
                         </div>
                         <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-b-3xl flex justify-end gap-3 z-10 relative">
                             <button onClick={() => setShowPackageModal(false)} disabled={isSavingPackage} className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-bold transition-colors">Cancel</button>
-                            <button onClick={handleSavePackage} disabled={isSavingPackage} className={`px-8 py-2.5 bg-gradient-to-r ${isSavingPackage ? 'from-slate-400 to-slate-500 cursor-not-allowed' : 'from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'} text-white rounded-xl shadow-lg shadow-blue-500/25 font-bold transition-all flex items-center gap-2 transform ${isSavingPackage ? '' : 'hover:-translate-y-0.5'}`}>
+                            <button onClick={handleSavePackage} disabled={isSavingPackage} className={`px-8 py-2.5 bg-gradient-to-r ${isSavingPackage ? 'from-slate-400 to-slate-500 cursor-not-allowed' : 'from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600'} text-white rounded-xl shadow-lg shadow-emerald-500/25 font-bold transition-all flex items-center gap-2 transform ${isSavingPackage ? '' : 'hover:-translate-y-0.5'}`}>
                                 {isSavingPackage ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : 'Save Package'}
                             </button>
                         </div>

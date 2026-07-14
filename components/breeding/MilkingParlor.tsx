@@ -181,7 +181,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                         <div className="relative w-full sm:w-auto">
                             <select
-                                className="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 dark:text-slate-200 cursor-pointer"
+                                className="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none text-slate-700 dark:text-slate-200 cursor-pointer"
                                 value={filterPregnant}
                                 onChange={e => setFilterPregnant(e.target.value as 'ALL' | 'PREGNANT')}
                             >
@@ -194,7 +194,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                             <input
                                 type="text"
                                 placeholder="Search animals..."
-                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
@@ -203,7 +203,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                             <Calendar className="absolute left-3 top-2.5 text-slate-400" size={16} />
                             <input
                                 type="date"
-                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
                                 value={milkingDate}
                                 onChange={(e) => setMilkingDate(e.target.value)}
                             />
@@ -211,7 +211,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                         <button
                             onClick={handleBulkSave}
                             disabled={saving}
-                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
+                            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Batch
                         </button>
@@ -245,7 +245,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                                         <td className="px-6 py-3">
                                             <input
                                                 type="number" step="0.1" placeholder="0.0"
-                                                className="w-24 p-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800 dark:text-slate-100"
+                                                className="w-24 p-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-slate-800 dark:text-slate-100"
                                                 value={logs[cow.id]?.morning || ''}
                                                 onChange={(e) => handleInputChange(cow.id, 'morning', e.target.value)}
                                             />
@@ -253,7 +253,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                                         <td className="px-6 py-3">
                                             <input
                                                 type="number" step="0.1" placeholder="0.0"
-                                                className="w-24 p-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800 dark:text-slate-100"
+                                                className="w-24 p-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-slate-800 dark:text-slate-100"
                                                 value={logs[cow.id]?.evening || ''}
                                                 onChange={(e) => handleInputChange(cow.id, 'evening', e.target.value)}
                                             />
@@ -261,7 +261,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                                         <td className="px-6 py-3">
                                             <input
                                                 type="text" placeholder="Observations..."
-                                                className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                                                 value={logs[cow.id]?.notes || ''}
                                                 onChange={(e) => handleInputChange(cow.id, 'notes', e.target.value)}
                                             />
@@ -305,7 +305,7 @@ export function MilkingParlor({ tenantId, cattleList }: MilkingParlorProps) {
                             <Calendar className="absolute left-3 top-2.5 text-slate-400" size={16} />
                             <input
                                 type="date"
-                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
                                 value={historyDate}
                                 onChange={e => setHistoryDate(e.target.value)}
                             />

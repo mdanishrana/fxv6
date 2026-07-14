@@ -94,7 +94,7 @@ export const ReportingManager: React.FC<ReportingManagerProps> = ({ tenantId, te
                 <button
                     onClick={() => setActiveReport('EXPENSES')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${activeReport === 'EXPENSES'
-                        ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800'
                         }`}
                 >
@@ -124,7 +124,7 @@ export const ReportingManager: React.FC<ReportingManagerProps> = ({ tenantId, te
                 <button
                     onClick={() => setActiveReport('EXPORTS')}
                     className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all whitespace-nowrap ${activeReport === 'EXPORTS'
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800'
                         }`}
                 >

@@ -129,9 +129,9 @@ export function GeneticsManager({ tenant }: GeneticsManagerProps) {
                 <div className="bg-white dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 flex gap-2 shadow-sm">
                     <button
                         onClick={() => setActiveTab('SEMEN')}
-                        className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'SEMEN' ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-md transform scale-[1.02]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'SEMEN' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-md transform scale-[1.02]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
                     >
-                        <TestTube size={18} className={activeTab === 'SEMEN' ? 'text-purple-500' : ''} />
+                        <TestTube size={18} className={activeTab === 'SEMEN' ? 'text-emerald-500' : ''} />
                         Semen Bank
                     </button>
                     <button
@@ -150,18 +150,18 @@ export function GeneticsManager({ tenant }: GeneticsManagerProps) {
                 {/* Toolbar */}
                 <div className="p-6 border-b border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/30 dark:bg-slate-800/30 backdrop-blur-sm">
                     <div className="relative w-full sm:w-80 group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500 transition-colors" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={18} />
                         <input
                             type="text"
                             placeholder={`Search by Code or Bull Name...`}
-                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-700 dark:text-slate-200 placeholder-slate-400"
+                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-700 dark:text-slate-200 placeholder-slate-400"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => openModal()}
-                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/40 hover:-translate-y-0.5 transition-all text-sm"
+                        className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all text-sm"
                     >
                         <Plus size={18} /> Add {activeTab === 'SEMEN' ? 'Semen' : 'Embryo'}
                     </button>
@@ -211,7 +211,7 @@ export function GeneticsManager({ tenant }: GeneticsManagerProps) {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => openModal(item)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" title="Edit">
+                                            <button onClick={() => openModal(item)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title="Edit">
                                                 <Edit2 size={16} />
                                             </button>
                                             <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Delete">
@@ -259,12 +259,12 @@ export function GeneticsManager({ tenant }: GeneticsManagerProps) {
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Code *</label>
-                                    <input required type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-medium" value={formData.code || ''} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Unique ID" />
+                                    <input required type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100 font-medium" value={formData.code || ''} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Unique ID" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</label>
                                     <div className="relative">
-                                        <select className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100 appearance-none font-medium" value={formData.status || 'AVAILABLE'} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+                                        <select className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100 appearance-none font-medium" value={formData.status || 'AVAILABLE'} onChange={e => setFormData({ ...formData, status: e.target.value })}>
                                             <option value="AVAILABLE">Available</option>
                                             <option value="ARCHIVED">Archived</option>
                                             <option value={activeTab === 'SEMEN' ? 'DEPLETED' : 'TRANSFERRED'}>{activeTab === 'SEMEN' ? 'Depleted' : 'Transferred'}</option>
@@ -278,35 +278,35 @@ export function GeneticsManager({ tenant }: GeneticsManagerProps) {
 
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sire / Bull Name</label>
-                                <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.bull_name || ''} onChange={e => setFormData({ ...formData, bull_name: e.target.value })} placeholder="Name of the Bull" />
+                                <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.bull_name || ''} onChange={e => setFormData({ ...formData, bull_name: e.target.value })} placeholder="Name of the Bull" />
                             </div>
 
                             {activeTab === 'EMBRYOS' && (
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Donor Dam</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.donor_cow || ''} onChange={e => setFormData({ ...formData, donor_cow: e.target.value })} placeholder="Mother Cow" />
+                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.donor_cow || ''} onChange={e => setFormData({ ...formData, donor_cow: e.target.value })} placeholder="Mother Cow" />
                                 </div>
                             )}
 
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Breed</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.breed || ''} onChange={e => setFormData({ ...formData, breed: e.target.value })} placeholder="e.g. Holstein" />
+                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.breed || ''} onChange={e => setFormData({ ...formData, breed: e.target.value })} placeholder="e.g. Holstein" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Source</label>
-                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.source || ''} onChange={e => setFormData({ ...formData, source: e.target.value })} placeholder="e.g. Own, Imported" />
+                                    <input type="text" className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100" value={formData.source || ''} onChange={e => setFormData({ ...formData, source: e.target.value })} placeholder="e.g. Own, Imported" />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Notes</label>
-                                <textarea className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-slate-800 dark:text-slate-100 resize-none" value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..."></textarea>
+                                <textarea className="w-full px-4 py-2.5 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl min-h-[100px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-slate-800 dark:text-slate-100 resize-none" value={formData.notes || ''} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..."></textarea>
                             </div>
 
                             <div className="pt-4 flex gap-3">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-white dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                                <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/40 hover:-translate-y-0.5 transition-all">Save Record</button>
+                                <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all">Save Record</button>
                             </div>
                         </form>
                     </div>

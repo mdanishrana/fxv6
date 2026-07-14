@@ -255,7 +255,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                         setTypeFilter(e.target.value);
                                         setSelectedCattleIds([]); // Clear selection when filter changes
                                     }}
-                                    className="px-3 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors"
+                                    className="px-3 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                                 >
                                     <option value="All">All Animals</option>
                                     <option value="Cattle">Cattle (Cows/Bulls/Calves)</option>
@@ -268,7 +268,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                         {selectedCattleIds.length > 0 && (
                             <button 
                                 onClick={() => setShowBulkModal(true)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
                             >
                                 <CalendarPlus size={20} />
                                 Bulk Schedule ({selectedCattleIds.length})
@@ -324,7 +324,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                                 setSelectedCattleIds([]);
                                             }
                                         }}
-                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                                     />
                                 </th>
                                 <th className="pb-3 font-semibold px-4">Tag Number</th>
@@ -353,7 +353,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                                         setSelectedCattleIds(prev => prev.filter(id => id !== v.cattleId));
                                                     }
                                                 }}
-                                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                                             />
                                         </td>
                                         <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{v.tagNumber}</td>
@@ -401,13 +401,13 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                 <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl mb-4">
                                     <button
                                         onClick={() => setBulkForm({ ...bulkForm, provider: 'STOCK', name: '' })}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.provider === 'STOCK' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.provider === 'STOCK' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         From Stock
                                     </button>
                                     <button
                                         onClick={() => setBulkForm({ ...bulkForm, provider: 'DOCTOR', name: '' })}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.provider === 'DOCTOR' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.provider === 'DOCTOR' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         Doctor Provided
                                     </button>
@@ -419,13 +419,13 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                 <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl mb-4">
                                     <button
                                         onClick={() => setBulkForm({ ...bulkForm, status: 'COMPLETED' })}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.status === 'COMPLETED' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.status === 'COMPLETED' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         Completed (Administered)
                                     </button>
                                     <button
                                         onClick={() => setBulkForm({ ...bulkForm, status: 'SCHEDULED' })}
-                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.status === 'SCHEDULED' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-colors ${bulkForm.status === 'SCHEDULED' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         Scheduled (Future)
                                     </button>
@@ -441,7 +441,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                     <select 
                                         value={bulkForm.name}
                                         onChange={(e) => setBulkForm({ ...bulkForm, name: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                                     >
                                         <option value="" disabled>Select a vaccine...</option>
                                         {availableVaccines.map(v => (
@@ -458,7 +458,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                     <select 
                                         value={bulkForm.name}
                                         onChange={(e) => setBulkForm({ ...bulkForm, name: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                                     >
                                         <option value="" disabled>Select a protocol vaccine...</option>
                                         {availableDoctorVaccines.map(p => (
@@ -474,7 +474,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                     type="date"
                                     value={bulkForm.date}
                                     onChange={(e) => setBulkForm({ ...bulkForm, date: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
                             </div>
                         </div>
@@ -489,7 +489,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                             <button 
                                 onClick={handleBulkSubmit}
                                 disabled={isSubmitting || !bulkForm.name}
-                                className="flex-1 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+                                className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 shadow-lg shadow-emerald-600/20"
                             >
                                 {isSubmitting ? 'Saving...' : 'Save Record'}
                             </button>

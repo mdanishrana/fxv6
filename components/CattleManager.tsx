@@ -1809,7 +1809,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 className="bg-white/80 dark:bg-slate-800/80 border border-white/20 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-2xl flex items-center gap-2 hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm group font-bold text-sm"
                                 title="Bulk Import Data"
                             >
-                                <Upload className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" /> <span className="hidden lg:inline">Import</span>
+                                <Upload className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> <span className="hidden lg:inline">Import</span>
                             </button>
                         </div>
                     </div>
@@ -1975,9 +1975,9 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                         </td>
                                         <td className="px-4 sm:px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => openReportModal(c)} className="p-2 hover:bg-emerald-50 dark:hover:bg-blue-900/30 text-slate-400 hover:text-emerald-600 rounded-xl transition-colors" title="Full Details"><FileText size={18} /></button>
+                                                <button onClick={() => openReportModal(c)} className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-600 rounded-xl transition-colors" title="Full Details"><FileText size={18} /></button>
                                                 <button onClick={() => openWeightModal(c)} className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-600 rounded-xl transition-colors" title="Update Weight"><Scale size={18} /></button>
-                                                <button onClick={() => openVaccineModal(c)} className="p-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-slate-400 hover:text-purple-600 rounded-xl transition-colors hidden sm:block" title="Vaccinate"><Syringe size={18} /></button>
+                                                <button onClick={() => openVaccineModal(c)} className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-600 rounded-xl transition-colors hidden sm:block" title="Vaccinate"><Syringe size={18} /></button>
                                                 {canSell && (<button onClick={() => openSellModal(c)} className="p-2 hover:bg-green-50 dark:hover:bg-green-900/30 text-slate-400 hover:text-green-600 rounded-xl transition-colors hidden sm:block" title="Sell Animal"><DollarSign size={18} /></button>)}
                                                 <button onClick={() => openHealthModal(c)} className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/30 text-slate-400 hover:text-amber-600 rounded-xl transition-colors hidden md:block" title="Log Health Issue"><Activity size={18} /></button>
                                                 {canEdit && (<button onClick={() => handleEdit(c)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl transition-colors hidden sm:block" title="Edit"><Pencil size={18} /></button>)}
@@ -2024,7 +2024,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                             key={pageNum}
                                             onClick={() => setCurrentPage(pageNum)}
                                             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center justify-center ${currentPage === pageNum
-                                                ? 'bg-emerald-600 text-white shadow-md shadow-blue-500/20 shadow-inner ring-2 ring-blue-600/50'
+                                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20 shadow-inner ring-2 ring-emerald-600/50'
                                                 : 'border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                                 }`}
                                         >
@@ -2385,11 +2385,11 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Target Weight (kg)</label>
-                                        <input type="number" value={newAnimal.targetWeight} onChange={(e) => setNewAnimal({ ...newAnimal, targetWeight: e.target.value })} className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder-slate-400" placeholder="e.g. 450" />
+                                        <input type="number" value={newAnimal.targetWeight} onChange={(e) => setNewAnimal({ ...newAnimal, targetWeight: e.target.value })} className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder-slate-400" placeholder="e.g. 450" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Target Daily Gain (kg/day)</label>
-                                        <input type="number" step="0.1" value={newAnimal.dailyTargetGain} onChange={(e) => setNewAnimal({ ...newAnimal, dailyTargetGain: e.target.value })} className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder-slate-400" placeholder="e.g. 1.2" />
+                                        <input type="number" step="0.1" value={newAnimal.dailyTargetGain} onChange={(e) => setNewAnimal({ ...newAnimal, dailyTargetGain: e.target.value })} className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder-slate-400" placeholder="e.g. 1.2" />
                                     </div>
                                 </div>
                             </div>
@@ -2473,7 +2473,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                         </div>
                         <div className="p-6 border-t border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-slate-900/50 flex justify-end gap-3 filter backdrop-blur-md">
                             <button onClick={handleCloseModal} disabled={isSaving} className="px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-bold transition-colors disabled:opacity-50">Cancel</button>
-                            <button onClick={handleSaveCattle} disabled={isSaving} className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-blue-500/20 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                            <button onClick={handleSaveCattle} disabled={isSaving} className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg shadow-emerald-500/20 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                                 {isSaving && <Loader2 size={18} className="animate-spin" />}
                                 {isSaving ? 'Saving...' : (editingId ? 'Save Changes' : 'Register Animal')}
                             </button>
@@ -2553,7 +2553,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                         <div className="space-y-4">
                             <div className="flex gap-2 p-1 bg-white dark:bg-slate-700 rounded-xl mb-4">
                                 <button
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${vaccineForm.type === 'VACCINE' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${vaccineForm.type === 'VACCINE' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
                                     onClick={() => setVaccineForm({ ...vaccineForm, type: 'VACCINE', medicalItemId: '', name: '' })}
                                 >
                                     Vaccination
@@ -2577,7 +2577,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                             Use from Stock
                                         </button>
                                         <button
-                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${vaccineForm.provider === 'DOCTOR' ? 'bg-indigo-500 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${vaccineForm.provider === 'DOCTOR' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                             onClick={() => setVaccineForm({ ...vaccineForm, provider: 'DOCTOR', medicalItemId: '', name: '' })}
                                         >
                                             Provided by Doctor
@@ -2597,7 +2597,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                         onChange={(e) => {
                                             setVaccineForm({ ...vaccineForm, name: e.target.value, medicalItemId: '' });
                                         }}
-                                        className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500/20 mb-3"
+                                        className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500/20 mb-3"
                                     >
                                         <option value="">-- Select Standard Vaccine --</option>
                                         {PAKISTAN_PROTOCOLS.filter(p => {
@@ -2716,7 +2716,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                         </div>
                         <div className="flex gap-3 mt-6">
                             <button onClick={closeActionModal} className="flex-1 py-3 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-                            <button onClick={submitVaccineUpdate} className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95">Record Entry</button>
+                            <button onClick={submitVaccineUpdate} className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95">Record Entry</button>
                         </div>
                     </div>
                 </div>
@@ -2798,7 +2798,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 </button>
                                 <button
                                     onClick={() => handlePrintIndividualReport(selectedActionCattle)}
-                                    className="flex-1 sm:flex-none justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border border-transparent px-4 sm:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95 text-sm"
+                                    className="flex-1 sm:flex-none justify-center bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white border border-transparent px-4 sm:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 text-sm"
                                 >
                                     <Printer size={16} /> <span className="hidden sm:inline">Print Report</span><span className="sm:hidden">Print</span>
                                 </button>
@@ -2820,7 +2820,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                             key="breeding"
                                             type="button"
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTab('breeding'); }}
-                                            className={`py-3 sm:py-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${reportTab === 'breeding' ? 'border-blue-500 text-emerald-600 dark:text-blue-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'}`}
+                                            className={`py-3 sm:py-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${reportTab === 'breeding' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'}`}
                                         >
                                             <Activity size={14} className="sm:w-4 sm:h-4" /> Breeding & Lactation
                                         </button>
@@ -2834,7 +2834,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 const icons: any = { weight: Scale, medical: Activity, alerts: Bell, financial: TrendingUp, info: Info, pedigree: GitBranch, gallery: Images, documents: FileText, notes: MessageSquare };
                                 const Icon = icons[tab] || Circle;
                                 return (
-                                    <button key={tab} type="button" onClick={(e) => { e.stopPropagation(); setReportTab(tab); }} className={`py-3 sm:py-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${reportTab === tab ? 'border-blue-500 text-emerald-600 dark:text-blue-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'}`}>
+                                    <button key={tab} type="button" onClick={(e) => { e.stopPropagation(); setReportTab(tab); }} className={`py-3 sm:py-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${reportTab === tab ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300'}`}>
                                         <Icon size={14} className="sm:w-4 sm:h-4" /> {tabLabels[tab]}
                                     </button>
                                 );
@@ -2861,7 +2861,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                             <button
                                                 onClick={handleGeneratePrediction}
                                                 disabled={loadingPrediction}
-                                                className="w-full sm:w-auto justify-center bg-indigo-50 dark:bg-indigo-900/20 text-emerald-600 dark:text-indigo-400 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all border border-indigo-100 dark:border-indigo-800/50 disabled:opacity-50 active:scale-95"
+                                                className="w-full sm:w-auto justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-100 dark:border-emerald-800/50 disabled:opacity-50 active:scale-95"
                                             >
                                                 {loadingPrediction ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
                                                 AI Growth Forecast
@@ -3388,7 +3388,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                         </h3>
                                                         <button
                                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowBreedingModal(true); }}
-                                                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-pink-500/20 active:scale-95 transition-all"
+                                                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
                                                         >
                                                             <Plus size={16} /> Record Event
                                                         </button>
@@ -3471,7 +3471,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                                                 alert('Milk log saved!');
                                                                             }
                                                                         } catch (err) { alert('Failed to save'); }
-                                                                    }} className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all mb-[1px]">Save</button>
+                                                                    }} className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-all mb-[1px]">Save</button>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -3617,7 +3617,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                         <button type="button" onClick={() => {
                                                             const sire = cattle.find(c => c.tagNumber === selectedActionCattle.fatherTag);
                                                             if (sire) setSelectedActionCattle(sire);
-                                                        }} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer w-fit text-left">{selectedActionCattle.fatherTag}</button>
+                                                        }} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer w-fit text-left">{selectedActionCattle.fatherTag}</button>
                                                     ) : (
                                                         <span className="font-semibold text-slate-800 dark:text-slate-200">Unknown / N/A</span>
                                                     )}
@@ -3630,7 +3630,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                         <button type="button" onClick={() => {
                                                             const dam = cattle.find(c => c.tagNumber === selectedActionCattle.motherTag);
                                                             if (dam) setSelectedActionCattle(dam);
-                                                        }} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer w-fit text-left">{selectedActionCattle.motherTag}</button>
+                                                        }} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer w-fit text-left">{selectedActionCattle.motherTag}</button>
                                                     ) : (
                                                         <span className="font-semibold text-slate-800 dark:text-slate-200">Unknown / N/A</span>
                                                     )}
@@ -3647,7 +3647,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                         return (
                                                             <div className="flex gap-2 flex-wrap">
                                                                 {calves.map(calf => (
-                                                                    <button type="button" key={calf.id} onClick={() => setSelectedActionCattle(calf)} className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors border border-blue-200 dark:border-blue-800/50">
+                                                                    <button type="button" key={calf.id} onClick={() => setSelectedActionCattle(calf)} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer transition-colors border border-emerald-200 dark:border-emerald-800/50">
                                                                         {calf.tagNumber} {calf.name ? `(${calf.name})` : ''}
                                                                     </button>
                                                                 ))}
@@ -3706,7 +3706,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                                         console.error(err);
                                                                     }
                                                                 }}
-                                                                className="border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 font-medium"
+                                                                className="border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 font-medium"
                                                             >
                                                                 <option value="Main Farm">Main Farm</option>
                                                                 {tenant.branches.map(b => <option key={b} value={b}>{b}</option>)}
@@ -3738,7 +3738,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                                     console.error('Failed to update target weight:', err);
                                                                 }
                                                             }}
-                                                            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm transition-all"
+                                                            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                                             placeholder="Enter target weight"
                                                         />
                                                         <div className="absolute right-4 top-3 text-slate-400 text-sm font-medium">kg</div>
@@ -3761,7 +3761,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                                     console.error('Failed to update daily gain:', err);
                                                                 }
                                                             }}
-                                                            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm transition-all"
+                                                            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm transition-all"
                                                             placeholder="Enter daily gain"
                                                         />
                                                         <div className="absolute right-4 top-3 text-slate-400 text-sm font-medium">kg/day</div>
@@ -3954,7 +3954,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                             href={video.youtubeUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                                                            className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg transition-colors"
                                                             title="Watch Video"
                                                         >
                                                             <ExternalLink size={18} />
@@ -4151,7 +4151,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                 <button
                                                     onClick={() => docInputRef.current?.click()}
                                                     disabled={uploadingDoc}
-                                                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-slate-400 disabled:to-slate-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-slate-400 disabled:to-slate-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
                                                 >
                                                     {uploadingDoc ? (
                                                         <>
@@ -4198,7 +4198,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                         <a
                                                             href={doc.url}
                                                             download={doc.name}
-                                                            className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                                                            className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg transition-colors"
                                                             title="Download"
                                                         >
                                                             <Download size={18} />
@@ -4230,7 +4230,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                     <p className="text-sm mt-1 mb-4">Upload purchase receipts, health certificates, and other records</p>
                                                     <button
                                                         onClick={() => docInputRef.current?.click()}
-                                                        className="text-emerald-600 dark:text-blue-400 font-medium hover:underline text-sm"
+                                                        className="text-emerald-600 dark:text-emerald-400 font-medium hover:underline text-sm"
                                                     >
                                                         Browse Files
                                                     </button>
@@ -4304,7 +4304,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 </p>
                                 <button
                                     onClick={handleDownloadTemplate}
-                                    className="bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700 text-emerald-600 dark:text-blue-400 px-4 py-2 text-sm rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors shadow-sm flex items-center gap-2"
+                                    className="bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 px-4 py-2 text-sm rounded-lg font-medium hover:bg-emerald-100 dark:hover:bg-emerald-800/50 transition-colors shadow-sm flex items-center gap-2"
                                 >
                                     <Download size={16} /> Download Template
                                 </button>
@@ -4415,7 +4415,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                 <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">End Date</label>
                                 <input
                                     type="date"
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm"
+                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm"
                                     value={endLactationForm.endDate}
                                     onChange={e => setEndLactationForm({ ...endLactationForm, endDate: e.target.value })}
                                 />
@@ -4423,7 +4423,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Reason (Optional)</label>
                                 <textarea
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm placeholder-slate-400"
+                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm placeholder-slate-400"
                                     placeholder="e.g. Dry Off, Sold, etc."
                                     rows={3}
                                     value={endLactationForm.reason}
@@ -4432,7 +4432,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                             </div>
                             <button
                                 onClick={handleEndLactation}
-                                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 transition-all mt-2"
+                                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 transition-all mt-2"
                             >
                                 Confirm End Lactation
                             </button>
@@ -4450,10 +4450,10 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                     </div>
                     <div className="w-px h-6 bg-slate-700"></div>
                     <div className="flex items-center gap-3">
-                        <button onClick={() => setShowBulkActionModal('status')} className="text-sm font-semibold hover:text-blue-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => setShowBulkActionModal('status')} className="text-sm font-semibold hover:text-emerald-400 transition-colors flex items-center gap-2">
                             <Activity size={16} /> Status
                         </button>
-                        <button onClick={() => setShowBulkActionModal('package')} className="text-sm font-semibold hover:text-indigo-400 transition-colors flex items-center gap-2">
+                        <button onClick={() => setShowBulkActionModal('package')} className="text-sm font-semibold hover:text-emerald-400 transition-colors flex items-center gap-2">
                             <Package size={16} /> Feed Plan
                         </button>
                         <button onClick={() => setShowBulkActionModal('delete')} className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors flex items-center gap-2 ml-2">
@@ -4492,7 +4492,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                             <button
                                 onClick={handleBulkActionSubmit}
                                 disabled={isBulkProcessing}
-                                className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 mt-4"
+                                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 mt-4"
                             >
                                 {isBulkProcessing ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Confirm Update'}
                             </button>
@@ -4533,7 +4533,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                             <button
                                 onClick={handleBulkActionSubmit}
                                 disabled={isBulkProcessing}
-                                className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 mt-4"
+                                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 mt-4"
                             >
                                 {isBulkProcessing ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Confirm Assignment'}
                             </button>

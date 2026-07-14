@@ -154,7 +154,7 @@ Total Cost: Rs. ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2
                     <button
                         onClick={handleExportPDF}
                         disabled={exporting || filteredCosts.length === 0}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-emerald-600 dark:text-indigo-400 font-medium text-sm rounded-xl transition-colors disabled:opacity-50"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium text-sm rounded-xl transition-colors disabled:opacity-50"
                     >
                         {exporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                         Export PDF

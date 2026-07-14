@@ -281,7 +281,7 @@ export const AIAdvisor: React.FC<AIAdvisorProps> = ({ cattle, feed, userRole, te
               <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/50 dark:border-slate-800/50 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center justify-between">
                   Growth Trajectory
-                  <button className="text-xs text-indigo-500 font-medium px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-full hover:bg-indigo-100 transition-colors">
+                  <button className="text-xs text-emerald-500 font-medium px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full hover:bg-emerald-100 transition-colors">
                     View Report
                   </button>
                 </h3>
@@ -389,7 +389,7 @@ export const AIAdvisor: React.FC<AIAdvisorProps> = ({ cattle, feed, userRole, te
               </div>
               <button
                 onClick={() => setActiveView('copilot')}
-                className="relative z-10 px-8 py-4 bg-white text-violet-600 font-bold rounded-xl hover:bg-violet-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2 whitespace-nowrap group-hover:scale-105"
+                className="relative z-10 px-8 py-4 bg-white text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2 whitespace-nowrap group-hover:scale-105"
               >
                 <Bot size={20} />
                 Ask Gemini Assistant
@@ -433,7 +433,7 @@ export const AIAdvisor: React.FC<AIAdvisorProps> = ({ cattle, feed, userRole, te
 
             {/* Input Area */}
             <div className="p-6 bg-white dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 sticky bottom-0 z-20">
-              <div className="flex items-center gap-3 max-w-4xl mx-auto bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-violet-500/50 focus-within:border-violet-500 transition-all shadow-inner">
+              <div className="flex items-center gap-3 max-w-4xl mx-auto bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:border-emerald-500 transition-all shadow-inner">
                 <input
                   type="text"
                   value={input}
@@ -446,7 +446,7 @@ export const AIAdvisor: React.FC<AIAdvisorProps> = ({ cattle, feed, userRole, te
                 <button
                   onClick={handleSend}
                   disabled={isLoading || !input.trim()}
-                  className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white p-3 rounded-xl shadow-lg shadow-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all transform hover:scale-105 active:scale-95"
+                  className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white p-3 rounded-xl shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all transform hover:scale-105 active:scale-95"
                 >
                   <Send size={20} />
                 </button>

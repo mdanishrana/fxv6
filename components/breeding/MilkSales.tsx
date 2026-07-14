@@ -381,7 +381,7 @@ export function MilkSales({ tenantId }: MilkSalesProps) {
                                                 <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleOpenModal(sale)}
-                                                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                                                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
                                                         title="Edit Sale"
                                                     >
                                                         <Edit2 size={15} />

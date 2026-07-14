@@ -175,7 +175,7 @@ export default function BreedingManager({ tenant }: BreedingManagerProps) {
                         </button>
                         <button
                             onClick={() => setView('milking')}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${view === 'milking' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transform scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-600/50'}`}
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${view === 'milking' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm transform scale-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-600/50'}`}
                         >
                             <Droplet size={16} /> Milking
                         </button>
@@ -324,7 +324,7 @@ export default function BreedingManager({ tenant }: BreedingManagerProps) {
                                                                 setEditEvent(evt);
                                                                 setShowAddModal(true);
                                                             }}
-                                                            className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-blue-900/20 p-1.5 rounded-lg transition-all"
+                                                            className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 p-1.5 rounded-lg transition-all"
                                                             title="Edit Event"
                                                         >
                                                             <Edit size={16} />

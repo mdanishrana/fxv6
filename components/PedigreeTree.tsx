@@ -25,7 +25,7 @@ const PedigreeNode = ({ animal, fallbackTag, label, isMain, onClick }: { animal?
         <div 
             onClick={onClick}
             className={`w-full min-h-[160px] py-4 bg-white dark:bg-slate-800 rounded-xl px-2 flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border-2 relative group 
-                ${isMain ? 'border-emerald-500 shadow-emerald-500/20 shadow-lg scale-110 z-10' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-indigo-500/20 hover:shadow-lg hover:scale-105'}`}
+                ${isMain ? 'border-emerald-500 shadow-emerald-500/20 shadow-lg scale-110 z-10' : 'border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-emerald-500/20 hover:shadow-lg hover:scale-105'}`}
         >
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/5 dark:to-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative z-10 flex flex-col items-center w-full">
@@ -144,7 +144,7 @@ export const PedigreeTree: React.FC<PedigreeTreeProps> = ({ cattle, mainAnimal, 
                 <button 
                     onClick={handlePrint}
                     disabled={isPrinting}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-md disabled:opacity-50"
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-md disabled:opacity-50"
                 >
                     <Download size={16} /> {isPrinting ? 'Generating PDF...' : 'Print Certificate'}
                 </button>

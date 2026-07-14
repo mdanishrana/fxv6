@@ -512,7 +512,7 @@ export const FinanceManager: React.FC<FinanceManagerProps> = ({ tenant, userRole
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white">Recent Transactions</h3>
                     <button
                         onClick={() => setShowAllTransactions(true)}
-                        className="text-sm text-indigo-500 font-medium hover:text-emerald-600"
+                        className="text-sm text-emerald-500 font-medium hover:text-emerald-600"
                     >
                         View All
                     </button>
@@ -748,7 +748,7 @@ export const FinanceManager: React.FC<FinanceManagerProps> = ({ tenant, userRole
                                                     key={type}
                                                     onClick={() => setExpenseForm({ ...expenseForm, costType: type as any })}
                                                     className={`py-2 px-3 text-xs font-medium rounded-lg border transition-all ${expenseForm.costType === type
-                                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-300'
+                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300'
                                                         : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
                                                         }`}
                                                 >
@@ -805,7 +805,7 @@ export const FinanceManager: React.FC<FinanceManagerProps> = ({ tenant, userRole
                             <button
                                 onClick={handleExpenseSubmit}
                                 disabled={isSubmitting || !expenseForm.amount}
-                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all shadow-md hover:shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all shadow-md hover:shadow-lg shadow-emerald-500/20 flex items-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <>

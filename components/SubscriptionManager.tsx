@@ -176,7 +176,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ tenant
                                         ${tenant.tier === plan.code
                                             ? 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
                                             : plan.isPopular
-                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md'
+                                                ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md'
                                                 : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-600'
                                         }`}
                                 >

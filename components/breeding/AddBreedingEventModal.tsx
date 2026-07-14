@@ -489,7 +489,7 @@ export function AddBreedingEventModal({ onClose, onSuccess, tenantId, initialDat
                                     <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Calf Tag ID</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:bg-slate-800 dark:text-slate-100"
+                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                                         placeholder="e.g. C-101"
                                         value={formData.calfDetails.tagNumber}
                                         onChange={e => setFormData({
@@ -501,7 +501,7 @@ export function AddBreedingEventModal({ onClose, onSuccess, tenantId, initialDat
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Gender</label>
                                     <select
-                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:text-slate-100"
+                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:text-slate-100"
                                         value={formData.calfDetails.gender}
                                         onChange={e => setFormData({
                                             ...formData,
@@ -516,7 +516,7 @@ export function AddBreedingEventModal({ onClose, onSuccess, tenantId, initialDat
                                     <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Breed</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:bg-slate-800 dark:text-slate-100"
+                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                                         placeholder="e.g. Holstein"
                                         value={formData.calfDetails.breed}
                                         onChange={e => setFormData({
@@ -529,7 +529,7 @@ export function AddBreedingEventModal({ onClose, onSuccess, tenantId, initialDat
                                     <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Birth Weight (kg)</label>
                                     <input
                                         type="number"
-                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:bg-slate-800 dark:text-slate-100"
+                                        className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                                         placeholder="0"
                                         value={formData.calfDetails.weight}
                                         onChange={e => setFormData({
@@ -544,7 +544,7 @@ export function AddBreedingEventModal({ onClose, onSuccess, tenantId, initialDat
                                         <input
                                             type="text"
                                             list="calving-sire-options"
-                                            className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 dark:bg-slate-800 dark:text-slate-100"
+                                            className="w-full p-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-slate-800 dark:text-slate-100"
                                             placeholder="Select or enter bull/semen code"
                                             value={formData.calfDetails.sireCode || ''}
                                             onChange={e => setFormData({

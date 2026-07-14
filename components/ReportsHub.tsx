@@ -207,7 +207,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ cattle, tenant, userRole
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
                         }`}
                 >
-                    <Download size={18} className={activeTab === 'EXPORTS' ? 'text-blue-500' : ''} /> Default Exports
+                    <Download size={18} className={activeTab === 'EXPORTS' ? 'text-emerald-500' : ''} /> Default Exports
                 </button>
                 <button
                     onClick={() => setActiveTab('FCR')}
@@ -216,7 +216,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ cattle, tenant, userRole
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
                         }`}
                 >
-                    <BarChart3 size={18} className={activeTab === 'FCR' ? 'text-indigo-500' : ''} /> Feed Efficiency (FCR)
+                    <BarChart3 size={18} className={activeTab === 'FCR' ? 'text-emerald-500' : ''} /> Feed Efficiency (FCR)
                 </button>
                 <button
                     onClick={() => setActiveTab('QURBANI')}
@@ -317,7 +317,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ cattle, tenant, userRole
                             <button
                                 onClick={handlePrintSales}
                                 disabled={!canSeeFinancials}
-                                className="w-full py-4 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-white/20 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 relative z-10"
+                                className="w-full py-4 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-white/20 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 relative z-10"
                             >
                                 <Download size={18} /> Download PDF
                             </button>
@@ -339,7 +339,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ cattle, tenant, userRole
                             </div>
                             <button
                                 onClick={handleExportCSV}
-                                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-2xl font-bold shadow-lg shadow-purple-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 relative z-10"
+                                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 relative z-10"
                             >
                                 <Download size={18} /> Export to CSV
                             </button>

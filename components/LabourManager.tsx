@@ -973,7 +973,7 @@ export const LabourManager: React.FC<LabourManagerProps> = ({ tenant, userRole }
 
               <button
                 onClick={handleCalculateWage}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Calculator size={20} />
                 Calculate from Attendance
