@@ -9,6 +9,7 @@ import { CostBreakdown } from './CostBreakdown';
 import { AddBreedingEventModal } from './breeding/AddBreedingEventModal';
 import { useTheme } from '../services/ThemeContext';
 import { calculateCattleFinancials } from '../utils/financials'; // Import financial utility
+import { checkVaccineEligibility } from '../utils/vaccinationEligibility';
 import { PedigreeTree } from './PedigreeTree';
 import { appEvents } from '../utils/events';
 import { PAKISTAN_PROTOCOLS } from './VaccinationProtocols';
@@ -639,6 +640,14 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
         if (!vaccineForm.date) {
             alert('Date is required.');
             return;
+        }
+
+        if (vaccineForm.type === 'VACCINE') {
+            const eligibility = checkVaccineEligibility(selectedActionCattle.vaccinationHistory, vaccineForm.name, vaccineForm.date);
+            if (!eligibility.eligible) {
+                alert(`Cannot record this vaccine.\n\n${eligibility.reason}`);
+                return;
+            }
         }
 
         try {

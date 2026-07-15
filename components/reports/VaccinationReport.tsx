@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { PAKISTAN_PROTOCOLS } from '../VaccinationProtocols';
+import { checkVaccineEligibility } from '../../utils/vaccinationEligibility';
 
 interface VaccinationReportProps {
     cattle: Cattle[];
@@ -142,7 +143,22 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
         doc.save(`Vaccination_Schedule_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
+    const eligibilityIssues = useMemo(() => {
+        if (!bulkForm.name) return [];
+        const issues: { tagNumber: string; reason: string }[] = [];
+        selectedCattleIds.forEach(id => {
+            const targetCattle = cattle.find(c => c.id === id);
+            if (!targetCattle) return;
+            const result = checkVaccineEligibility(targetCattle.vaccinationHistory, bulkForm.name, bulkForm.date);
+            if (!result.eligible) {
+                issues.push({ tagNumber: targetCattle.tagNumber, reason: result.reason || 'Not eligible.' });
+            }
+        });
+        return issues;
+    }, [selectedCattleIds, cattle, bulkForm.name, bulkForm.date]);
+
     const handleBulkSubmit = async () => {
+        if (eligibilityIssues.length > 0) return; // guarded by the disabled Save button too
         setIsSubmitting(true);
         try {
             await Promise.all(selectedCattleIds.map(async (cattleId) => {
@@ -475,16 +491,32 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                             </div>
                         </div>
 
+                        {eligibilityIssues.length > 0 && (
+                            <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50">
+                                <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-2">
+                                    Cannot save - {eligibilityIssues.length} of {selectedCattleIds.length} selected animal{eligibilityIssues.length === 1 ? '' : 's'} not eligible:
+                                </p>
+                                <ul className="space-y-1 max-h-32 overflow-y-auto">
+                                    {eligibilityIssues.map((issue, idx) => (
+                                        <li key={idx} className="text-xs text-rose-600 dark:text-rose-400">
+                                            <span className="font-bold">{issue.tagNumber}</span>: {issue.reason}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="text-xs text-rose-500 dark:text-rose-500/80 mt-2">Deselect these animals or choose a different vaccine/date to continue.</p>
+                            </div>
+                        )}
+
                         <div className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={() => setShowBulkModal(false)}
                                 className="flex-1 px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-bold transition-colors"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={handleBulkSubmit}
-                                disabled={isSubmitting || !bulkForm.name}
+                                disabled={isSubmitting || !bulkForm.name || eligibilityIssues.length > 0}
                                 className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 shadow-lg shadow-emerald-600/20"
                             >
                                 {isSubmitting ? 'Saving...' : 'Save Record'}
