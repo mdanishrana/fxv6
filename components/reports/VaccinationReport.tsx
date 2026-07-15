@@ -98,12 +98,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
         });
         
         return schedule
-            .filter(v => {
-                if (typeFilter === 'All') return true;
-                if (typeFilter === 'Cattle') return ['Cow', 'Bull', 'Calf'].includes(v.animalType);
-                if (typeFilter === 'Small') return ['Goat', 'Sheep'].includes(v.animalType);
-                return v.animalType === typeFilter;
-            })
+            .filter(v => typeFilter === 'All' || v.animalType === typeFilter)
             .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
     }, [cattle, typeFilter]);
 
@@ -203,8 +198,8 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
         return Array.from(types);
     }, [selectedCattleIds, cattle]);
 
-    const isOnlyCattle = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Cow', 'Bull', 'Calf'].includes(t));
-    const isOnlySmall = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Goat', 'Sheep'].includes(t));
+    const isOnlyCattle = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Cow', 'Bull', 'Heifer', 'Calf'].includes(t));
+    const isOnlySmall = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Goat', 'Kid'].includes(t));
 
     const availableVaccines = useMemo(() => {
         return medicalInventory.filter(item => {
@@ -249,7 +244,7 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                             <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Vaccination Compliance Schedule</h3>
                             <div className="flex items-center gap-4 mt-2">
                                 <p className="text-slate-500 text-sm">Predictive booster tracking based on 12-month cycles.</p>
-                                <select 
+                                <select
                                     value={typeFilter}
                                     onChange={(e) => {
                                         setTypeFilter(e.target.value);
@@ -257,9 +252,13 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                     }}
                                     className="px-3 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                                 >
-                                    <option value="All">All Animals</option>
-                                    <option value="Cattle">Cattle (Cows/Bulls/Calves)</option>
-                                    <option value="Small">Small Ruminants (Goats/Sheep)</option>
+                                    <option value="All">All Types</option>
+                                    <option value="Cow">Cow</option>
+                                    <option value="Bull">Bull</option>
+                                    <option value="Heifer">Heifer</option>
+                                    <option value="Goat">Goat</option>
+                                    <option value="Calf">Calf</option>
+                                    <option value="Kid">Kid</option>
                                 </select>
                             </div>
                         </div>
@@ -434,11 +433,8 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                             
                             {bulkForm.provider === 'STOCK' ? (
                                 <div>
-                                    <div className="flex justify-between items-end mb-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Vaccine Name (From Inventory)</label>
-                                        <span className="text-[10px] text-slate-400">Debug: total {medicalInventory.length}, valid {availableVaccines.length}</span>
-                                    </div>
-                                    <select 
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Vaccine Name (From Inventory)</label>
+                                    <select
                                         value={bulkForm.name}
                                         onChange={(e) => setBulkForm({ ...bulkForm, name: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
