@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReloadPrompt } from './components/ReloadPrompt';
-import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe } from 'lucide-react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from './services/ThemeContext';
 import { Dashboard } from './components/Dashboard';
@@ -20,7 +20,9 @@ import { GeneticsManager } from './components/GeneticsManager';
 import BreedingManager from './components/BreedingManager';
 import { GroupsManager } from './components/GroupsManager';
 import { FinanceManager } from './components/FinanceManager';
-import { HealthManager } from './components/HealthManager';
+import { MedicalManager } from './components/MedicalManager';
+import { VaccinationProtocols } from './components/VaccinationProtocols';
+import { VaccinationReport } from './components/reports/VaccinationReport';
 import { ReportingManager } from './components/ReportingManager';
 import { AnimalOwnerDashboard } from './components/AnimalOwnerDashboard';
 import { SubscriptionManager } from './components/SubscriptionManager';
@@ -53,6 +55,7 @@ export default function App() {
     // Auto-expand sidebar group based on active route
     const path = location.pathname.substring(1);
     if (['cattle', 'breeding', 'genetics', 'groups'].includes(path)) setExpandedMenu('herd');
+    if (['medical', 'vaccinations', 'protocols'].includes(path)) setExpandedMenu('health');
     if (['feed', 'packages', 'daily-feed'].includes(path)) setExpandedMenu('nutrition');
     if (['labour', 'suppliers'].includes(path)) setExpandedMenu('operations');
     if (['payments', 'finance', 'qurbani'].includes(path)) setExpandedMenu('financials');
@@ -550,7 +553,19 @@ export default function App() {
               ]}
             />
 
-            <NavItem v="health" icon={ShieldCheck} label={t('medical')} />
+            <CollapsibleNav
+              id="health"
+              label={t('medical')}
+              icon={ShieldCheck}
+              isOpen={expandedMenu === 'health'}
+              onToggle={() => toggleMenu('health')}
+              active={['medical', 'vaccinations', 'protocols'].includes(view)}
+              items={[
+                { v: 'medical', label: "Medical Inventory", icon: Pill },
+                { v: 'vaccinations', label: "Vaccinations", icon: Syringe },
+                { v: 'protocols', label: "Protocols", icon: ShieldAlert }
+              ]}
+            />
 
             {/* Nutrition - Collapsible */}
             <CollapsibleNav
@@ -907,11 +922,19 @@ export default function App() {
                   userRole={currentUserRole}
                 />
               } />
-              <Route path="/health" element={
-                <HealthManager
+              <Route path="/medical" element={
+                <MedicalManager
                   tenantId={tenant.id}
-                  cattle={cattle}
                 />
+              } />
+              <Route path="/vaccinations" element={
+                <VaccinationReport
+                  cattle={cattle}
+                  tenant={tenant}
+                />
+              } />
+              <Route path="/protocols" element={
+                <VaccinationProtocols />
               } />
               <Route path="/finance" element={
                 <FinanceManager

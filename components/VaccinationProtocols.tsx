@@ -1,12 +1,5 @@
 import React from 'react';
 import { ShieldAlert } from 'lucide-react';
-import { VaccinationReport } from './reports/VaccinationReport';
-import { Cattle, Tenant } from '../types';
-
-interface VaccinationProtocolsProps {
-    cattle: Cattle[];
-    tenant: Tenant;
-}
 
 export const PAKISTAN_PROTOCOLS = [
     {
@@ -53,7 +46,7 @@ export const PAKISTAN_PROTOCOLS = [
         }
     ];
 
-export const VaccinationProtocols: React.FC<VaccinationProtocolsProps> = ({ cattle, tenant }) => {
+export const VaccinationProtocols: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in relative z-10 w-full">
@@ -90,9 +83,6 @@ export const VaccinationProtocols: React.FC<VaccinationProtocolsProps> = ({ catt
                     ))}
                 </div>
             </div>
-
-            {/* Vaccination Schedule Engine */}
-            <VaccinationReport cattle={cattle} tenant={tenant} />
         </div>
     );
 };
