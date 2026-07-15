@@ -12,6 +12,36 @@ interface VaccinationReportProps {
     tenant: any;
 }
 
+const VaccineHistoryCell: React.FC<{ label: string; animal?: Cattle }> = ({ label, animal }) => {
+    const doses = (animal?.vaccinationHistory || [])
+        .filter(v => !v.type || v.type === 'VACCINE')
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (doses.length === 0) {
+        return <span>{label}</span>;
+    }
+
+    return (
+        <div className="group relative inline-block cursor-default">
+            <span className="border-b border-dashed border-slate-300 dark:border-slate-600">{label}</span>
+            <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-3 text-left">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Vaccination History ({doses.length})</p>
+                <ul className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {doses.map((d, i) => (
+                        <li key={i} className="flex justify-between items-center gap-3 text-xs">
+                            <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{d.vaccineName}</span>
+                            <span className="text-slate-400 whitespace-nowrap">
+                                {new Date(d.date).toLocaleDateString()}{d.status === 'SCHEDULED' ? ' (scheduled)' : ''}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-white dark:bg-slate-800 border-r border-b border-slate-200 dark:border-slate-700 rotate-45"></div>
+            </div>
+        </div>
+    );
+};
+
 export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, tenant }) => {
     
     const [selectedCattleIds, setSelectedCattleIds] = useState<string[]>([]);
@@ -373,7 +403,9 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                         </td>
                                         <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{v.tagNumber}</td>
                                         <td className="py-4 px-4 text-slate-600 dark:text-slate-400">{v.breed}</td>
-                                        <td className="py-4 px-4 text-slate-600 dark:text-slate-400">{v.lastVaccine}</td>
+                                        <td className="py-4 px-4 text-slate-600 dark:text-slate-400">
+                                            <VaccineHistoryCell label={v.lastVaccine} animal={cattle.find(c => c.id === v.cattleId)} />
+                                        </td>
                                         <td className="py-4 px-4 text-slate-600 dark:text-slate-400">{v.dueDate}</td>
                                         <td className="py-4 px-4 text-center">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
