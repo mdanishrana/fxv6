@@ -1,6 +1,7 @@
 
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const Sentry = require('@sentry/node');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -8,6 +9,14 @@ const helmet = require('helmet');
 if (!process.env.JWT_SECRET) {
   console.error('FATAL: JWT_SECRET is not set in .env. Refusing to start.');
   process.exit(1);
+}
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    sendDefaultPii: false
+  });
 }
 
 const app = express();
@@ -103,6 +112,11 @@ app.use(express.static(distPath));
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
+
+// Report unhandled errors to Sentry (if configured) before our own handler responds
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // Generic error handler - never leak stack traces/file paths to clients
 app.use((err, req, res, next) => {
