@@ -470,7 +470,19 @@ export default function App() {
         {view === v && !isLocked && (
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald-500 rounded-r-full"></div>
         )}
-        <Icon size={isSubItem ? 18 : 20} className={view === v && !isLocked ? 'text-emerald-400' : isLocked ? 'opacity-50' : 'group-hover:text-slate-200 transition-colors'} />
+        {isSubItem ? (
+          <Icon size={18} className={view === v && !isLocked ? 'text-emerald-400' : isLocked ? 'opacity-50' : 'group-hover:text-slate-200 transition-colors'} />
+        ) : (
+          <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors duration-200
+            ${view === v && !isLocked
+              ? 'bg-emerald-500/15 text-emerald-400'
+              : isLocked
+                ? 'bg-slate-800/40 opacity-50'
+                : 'bg-slate-800/60 text-slate-400 group-hover:bg-slate-700/60 group-hover:text-slate-200'}`}
+          >
+            <Icon size={18} />
+          </div>
+        )}
         <span className={isLocked ? 'opacity-70' : ''}>{label}</span>
         {isLocked && <Lock size={14} className="ml-auto text-amber-500" />}
       </button>
@@ -486,7 +498,11 @@ export default function App() {
                     ${active ? 'text-white' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/30'}
                 `}
         >
-          <Icon size={20} className={active ? 'text-emerald-400' : 'group-hover:text-slate-200'} />
+          <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors duration-200
+            ${active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-800/60 text-slate-400 group-hover:bg-slate-700/60 group-hover:text-slate-200'}`}
+          >
+            <Icon size={18} />
+          </div>
           <span className="flex-1 text-left">{label}</span>
           {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
@@ -542,7 +558,7 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
             {/* Dashboard - Single */}
             <NavItem v="dashboard" icon={LayoutDashboard} label={t('dashboard')} />
 
@@ -679,7 +695,7 @@ export default function App() {
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-xl text-sm font-medium transition-all duration-200 border border-red-500/20"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm font-medium transition-all duration-200"
             >
               <LogOut size={16} /> Sign Out
             </button>
