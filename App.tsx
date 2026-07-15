@@ -3,33 +3,37 @@ import { ReloadPrompt } from './components/ReloadPrompt';
 import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe } from 'lucide-react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from './services/ThemeContext';
-import { Dashboard } from './components/Dashboard';
-import { CattleManager } from './components/CattleManager';
-import { FeedManager } from './components/FeedManager';
-import { AIAdvisor } from './components/AIAdvisor';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
-import { QurbaniManager } from './components/QurbaniManager';
-import { FarmSettings } from './components/FarmSettings';
-import { ActivityLogs } from './components/ActivityLogs';
-import { SaaSAdmin } from './components/SaaSAdmin';
-import { PaymentManager } from './components/PaymentManager';
-import { SupplierManager } from './components/SupplierManager';
-import { LabourManager } from './components/LabourManager';
-import { GeneticsManager } from './components/GeneticsManager';
-import BreedingManager from './components/BreedingManager';
-import { GroupsManager } from './components/GroupsManager';
-import { FinanceManager } from './components/FinanceManager';
-import { MedicalManager } from './components/MedicalManager';
-import { VaccinationProtocols } from './components/VaccinationProtocols';
-import { VaccinationReport } from './components/reports/VaccinationReport';
-import { ReportingManager } from './components/ReportingManager';
-import { AnimalOwnerDashboard } from './components/AnimalOwnerDashboard';
-import { SubscriptionManager } from './components/SubscriptionManager';
-import { UsersManager } from './components/UsersManager';
 import { Cattle, FeedItem, ViewState, Tenant, DeletionRequest, UserRole, FeedPackage } from './types';
 import { api } from './services/api';
 import { Loading } from './components/Loading';
+
+// Lazy-loaded: these pull in heavy deps (recharts, jspdf, html2canvas, xlsx) and are
+// only needed after login, so keeping them out of the initial bundle matters most
+// for mobile users on slower networks.
+const Dashboard = React.lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
+const CattleManager = React.lazy(() => import('./components/CattleManager').then(m => ({ default: m.CattleManager })));
+const FeedManager = React.lazy(() => import('./components/FeedManager').then(m => ({ default: m.FeedManager })));
+const AIAdvisor = React.lazy(() => import('./components/AIAdvisor').then(m => ({ default: m.AIAdvisor })));
+const QurbaniManager = React.lazy(() => import('./components/QurbaniManager').then(m => ({ default: m.QurbaniManager })));
+const FarmSettings = React.lazy(() => import('./components/FarmSettings').then(m => ({ default: m.FarmSettings })));
+const ActivityLogs = React.lazy(() => import('./components/ActivityLogs').then(m => ({ default: m.ActivityLogs })));
+const SaaSAdmin = React.lazy(() => import('./components/SaaSAdmin').then(m => ({ default: m.SaaSAdmin })));
+const PaymentManager = React.lazy(() => import('./components/PaymentManager').then(m => ({ default: m.PaymentManager })));
+const SupplierManager = React.lazy(() => import('./components/SupplierManager').then(m => ({ default: m.SupplierManager })));
+const LabourManager = React.lazy(() => import('./components/LabourManager').then(m => ({ default: m.LabourManager })));
+const GeneticsManager = React.lazy(() => import('./components/GeneticsManager').then(m => ({ default: m.GeneticsManager })));
+const BreedingManager = React.lazy(() => import('./components/BreedingManager'));
+const GroupsManager = React.lazy(() => import('./components/GroupsManager').then(m => ({ default: m.GroupsManager })));
+const FinanceManager = React.lazy(() => import('./components/FinanceManager').then(m => ({ default: m.FinanceManager })));
+const MedicalManager = React.lazy(() => import('./components/MedicalManager').then(m => ({ default: m.MedicalManager })));
+const VaccinationProtocols = React.lazy(() => import('./components/VaccinationProtocols').then(m => ({ default: m.VaccinationProtocols })));
+const VaccinationReport = React.lazy(() => import('./components/reports/VaccinationReport').then(m => ({ default: m.VaccinationReport })));
+const ReportingManager = React.lazy(() => import('./components/ReportingManager').then(m => ({ default: m.ReportingManager })));
+const AnimalOwnerDashboard = React.lazy(() => import('./components/AnimalOwnerDashboard').then(m => ({ default: m.AnimalOwnerDashboard })));
+const SubscriptionManager = React.lazy(() => import('./components/SubscriptionManager').then(m => ({ default: m.SubscriptionManager })));
+const UsersManager = React.lazy(() => import('./components/UsersManager').then(m => ({ default: m.UsersManager })));
 
 type AppView = 'landing' | 'auth' | 'app';
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
@@ -350,21 +354,23 @@ export default function App() {
           </div>
         </header>
         <div className="p-8 max-w-7xl mx-auto">
-          <SaaSAdmin
-            tenants={allTenants}
-            setTenants={setAllTenants}
-            onLoginAsTenant={(t) => {
-              const tenantData: Tenant = {
-                ...t,
-                users: t.users || []
-              };
-              setTenant(tenantData);
-              setCurrentUserRole('OWNER');
-              setIsSaasAdmin(false);
-              navigate('/');
-              refreshData(t.id);
-            }}
-          />
+          <React.Suspense fallback={<Loading />}>
+            <SaaSAdmin
+              tenants={allTenants}
+              setTenants={setAllTenants}
+              onLoginAsTenant={(t) => {
+                const tenantData: Tenant = {
+                  ...t,
+                  users: t.users || []
+                };
+                setTenant(tenantData);
+                setCurrentUserRole('OWNER');
+                setIsSaasAdmin(false);
+                navigate('/');
+                refreshData(t.id);
+              }}
+            />
+          </React.Suspense>
         </div>
       </div>
     );
@@ -419,13 +425,15 @@ export default function App() {
             </button>
           </div>
         </header>
-        <AnimalOwnerDashboard
-          userEmail={currentUser?.email || ''}
-          userName={currentUser?.name || ''}
-          tenantId={tenant.id}
-          authToken={authToken || ''}
-          isDarkMode={isDarkMode}
-        />
+        <React.Suspense fallback={<Loading />}>
+          <AnimalOwnerDashboard
+            userEmail={currentUser?.email || ''}
+            userName={currentUser?.name || ''}
+            tenantId={tenant.id}
+            authToken={authToken || ''}
+            isDarkMode={isDarkMode}
+          />
+        </React.Suspense>
       </div>
     );
   }
@@ -804,6 +812,7 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-slate-50 dark:bg-slate-900">
           <div className="max-w-7xl mx-auto">
+            <React.Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={
                 <Dashboard
@@ -969,6 +978,7 @@ export default function App() {
               {/* Fallback route */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </React.Suspense>
           </div>
         </div>
       </main>

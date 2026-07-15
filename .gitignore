@@ -10,7 +10,8 @@ lerna-debug.log*
 # Dependencies
 node_modules
 
-# Build output (include dist in repo for easy deployment)
+# Build output (VPS rebuilds this itself via `npm run build` on every deploy)
+dist
 dist-ssr
 *.local
 

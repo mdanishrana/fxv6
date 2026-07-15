@@ -522,7 +522,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                 <div className="w-full max-w-md">
                     <button
                         onClick={onBack}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors"
+                        className="flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors py-2 -my-2"
                     >
                         <ArrowLeft size={20} />
                         Back to Home
@@ -563,7 +563,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                             Don't have an account?{' '}
                             <button
                                 onClick={() => onSwitchMode('register')}
-                                className="text-emerald-400 hover:text-emerald-300 font-medium"
+                                className="text-emerald-400 hover:text-emerald-300 font-medium inline-block py-2 -my-2"
                             >
                                 Sign up
                             </button>
@@ -575,7 +575,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                             Already have an account?{' '}
                             <button
                                 onClick={() => onSwitchMode('login')}
-                                className="text-emerald-400 hover:text-emerald-300 font-medium"
+                                className="text-emerald-400 hover:text-emerald-300 font-medium inline-block py-2 -my-2"
                             >
                                 Sign in
                             </button>
@@ -587,7 +587,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                             Remember your password?{' '}
                             <button
                                 onClick={() => onSwitchMode('login')}
-                                className="text-emerald-400 hover:text-emerald-300 font-medium"
+                                className="text-emerald-400 hover:text-emerald-300 font-medium inline-block py-2 -my-2"
                             >
                                 Sign in
                             </button>
