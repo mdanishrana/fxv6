@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReloadPrompt } from './components/ReloadPrompt';
-import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, Pill, BarChart3, Syringe, Package, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays } from 'lucide-react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from './services/ThemeContext';
 import { Dashboard } from './components/Dashboard';
@@ -20,8 +20,7 @@ import { GeneticsManager } from './components/GeneticsManager';
 import BreedingManager from './components/BreedingManager';
 import { GroupsManager } from './components/GroupsManager';
 import { FinanceManager } from './components/FinanceManager';
-import { MedicalManager } from './components/MedicalManager';
-import { VaccinationProtocols } from './components/VaccinationProtocols';
+import { HealthManager } from './components/HealthManager';
 import { ReportingManager } from './components/ReportingManager';
 import { AnimalOwnerDashboard } from './components/AnimalOwnerDashboard';
 import { SubscriptionManager } from './components/SubscriptionManager';
@@ -551,19 +550,7 @@ export default function App() {
               ]}
             />
 
-            {/* Health - Collapsible */}
-            <CollapsibleNav
-              id="health"
-              label={t('medical')}
-              icon={ShieldCheck}
-              isOpen={expandedMenu === 'health'}
-              onToggle={() => toggleMenu('health')}
-              active={['medical', 'vaccinations'].includes(view)}
-              items={[
-                { v: 'medical', label: "Medical Inventory", icon: Pill },
-                { v: 'vaccinations', label: "Vaccinations", icon: Syringe }
-              ]}
-            />
+            <NavItem v="health" icon={ShieldCheck} label={t('medical')} />
 
             {/* Nutrition - Collapsible */}
             <CollapsibleNav
@@ -920,15 +907,10 @@ export default function App() {
                   userRole={currentUserRole}
                 />
               } />
-              <Route path="/medical" element={
-                <MedicalManager 
-                  tenantId={tenant.id} 
-                />
-              } />
-              <Route path="/vaccinations" element={
-                <VaccinationProtocols
+              <Route path="/health" element={
+                <HealthManager
+                  tenantId={tenant.id}
                   cattle={cattle}
-                  tenant={tenant}
                 />
               } />
               <Route path="/finance" element={
