@@ -9,7 +9,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        setupFiles: ['./src/test/setup.ts'],
+        setupFiles: ['./server/__tests__/env.setup.js', './src/test/setup.ts'],
         css: true,
         // Playwright's e2e specs live under tests/ - keep them (and all node_modules, at any depth) out of vitest's run
         exclude: ['**/node_modules/**', '**/dist/**', 'tests/**'],
