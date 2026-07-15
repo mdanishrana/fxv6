@@ -469,8 +469,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                 <div className="relative z-10 flex flex-col h-full">
                     {/* Header */}
                     <div className="mb-8 shrink-0">
-                        <div className="h-14 w-60 overflow-hidden flex items-center justify-center relative mb-4">
-                            <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain scale-[2.4] origin-center" />
+                        <div className="h-12 w-36 flex items-center justify-start relative mb-4">
+                            <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain object-left" />
                         </div>
                         <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight drop-shadow-sm">
                             {content.heroTitle}

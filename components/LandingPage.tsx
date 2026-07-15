@@ -162,11 +162,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             {/* Premium Sticky Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/85 backdrop-blur-md border-b border-slate-900/60 shadow-lg shadow-black/20 transition-all duration-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-                    <div className="h-12 w-60 overflow-hidden flex items-center justify-center relative">
-                        <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain scale-[2.4] origin-center" />
+                    <div className="h-10 w-32 flex items-center justify-center relative">
+                        <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain" />
                     </div>
                     <div className="flex items-center gap-4">
-                        <button 
+                        <button
                             onClick={onLogin}
                             className="text-slate-300 hover:text-white font-semibold transition-colors px-4 py-2 text-sm cursor-pointer"
                         >
@@ -544,8 +544,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             {/* Footer */}
             <footer className="py-6 px-4 sm:px-6 lg:px-8 bg-[#04070d] border-t border-slate-900">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="h-12 w-60 overflow-hidden flex items-center justify-center relative">
-                        <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain scale-[2.4] origin-center" />
+                    <div className="h-10 w-32 flex items-center justify-center relative">
+                        <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain" />
                     </div>
                     <p className="text-slate-500 text-xs font-semibold">© {new Date().getFullYear()} FarmXpert Ltd. Pakistan's Premier Farm Management Platform.</p>
                     <div className="flex items-center gap-6 text-slate-400 text-xs font-semibold">
