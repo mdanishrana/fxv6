@@ -1023,9 +1023,10 @@ router.post('/:id/medical-record', async (req, res) => {
         // We need the item name for the record if we used an inventory item
         let recordName = 'Unknown Treatment';
         let batchNum = null;
+        let itemRes = null;
 
         if (medicalItemId) {
-            const itemRes = await client.query('SELECT name, batch_number, type FROM medical_inventory WHERE id = $1', [medicalItemId]);
+            itemRes = await client.query('SELECT name, batch_number, type FROM medical_inventory WHERE id = $1', [medicalItemId]);
             if (itemRes.rows.length > 0) {
                 recordName = itemRes.rows[0].name;
                 batchNum = itemRes.rows[0].batch_number;
