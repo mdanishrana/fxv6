@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
@@ -17,7 +18,30 @@ const generateRandomToken = () => {
     return crypto.randomBytes(32).toString('hex');
 };
 
-router.post('/register', async (req, res) => {
+// Brute-force / abuse protection on sensitive auth endpoints
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many login attempts. Please try again in 15 minutes.' }
+});
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many accounts created from this location. Please try again later.' }
+});
+const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many password reset attempts. Please try again later.' }
+});
+
+router.post('/register', registerLimiter, async (req, res) => {
     const { name, email, password, farmName, mobile, tier = 'BASIC' } = req.body;
 
     if (!name || !email || !password || !farmName) {
@@ -100,7 +124,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -174,7 +198,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
@@ -210,7 +234,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', passwordResetLimiter, async (req, res) => {
     const { token, password } = req.body;
 
     if (!token || !password) {
