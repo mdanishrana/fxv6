@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ex58ZbJqMM5WiN2YIU3070VdM0p6HbPio9lTr8KfJX3t7qOy7loqZ63xIvvDdHw
+\restrict HAvjGUw2nMp9OFD2L6hYxAK8jzwlJmTc6of48NMsXAmUoE4B8EhZWcVUOWj1uay
 
--- Dumped from database version 16.11
--- Dumped by pg_dump version 16.11
+-- Dumped from database version 16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -26,7 +26,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
@@ -37,7 +37,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: attendance; Type: TABLE; Schema: public; Owner: postgres
+-- Name: animal_feed_cost_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.animal_feed_cost_logs (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id character varying(255) NOT NULL,
+    animal_id uuid NOT NULL,
+    log_date date NOT NULL,
+    daily_cost numeric(10,2) DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: attendance; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.attendance (
@@ -54,10 +68,24 @@ CREATE TABLE public.attendance (
 );
 
 
-ALTER TABLE public.attendance OWNER TO postgres;
+--
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    user_id uuid,
+    action_type character varying(50) NOT NULL,
+    entity_type character varying(50) NOT NULL,
+    entity_id uuid,
+    details jsonb,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
 
 --
--- Name: breeding_events; Type: TABLE; Schema: public; Owner: postgres
+-- Name: breeding_events; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.breeding_events (
@@ -73,10 +101,8 @@ CREATE TABLE public.breeding_events (
 );
 
 
-ALTER TABLE public.breeding_events OWNER TO postgres;
-
 --
--- Name: cattle; Type: TABLE; Schema: public; Owner: postgres
+-- Name: cattle; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.cattle (
@@ -120,14 +146,20 @@ CREATE TABLE public.cattle (
     health_status character varying(50) DEFAULT 'Healthy'::character varying,
     expected_calving_date date,
     current_daily_milk_yield numeric(10,2) DEFAULT 0,
-    age_months integer
+    age_months integer,
+    group_id uuid,
+    expected_conceiving_date date,
+    pregnancy_type character varying(50),
+    pregnancy_sire_embryo character varying(100),
+    lactation_number integer,
+    branch character varying(255),
+    owner_whatsapp_number character varying(50),
+    owner_whatsapp_apikey character varying(50)
 );
 
 
-ALTER TABLE public.cattle OWNER TO postgres;
-
 --
--- Name: cattle_costs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: cattle_costs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.cattle_costs (
@@ -143,10 +175,23 @@ CREATE TABLE public.cattle_costs (
 );
 
 
-ALTER TABLE public.cattle_costs OWNER TO postgres;
+--
+-- Name: cattle_groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cattle_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    description text,
+    color character varying(20) DEFAULT '#10b981'::character varying,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
 
 --
--- Name: email_verification_tokens; Type: TABLE; Schema: public; Owner: postgres
+-- Name: email_verification_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.email_verification_tokens (
@@ -158,10 +203,8 @@ CREATE TABLE public.email_verification_tokens (
 );
 
 
-ALTER TABLE public.email_verification_tokens OWNER TO postgres;
-
 --
--- Name: embryo_bank; Type: TABLE; Schema: public; Owner: postgres
+-- Name: embryo_bank; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.embryo_bank (
@@ -180,10 +223,8 @@ CREATE TABLE public.embryo_bank (
 );
 
 
-ALTER TABLE public.embryo_bank OWNER TO postgres;
-
 --
--- Name: feed_items; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feed_items; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.feed_items (
@@ -204,10 +245,8 @@ CREATE TABLE public.feed_items (
 );
 
 
-ALTER TABLE public.feed_items OWNER TO postgres;
-
 --
--- Name: feed_packages; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feed_packages; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.feed_packages (
@@ -227,10 +266,8 @@ CREATE TABLE public.feed_packages (
 );
 
 
-ALTER TABLE public.feed_packages OWNER TO postgres;
-
 --
--- Name: feed_usage_log; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feed_usage_log; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.feed_usage_log (
@@ -245,10 +282,8 @@ CREATE TABLE public.feed_usage_log (
 );
 
 
-ALTER TABLE public.feed_usage_log OWNER TO postgres;
-
 --
--- Name: general_transactions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: general_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.general_transactions (
@@ -262,14 +297,12 @@ CREATE TABLE public.general_transactions (
     description text,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT general_transactions_type_check CHECK (((type)::text = ANY ((ARRAY['INCOME'::character varying, 'EXPENSE'::character varying])::text[])))
+    CONSTRAINT general_transactions_type_check CHECK (((type)::text = ANY (ARRAY[('INCOME'::character varying)::text, ('EXPENSE'::character varying)::text])))
 );
 
 
-ALTER TABLE public.general_transactions OWNER TO postgres;
-
 --
--- Name: lactations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: lactations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.lactations (
@@ -286,10 +319,8 @@ CREATE TABLE public.lactations (
 );
 
 
-ALTER TABLE public.lactations OWNER TO postgres;
-
 --
--- Name: medical_inventory; Type: TABLE; Schema: public; Owner: postgres
+-- Name: medical_inventory; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.medical_inventory (
@@ -307,15 +338,13 @@ CREATE TABLE public.medical_inventory (
     notes text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT medical_inventory_status_check CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'EXPIRED'::character varying, 'DEPLETED'::character varying])::text[]))),
-    CONSTRAINT medical_inventory_type_check CHECK (((type)::text = ANY ((ARRAY['VACCINE'::character varying, 'MEDICINE'::character varying])::text[])))
+    CONSTRAINT medical_inventory_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('EXPIRED'::character varying)::text, ('DEPLETED'::character varying)::text]))),
+    CONSTRAINT medical_inventory_type_check CHECK (((type)::text = ANY (ARRAY[('VACCINE'::character varying)::text, ('MEDICINE'::character varying)::text])))
 );
 
 
-ALTER TABLE public.medical_inventory OWNER TO postgres;
-
 --
--- Name: milk_logs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: milk_logs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.milk_logs (
@@ -332,10 +361,30 @@ CREATE TABLE public.milk_logs (
 );
 
 
-ALTER TABLE public.milk_logs OWNER TO postgres;
+--
+-- Name: milk_sales; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.milk_sales (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    sale_date date NOT NULL,
+    shift character varying(20) NOT NULL,
+    quantity_liters numeric(10,2) NOT NULL,
+    price_per_liter numeric(10,2) NOT NULL,
+    total_amount numeric(12,2) NOT NULL,
+    buyer_name character varying(255) NOT NULL,
+    payment_status character varying(20) DEFAULT 'PENDING'::character varying NOT NULL,
+    paid_amount numeric(12,2) DEFAULT 0.00 NOT NULL,
+    notes text,
+    transaction_id uuid,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
 
 --
--- Name: password_reset_tokens; Type: TABLE; Schema: public; Owner: postgres
+-- Name: password_reset_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.password_reset_tokens (
@@ -348,10 +397,8 @@ CREATE TABLE public.password_reset_tokens (
 );
 
 
-ALTER TABLE public.password_reset_tokens OWNER TO postgres;
-
 --
--- Name: payments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: payments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.payments (
@@ -370,10 +417,8 @@ CREATE TABLE public.payments (
 );
 
 
-ALTER TABLE public.payments OWNER TO postgres;
-
 --
--- Name: plan_features; Type: TABLE; Schema: public; Owner: postgres
+-- Name: plan_features; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.plan_features (
@@ -384,10 +429,8 @@ CREATE TABLE public.plan_features (
 );
 
 
-ALTER TABLE public.plan_features OWNER TO postgres;
-
 --
--- Name: plan_features_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: plan_features_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.plan_features_id_seq
@@ -399,17 +442,15 @@ CREATE SEQUENCE public.plan_features_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.plan_features_id_seq OWNER TO postgres;
-
 --
--- Name: plan_features_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: plan_features_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.plan_features_id_seq OWNED BY public.plan_features.id;
 
 
 --
--- Name: pregnancy_cycles; Type: TABLE; Schema: public; Owner: postgres
+-- Name: pregnancy_cycles; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.pregnancy_cycles (
@@ -426,10 +467,8 @@ CREATE TABLE public.pregnancy_cycles (
 );
 
 
-ALTER TABLE public.pregnancy_cycles OWNER TO postgres;
-
 --
--- Name: push_subscriptions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: push_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.push_subscriptions (
@@ -442,10 +481,8 @@ CREATE TABLE public.push_subscriptions (
 );
 
 
-ALTER TABLE public.push_subscriptions OWNER TO postgres;
-
 --
--- Name: push_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: push_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.push_subscriptions_id_seq
@@ -457,17 +494,15 @@ CREATE SEQUENCE public.push_subscriptions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.push_subscriptions_id_seq OWNER TO postgres;
-
 --
--- Name: push_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: push_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.push_subscriptions_id_seq OWNED BY public.push_subscriptions.id;
 
 
 --
--- Name: semen_bank; Type: TABLE; Schema: public; Owner: postgres
+-- Name: semen_bank; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.semen_bank (
@@ -484,10 +519,8 @@ CREATE TABLE public.semen_bank (
 );
 
 
-ALTER TABLE public.semen_bank OWNER TO postgres;
-
 --
--- Name: sessions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: sessions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sessions (
@@ -499,10 +532,8 @@ CREATE TABLE public.sessions (
 );
 
 
-ALTER TABLE public.sessions OWNER TO postgres;
-
 --
--- Name: subscription_invoices; Type: TABLE; Schema: public; Owner: postgres
+-- Name: subscription_invoices; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.subscription_invoices (
@@ -528,17 +559,15 @@ CREATE TABLE public.subscription_invoices (
 );
 
 
-ALTER TABLE public.subscription_invoices OWNER TO postgres;
-
 --
--- Name: TABLE subscription_invoices; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE subscription_invoices; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.subscription_invoices IS 'Stores all subscription invoices with payment tracking';
 
 
 --
--- Name: subscription_plans; Type: TABLE; Schema: public; Owner: postgres
+-- Name: subscription_plans; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.subscription_plans (
@@ -559,10 +588,8 @@ CREATE TABLE public.subscription_plans (
 );
 
 
-ALTER TABLE public.subscription_plans OWNER TO postgres;
-
 --
--- Name: subscription_plans_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: subscription_plans_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.subscription_plans_id_seq
@@ -574,17 +601,15 @@ CREATE SEQUENCE public.subscription_plans_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.subscription_plans_id_seq OWNER TO postgres;
-
 --
--- Name: subscription_plans_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: subscription_plans_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.subscription_plans_id_seq OWNED BY public.subscription_plans.id;
 
 
 --
--- Name: supplier_purchases; Type: TABLE; Schema: public; Owner: postgres
+-- Name: supplier_purchases; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.supplier_purchases (
@@ -607,10 +632,8 @@ CREATE TABLE public.supplier_purchases (
 );
 
 
-ALTER TABLE public.supplier_purchases OWNER TO postgres;
-
 --
--- Name: suppliers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: suppliers; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.suppliers (
@@ -629,10 +652,8 @@ CREATE TABLE public.suppliers (
 );
 
 
-ALTER TABLE public.suppliers OWNER TO postgres;
-
 --
--- Name: system_content; Type: TABLE; Schema: public; Owner: postgres
+-- Name: system_content; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.system_content (
@@ -644,10 +665,8 @@ CREATE TABLE public.system_content (
 );
 
 
-ALTER TABLE public.system_content OWNER TO postgres;
-
 --
--- Name: system_content_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: system_content_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.system_content_id_seq
@@ -659,17 +678,15 @@ CREATE SEQUENCE public.system_content_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.system_content_id_seq OWNER TO postgres;
-
 --
--- Name: system_content_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: system_content_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.system_content_id_seq OWNED BY public.system_content.id;
 
 
 --
--- Name: tenant_subscriptions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: tenant_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.tenant_subscriptions (
@@ -688,22 +705,21 @@ CREATE TABLE public.tenant_subscriptions (
     notes text,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
+    cattle_limit_override character varying(50),
     CONSTRAINT tenant_subscriptions_billing_cycle_check CHECK (((billing_cycle)::text = ANY (ARRAY[('MONTHLY'::character varying)::text, ('QUARTERLY'::character varying)::text, ('YEARLY'::character varying)::text]))),
     CONSTRAINT tenant_subscriptions_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('TRIAL'::character varying)::text, ('PAST_DUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('SUSPENDED'::character varying)::text])))
 );
 
 
-ALTER TABLE public.tenant_subscriptions OWNER TO postgres;
-
 --
--- Name: TABLE tenant_subscriptions; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE tenant_subscriptions; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.tenant_subscriptions IS 'Tracks SaaS subscription details for each tenant/farm';
 
 
 --
--- Name: tenants; Type: TABLE; Schema: public; Owner: postgres
+-- Name: tenants; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.tenants (
@@ -724,15 +740,18 @@ CREATE TABLE public.tenants (
     herd_value_rate numeric(10,2) DEFAULT 1100,
     manager_email character varying(255),
     smtp_settings jsonb,
+    logo_url text,
+    weight_unit character varying(10) DEFAULT 'kg'::character varying,
+    branches jsonb DEFAULT '[]'::jsonb,
+    whatsapp_number character varying(50),
+    whatsapp_apikey character varying(50),
     CONSTRAINT tenants_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('SUSPENDED'::character varying)::text, ('TRIAL'::character varying)::text]))),
     CONSTRAINT tenants_tier_check CHECK (((tier)::text = ANY (ARRAY[('BASIC'::character varying)::text, ('STANDARD'::character varying)::text, ('PREMIUM'::character varying)::text])))
 );
 
 
-ALTER TABLE public.tenants OWNER TO postgres;
-
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -750,10 +769,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
-
 --
--- Name: wage_payments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: wage_payments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.wage_payments (
@@ -776,10 +793,8 @@ CREATE TABLE public.wage_payments (
 );
 
 
-ALTER TABLE public.wage_payments OWNER TO postgres;
-
 --
--- Name: workers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: workers; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.workers (
@@ -802,38 +817,52 @@ CREATE TABLE public.workers (
 );
 
 
-ALTER TABLE public.workers OWNER TO postgres;
-
 --
--- Name: plan_features id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: plan_features id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.plan_features ALTER COLUMN id SET DEFAULT nextval('public.plan_features_id_seq'::regclass);
 
 
 --
--- Name: push_subscriptions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: push_subscriptions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.push_subscriptions ALTER COLUMN id SET DEFAULT nextval('public.push_subscriptions_id_seq'::regclass);
 
 
 --
--- Name: subscription_plans id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: subscription_plans id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_plans ALTER COLUMN id SET DEFAULT nextval('public.subscription_plans_id_seq'::regclass);
 
 
 --
--- Name: system_content id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: system_content id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.system_content ALTER COLUMN id SET DEFAULT nextval('public.system_content_id_seq'::regclass);
 
 
 --
--- Name: attendance attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: animal_feed_cost_logs animal_feed_cost_logs_animal_id_log_date_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.animal_feed_cost_logs
+    ADD CONSTRAINT animal_feed_cost_logs_animal_id_log_date_key UNIQUE (animal_id, log_date);
+
+
+--
+-- Name: animal_feed_cost_logs animal_feed_cost_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.animal_feed_cost_logs
+    ADD CONSTRAINT animal_feed_cost_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: attendance attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.attendance
@@ -841,7 +870,7 @@ ALTER TABLE ONLY public.attendance
 
 
 --
--- Name: attendance attendance_worker_id_date_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: attendance attendance_worker_id_date_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.attendance
@@ -849,7 +878,15 @@ ALTER TABLE ONLY public.attendance
 
 
 --
--- Name: breeding_events breeding_events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: breeding_events breeding_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.breeding_events
@@ -857,7 +894,7 @@ ALTER TABLE ONLY public.breeding_events
 
 
 --
--- Name: cattle_costs cattle_costs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle_costs cattle_costs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle_costs
@@ -865,7 +902,15 @@ ALTER TABLE ONLY public.cattle_costs
 
 
 --
--- Name: cattle cattle_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle_groups cattle_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cattle_groups
+    ADD CONSTRAINT cattle_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cattle cattle_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle
@@ -873,7 +918,15 @@ ALTER TABLE ONLY public.cattle
 
 
 --
--- Name: email_verification_tokens email_verification_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle cattle_tenant_id_tag_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cattle
+    ADD CONSTRAINT cattle_tenant_id_tag_number_key UNIQUE (tenant_id, tag_number);
+
+
+--
+-- Name: email_verification_tokens email_verification_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.email_verification_tokens
@@ -881,7 +934,7 @@ ALTER TABLE ONLY public.email_verification_tokens
 
 
 --
--- Name: embryo_bank embryo_bank_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: embryo_bank embryo_bank_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.embryo_bank
@@ -889,7 +942,7 @@ ALTER TABLE ONLY public.embryo_bank
 
 
 --
--- Name: embryo_bank embryo_bank_tenant_id_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: embryo_bank embryo_bank_tenant_id_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.embryo_bank
@@ -897,7 +950,7 @@ ALTER TABLE ONLY public.embryo_bank
 
 
 --
--- Name: feed_items feed_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_items feed_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_items
@@ -905,7 +958,7 @@ ALTER TABLE ONLY public.feed_items
 
 
 --
--- Name: feed_packages feed_packages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_packages feed_packages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_packages
@@ -913,7 +966,7 @@ ALTER TABLE ONLY public.feed_packages
 
 
 --
--- Name: feed_usage_log feed_usage_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_usage_log feed_usage_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_usage_log
@@ -921,7 +974,7 @@ ALTER TABLE ONLY public.feed_usage_log
 
 
 --
--- Name: feed_usage_log feed_usage_log_tenant_id_date_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_usage_log feed_usage_log_tenant_id_date_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_usage_log
@@ -929,7 +982,7 @@ ALTER TABLE ONLY public.feed_usage_log
 
 
 --
--- Name: general_transactions general_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: general_transactions general_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.general_transactions
@@ -937,7 +990,7 @@ ALTER TABLE ONLY public.general_transactions
 
 
 --
--- Name: lactations lactations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: lactations lactations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lactations
@@ -945,7 +998,7 @@ ALTER TABLE ONLY public.lactations
 
 
 --
--- Name: medical_inventory medical_inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: medical_inventory medical_inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.medical_inventory
@@ -953,7 +1006,7 @@ ALTER TABLE ONLY public.medical_inventory
 
 
 --
--- Name: milk_logs milk_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: milk_logs milk_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.milk_logs
@@ -961,7 +1014,7 @@ ALTER TABLE ONLY public.milk_logs
 
 
 --
--- Name: milk_logs milk_logs_tenant_id_animal_id_log_date_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: milk_logs milk_logs_tenant_id_animal_id_log_date_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.milk_logs
@@ -969,7 +1022,15 @@ ALTER TABLE ONLY public.milk_logs
 
 
 --
--- Name: password_reset_tokens password_reset_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: milk_sales milk_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.milk_sales
+    ADD CONSTRAINT milk_sales_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: password_reset_tokens password_reset_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.password_reset_tokens
@@ -977,7 +1038,7 @@ ALTER TABLE ONLY public.password_reset_tokens
 
 
 --
--- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments
@@ -985,7 +1046,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- Name: plan_features plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: plan_features plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.plan_features
@@ -993,7 +1054,7 @@ ALTER TABLE ONLY public.plan_features
 
 
 --
--- Name: pregnancy_cycles pregnancy_cycles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: pregnancy_cycles pregnancy_cycles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.pregnancy_cycles
@@ -1001,7 +1062,7 @@ ALTER TABLE ONLY public.pregnancy_cycles
 
 
 --
--- Name: push_subscriptions push_subscriptions_endpoint_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: push_subscriptions push_subscriptions_endpoint_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.push_subscriptions
@@ -1009,7 +1070,7 @@ ALTER TABLE ONLY public.push_subscriptions
 
 
 --
--- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.push_subscriptions
@@ -1017,7 +1078,7 @@ ALTER TABLE ONLY public.push_subscriptions
 
 
 --
--- Name: semen_bank semen_bank_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: semen_bank semen_bank_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.semen_bank
@@ -1025,7 +1086,7 @@ ALTER TABLE ONLY public.semen_bank
 
 
 --
--- Name: semen_bank semen_bank_tenant_id_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: semen_bank semen_bank_tenant_id_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.semen_bank
@@ -1033,7 +1094,7 @@ ALTER TABLE ONLY public.semen_bank
 
 
 --
--- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sessions
@@ -1041,7 +1102,7 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: subscription_invoices subscription_invoices_invoice_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_invoices subscription_invoices_invoice_number_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_invoices
@@ -1049,7 +1110,7 @@ ALTER TABLE ONLY public.subscription_invoices
 
 
 --
--- Name: subscription_invoices subscription_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_invoices subscription_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_invoices
@@ -1057,7 +1118,7 @@ ALTER TABLE ONLY public.subscription_invoices
 
 
 --
--- Name: subscription_plans subscription_plans_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_plans subscription_plans_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_plans
@@ -1065,7 +1126,7 @@ ALTER TABLE ONLY public.subscription_plans
 
 
 --
--- Name: subscription_plans subscription_plans_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_plans subscription_plans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_plans
@@ -1073,7 +1134,7 @@ ALTER TABLE ONLY public.subscription_plans
 
 
 --
--- Name: supplier_purchases supplier_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: supplier_purchases supplier_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supplier_purchases
@@ -1081,7 +1142,7 @@ ALTER TABLE ONLY public.supplier_purchases
 
 
 --
--- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.suppliers
@@ -1089,7 +1150,7 @@ ALTER TABLE ONLY public.suppliers
 
 
 --
--- Name: system_content system_content_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: system_content system_content_key_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.system_content
@@ -1097,7 +1158,7 @@ ALTER TABLE ONLY public.system_content
 
 
 --
--- Name: system_content system_content_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: system_content system_content_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.system_content
@@ -1105,7 +1166,7 @@ ALTER TABLE ONLY public.system_content
 
 
 --
--- Name: tenant_subscriptions tenant_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenant_subscriptions tenant_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenant_subscriptions
@@ -1113,7 +1174,7 @@ ALTER TABLE ONLY public.tenant_subscriptions
 
 
 --
--- Name: tenant_subscriptions tenant_subscriptions_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenant_subscriptions tenant_subscriptions_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenant_subscriptions
@@ -1121,7 +1182,7 @@ ALTER TABLE ONLY public.tenant_subscriptions
 
 
 --
--- Name: tenants tenants_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenants tenants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenants
@@ -1129,7 +1190,7 @@ ALTER TABLE ONLY public.tenants
 
 
 --
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -1137,7 +1198,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -1145,7 +1206,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: wage_payments wage_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wage_payments wage_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wage_payments
@@ -1153,7 +1214,7 @@ ALTER TABLE ONLY public.wage_payments
 
 
 --
--- Name: workers workers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: workers workers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.workers
@@ -1161,252 +1222,281 @@ ALTER TABLE ONLY public.workers
 
 
 --
--- Name: idx_attendance_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_attendance_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_attendance_date ON public.attendance USING btree (date);
 
 
 --
--- Name: idx_attendance_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_attendance_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_attendance_tenant ON public.attendance USING btree (tenant_id);
 
 
 --
--- Name: idx_attendance_worker; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_attendance_worker; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_attendance_worker ON public.attendance USING btree (worker_id);
 
 
 --
--- Name: idx_cattle_costs_cattle; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_audit_logs_entity; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_entity ON public.audit_logs USING btree (entity_type, entity_id);
+
+
+--
+-- Name: idx_audit_logs_tenant_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_tenant_created ON public.audit_logs USING btree (tenant_id, created_at DESC);
+
+
+--
+-- Name: idx_cattle_costs_cattle; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_costs_cattle ON public.cattle_costs USING btree (cattle_id);
 
 
 --
--- Name: idx_cattle_costs_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_costs_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_costs_date ON public.cattle_costs USING btree (date);
 
 
 --
--- Name: idx_cattle_costs_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_costs_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_costs_tenant ON public.cattle_costs USING btree (tenant_id);
 
 
 --
--- Name: idx_cattle_costs_type; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_costs_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_costs_type ON public.cattle_costs USING btree (cost_type);
 
 
 --
--- Name: idx_cattle_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_status ON public.cattle USING btree (status);
 
 
 --
--- Name: idx_cattle_tag; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_tag; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_tag ON public.cattle USING btree (tag_number);
 
 
 --
--- Name: idx_cattle_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cattle_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cattle_tenant ON public.cattle USING btree (tenant_id);
 
 
 --
--- Name: idx_feed_items_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_feed_items_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_feed_items_tenant ON public.feed_items USING btree (tenant_id);
 
 
 --
--- Name: idx_feed_packages_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_feed_logs_animal; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_feed_logs_animal ON public.animal_feed_cost_logs USING btree (animal_id);
+
+
+--
+-- Name: idx_feed_packages_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_feed_packages_tenant ON public.feed_packages USING btree (tenant_id);
 
 
 --
--- Name: idx_feed_usage_tenant_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_feed_usage_tenant_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_feed_usage_tenant_date ON public.feed_usage_log USING btree (tenant_id, date);
 
 
 --
--- Name: idx_gen_trans_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_gen_trans_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_gen_trans_date ON public.general_transactions USING btree (date);
 
 
 --
--- Name: idx_gen_trans_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_gen_trans_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_gen_trans_tenant ON public.general_transactions USING btree (tenant_id);
 
 
 --
--- Name: idx_gen_trans_type; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_gen_trans_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_gen_trans_type ON public.general_transactions USING btree (type);
 
 
 --
--- Name: idx_invoices_due_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_invoices_due_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_invoices_due_date ON public.subscription_invoices USING btree (due_date);
 
 
 --
--- Name: idx_invoices_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_invoices_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_invoices_status ON public.subscription_invoices USING btree (status);
 
 
 --
--- Name: idx_invoices_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_invoices_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_invoices_tenant ON public.subscription_invoices USING btree (tenant_id);
 
 
 --
--- Name: idx_medical_tenant_type; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_medical_tenant_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_medical_tenant_type ON public.medical_inventory USING btree (tenant_id, type);
 
 
 --
--- Name: idx_payments_due_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_payments_due_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_payments_due_date ON public.payments USING btree (due_date);
 
 
 --
--- Name: idx_payments_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_payments_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_payments_status ON public.payments USING btree (status);
 
 
 --
--- Name: idx_payments_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_payments_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_payments_tenant ON public.payments USING btree (tenant_id);
 
 
 --
--- Name: idx_subscriptions_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_subscriptions_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_subscriptions_status ON public.tenant_subscriptions USING btree (status);
 
 
 --
--- Name: idx_subscriptions_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_subscriptions_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_subscriptions_tenant ON public.tenant_subscriptions USING btree (tenant_id);
 
 
 --
--- Name: idx_supp_purchases_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_supp_purchases_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_supp_purchases_date ON public.supplier_purchases USING btree (purchase_date);
 
 
 --
--- Name: idx_supp_purchases_supplier; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_supp_purchases_supplier; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_supp_purchases_supplier ON public.supplier_purchases USING btree (supplier_id);
 
 
 --
--- Name: idx_supp_purchases_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_supp_purchases_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_supp_purchases_tenant ON public.supplier_purchases USING btree (tenant_id);
 
 
 --
--- Name: idx_supplier_purchases_supplier; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_supplier_purchases_supplier; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_supplier_purchases_supplier ON public.supplier_purchases USING btree (supplier_id);
 
 
 --
--- Name: idx_supplier_purchases_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_supplier_purchases_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_supplier_purchases_tenant ON public.supplier_purchases USING btree (tenant_id);
 
 
 --
--- Name: idx_suppliers_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_suppliers_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_suppliers_tenant ON public.suppliers USING btree (tenant_id);
 
 
 --
--- Name: idx_users_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_users_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
 
 
 --
--- Name: idx_wage_payments_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_wage_payments_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_wage_payments_tenant ON public.wage_payments USING btree (tenant_id);
 
 
 --
--- Name: idx_wage_payments_worker; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_wage_payments_worker; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_wage_payments_worker ON public.wage_payments USING btree (worker_id);
 
 
 --
--- Name: idx_workers_tenant; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_workers_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_workers_tenant ON public.workers USING btree (tenant_id);
 
 
 --
--- Name: attendance attendance_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: animal_feed_cost_logs animal_feed_cost_logs_animal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.animal_feed_cost_logs
+    ADD CONSTRAINT animal_feed_cost_logs_animal_id_fkey FOREIGN KEY (animal_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
+-- Name: attendance attendance_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.attendance
@@ -1414,7 +1504,7 @@ ALTER TABLE ONLY public.attendance
 
 
 --
--- Name: attendance attendance_worker_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: attendance attendance_worker_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.attendance
@@ -1422,7 +1512,23 @@ ALTER TABLE ONLY public.attendance
 
 
 --
--- Name: cattle_costs cattle_costs_cattle_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: audit_logs audit_logs_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: audit_logs audit_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: cattle_costs cattle_costs_cattle_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle_costs
@@ -1430,7 +1536,7 @@ ALTER TABLE ONLY public.cattle_costs
 
 
 --
--- Name: cattle_costs cattle_costs_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle_costs cattle_costs_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle_costs
@@ -1438,7 +1544,15 @@ ALTER TABLE ONLY public.cattle_costs
 
 
 --
--- Name: cattle cattle_monthly_package_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle cattle_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cattle
+    ADD CONSTRAINT cattle_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.cattle_groups(id) ON DELETE SET NULL;
+
+
+--
+-- Name: cattle cattle_monthly_package_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle
@@ -1446,7 +1560,7 @@ ALTER TABLE ONLY public.cattle
 
 
 --
--- Name: cattle cattle_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cattle cattle_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cattle
@@ -1454,7 +1568,7 @@ ALTER TABLE ONLY public.cattle
 
 
 --
--- Name: email_verification_tokens email_verification_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: email_verification_tokens email_verification_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.email_verification_tokens
@@ -1462,7 +1576,7 @@ ALTER TABLE ONLY public.email_verification_tokens
 
 
 --
--- Name: feed_items feed_items_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_items feed_items_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_items
@@ -1470,7 +1584,7 @@ ALTER TABLE ONLY public.feed_items
 
 
 --
--- Name: feed_packages feed_packages_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_packages feed_packages_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_packages
@@ -1478,7 +1592,7 @@ ALTER TABLE ONLY public.feed_packages
 
 
 --
--- Name: feed_usage_log feed_usage_log_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: feed_usage_log feed_usage_log_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.feed_usage_log
@@ -1486,7 +1600,7 @@ ALTER TABLE ONLY public.feed_usage_log
 
 
 --
--- Name: general_transactions general_transactions_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: general_transactions general_transactions_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.general_transactions
@@ -1494,7 +1608,7 @@ ALTER TABLE ONLY public.general_transactions
 
 
 --
--- Name: medical_inventory medical_inventory_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: medical_inventory medical_inventory_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.medical_inventory
@@ -1502,7 +1616,7 @@ ALTER TABLE ONLY public.medical_inventory
 
 
 --
--- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: password_reset_tokens password_reset_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.password_reset_tokens
@@ -1510,7 +1624,7 @@ ALTER TABLE ONLY public.password_reset_tokens
 
 
 --
--- Name: payments payments_cattle_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: payments payments_cattle_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments
@@ -1518,7 +1632,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- Name: payments payments_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: payments payments_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payments
@@ -1526,7 +1640,7 @@ ALTER TABLE ONLY public.payments
 
 
 --
--- Name: plan_features plan_features_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: plan_features plan_features_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.plan_features
@@ -1534,7 +1648,7 @@ ALTER TABLE ONLY public.plan_features
 
 
 --
--- Name: push_subscriptions push_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: push_subscriptions push_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.push_subscriptions
@@ -1542,7 +1656,7 @@ ALTER TABLE ONLY public.push_subscriptions
 
 
 --
--- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sessions
@@ -1550,7 +1664,7 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: subscription_invoices subscription_invoices_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_invoices subscription_invoices_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_invoices
@@ -1558,7 +1672,7 @@ ALTER TABLE ONLY public.subscription_invoices
 
 
 --
--- Name: subscription_invoices subscription_invoices_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: subscription_invoices subscription_invoices_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.subscription_invoices
@@ -1566,7 +1680,7 @@ ALTER TABLE ONLY public.subscription_invoices
 
 
 --
--- Name: supplier_purchases supplier_purchases_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: supplier_purchases supplier_purchases_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supplier_purchases
@@ -1574,7 +1688,7 @@ ALTER TABLE ONLY public.supplier_purchases
 
 
 --
--- Name: supplier_purchases supplier_purchases_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: supplier_purchases supplier_purchases_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.supplier_purchases
@@ -1582,7 +1696,7 @@ ALTER TABLE ONLY public.supplier_purchases
 
 
 --
--- Name: suppliers suppliers_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: suppliers suppliers_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.suppliers
@@ -1590,7 +1704,7 @@ ALTER TABLE ONLY public.suppliers
 
 
 --
--- Name: tenant_subscriptions tenant_subscriptions_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenant_subscriptions tenant_subscriptions_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenant_subscriptions
@@ -1598,7 +1712,7 @@ ALTER TABLE ONLY public.tenant_subscriptions
 
 
 --
--- Name: tenant_subscriptions tenant_subscriptions_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenant_subscriptions tenant_subscriptions_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenant_subscriptions
@@ -1606,7 +1720,7 @@ ALTER TABLE ONLY public.tenant_subscriptions
 
 
 --
--- Name: users users_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -1614,7 +1728,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: wage_payments wage_payments_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wage_payments wage_payments_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wage_payments
@@ -1622,7 +1736,7 @@ ALTER TABLE ONLY public.wage_payments
 
 
 --
--- Name: wage_payments wage_payments_worker_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wage_payments wage_payments_worker_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wage_payments
@@ -1630,7 +1744,7 @@ ALTER TABLE ONLY public.wage_payments
 
 
 --
--- Name: workers workers_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: workers workers_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.workers
@@ -1641,5 +1755,5 @@ ALTER TABLE ONLY public.workers
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ex58ZbJqMM5WiN2YIU3070VdM0p6HbPio9lTr8KfJX3t7qOy7loqZ63xIvvDdHw
+\unrestrict HAvjGUw2nMp9OFD2L6hYxAK8jzwlJmTc6of48NMsXAmUoE4B8EhZWcVUOWj1uay
 
