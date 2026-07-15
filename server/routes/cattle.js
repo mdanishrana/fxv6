@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendAnimalOwnerWelcomeEmail } = require('../services/emailService');
-const { optionalAuth } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
 const crypto = require('crypto');
 
@@ -62,16 +62,11 @@ const mapCattleRow = (row) => {
     };
 };
 
-// Middleware to check tenant
-const requireTenant = (req, res, next) => {
-    const tenantId = req.headers['x-tenant-id'];
-    if (!tenantId) return res.status(400).json({ error: 'Missing Tenant ID' });
-    req.tenantId = tenantId;
+router.use(authMiddleware);
+router.use((req, res, next) => {
+    req.tenantId = req.user.tenantId;
     next();
-};
-
-router.use(requireTenant);
-router.use(optionalAuth);
+});
 
 // GET all cattle for tenant
 router.get('/', async (req, res) => {
@@ -135,7 +130,7 @@ router.get('/my-animals', async (req, res) => {
     }
 
     const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || 'farmxpert-secret-key-change-in-production';
+    const JWT_SECRET = process.env.JWT_SECRET;
 
     try {
         const token = authHeader.substring(7);

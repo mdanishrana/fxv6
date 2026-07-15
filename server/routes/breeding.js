@@ -5,16 +5,11 @@ const db = require('../db');
 
 const { authMiddleware } = require('../middleware/auth');
 
-// Middleware to check tenant
-const requireTenant = (req, res, next) => {
-    const tenantId = req.headers['x-tenant-id'];
-    if (!tenantId) return res.status(400).json({ error: 'Missing Tenant ID' });
-    req.tenantId = tenantId;
-    next();
-};
-
 router.use(authMiddleware);
-router.use(requireTenant);
+router.use((req, res, next) => {
+    req.tenantId = req.user.tenantId;
+    next();
+});
 
 // Middleware to restrict non-GET methods to farm admins
 router.use((req, res, next) => {

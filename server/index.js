@@ -4,6 +4,11 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET is not set in .env. Refusing to start.');
+  process.exit(1);
+}
+
 const app = express();
 const port = process.env.PORT || 5000;
 

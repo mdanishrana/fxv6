@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'farmxpert-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 
 const generateToken = (userId) => {

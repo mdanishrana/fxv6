@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'farmxpert-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;

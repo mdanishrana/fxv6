@@ -1,5 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.post('/subscribe', async (req, res) => {
 });
 
 // Send notification endpoint (Internal use or Admin)
-router.post('/send', async (req, res) => {
+router.post('/send', authMiddleware, requireRole('SAAS_ADMIN'), async (req, res) => {
     const { title, body, userId } = req.body;
     const { sendToUser, broadcast } = require('../services/notificationService');
 
@@ -61,7 +62,7 @@ router.post('/send', async (req, res) => {
     }
 });
 
-router.post('/broadcast', async (req, res) => {
+router.post('/broadcast', authMiddleware, requireRole('SAAS_ADMIN'), async (req, res) => {
     const { title, body } = req.body;
     const { broadcast } = require('../services/notificationService');
 

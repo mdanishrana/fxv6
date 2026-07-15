@@ -6,7 +6,7 @@ const { authMiddleware: auth } = require('../middleware/auth');
 // Get all medical items (Active only by default)
 router.get('/:tenantId', auth, async (req, res) => {
     try {
-        const { tenantId } = req.params;
+        const tenantId = req.user.tenantId;
         const { type, status } = req.query;
 
         let query = 'SELECT * FROM medical_inventory WHERE tenant_id = $1';
@@ -41,7 +41,7 @@ router.get('/:tenantId', auth, async (req, res) => {
 // Add new medical item
 router.post('/:tenantId', auth, async (req, res) => {
     try {
-        const { tenantId } = req.params;
+        const tenantId = req.user.tenantId;
         // Handle both camelCase (frontend) and snake_case inputs
         const { type, name, batchNumber, batch_number, manufacturer, quantity, unit, costPerUnit, cost_per_unit, expiryDate, expiry_date, notes } = req.body;
 
@@ -86,7 +86,7 @@ router.put('/:tenantId/:id', auth, async (req, res) => {
 
         const result = await pool.query(updateQuery, [
             name, batch, manufacturer, quantity, unit, cost, expiry, status, notes,
-            id, req.params.tenantId
+            id, req.user.tenantId
         ]);
 
         if (result.rows.length === 0) {
@@ -103,7 +103,8 @@ router.put('/:tenantId/:id', auth, async (req, res) => {
 // Delete medical item
 router.delete('/:tenantId/:id', auth, async (req, res) => {
     try {
-        const { id, tenantId } = req.params;
+        const { id } = req.params;
+        const tenantId = req.user.tenantId;
 
         // Instead of hard delete, maybe soft delete? Plan said "Archive/Delete".
         // Let's do hard delete for now as per "Delete" in plan, or check if used.

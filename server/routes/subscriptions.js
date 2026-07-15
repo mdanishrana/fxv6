@@ -8,7 +8,7 @@ const requireSaaSAdmin = async (req, res, next) => {
     
     try {
         const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'farmxpert-secret-key-change-in-production');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         const userResult = await db.query('SELECT role FROM users WHERE id = $1', [decoded.userId]);
         if (userResult.rows.length === 0 || userResult.rows[0].role !== 'SAAS_ADMIN') {

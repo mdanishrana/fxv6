@@ -1,15 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authMiddleware } = require('../middleware/auth');
 
-const requireTenant = (req, res, next) => {
-    const tenantId = req.headers['x-tenant-id'];
-    if (!tenantId) return res.status(400).json({ error: 'Missing Tenant ID' });
-    req.tenantId = tenantId;
+router.use(authMiddleware);
+router.use((req, res, next) => {
+    req.tenantId = req.user.tenantId;
     next();
-};
-
-router.use(requireTenant);
+});
 
 // --- WORKERS ---
 

@@ -357,6 +357,10 @@ router.post('/:tenantId/upgrade', authMiddleware, async (req, res) => {
         return res.status(403).json({ error: 'Only Farm Owners can upgrade plans' });
     }
 
+    if (req.user.role !== 'SAAS_ADMIN' && req.user.tenantId !== tenantId) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
     const client = await db.pool.connect();
     try {
         await client.query('BEGIN');

@@ -2,15 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const nodemailer = require('nodemailer');
+const { authMiddleware } = require('../middleware/auth');
 
-const requireTenant = (req, res, next) => {
-    const tenantId = req.headers['x-tenant-id'];
-    if (!tenantId) return res.status(400).json({ error: 'Missing Tenant ID' });
-    req.tenantId = tenantId;
+router.use(authMiddleware);
+router.use((req, res, next) => {
+    req.tenantId = req.user.tenantId;
     next();
-};
-
-router.use(requireTenant);
+});
 
 router.get('/', async (req, res) => {
     try {
@@ -247,8 +245,8 @@ router.post('/settle/:cattleId', async (req, res) => {
 
         // Fetch Owner and Billing Details early
         const cattleRes = await client.query(
-            `SELECT tag_number, owner_name, owner_email, monthly_charges, entry_date FROM cattle WHERE id = $1`,
-            [cattleId]
+            `SELECT tag_number, owner_name, owner_email, monthly_charges, entry_date FROM cattle WHERE id = $1 AND tenant_id = $2`,
+            [cattleId, req.tenantId]
         );
         const cattle = cattleRes.rows[0];
         const monthlyCharges = parseFloat(cattle.monthly_charges || 0);
