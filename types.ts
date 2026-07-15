@@ -334,7 +334,7 @@ export interface PaymentRecord {
   reminderSent: boolean;
 }
 
-export type ViewState = 'dashboard' | 'cattle' | 'medical' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';
+export type ViewState = 'dashboard' | 'cattle' | 'health' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';
 
 export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';
 export type InvoiceStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED';
