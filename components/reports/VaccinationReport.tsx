@@ -328,29 +328,41 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 p-5 rounded-2xl flex items-center gap-4">
-                        <AlertCircle className="text-rose-500" size={32} />
-                        <div>
-                            <p className="text-2xl font-black text-rose-600 dark:text-rose-400">{upcomingVaccinations.filter(v => v.urgency === 'OVERDUE').length}</p>
-                            <p className="text-xs uppercase font-bold text-rose-500">Overdue Boosters</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-rose-100 dark:hover:border-rose-900/50 transition-all duration-300 hover:-translate-y-1 group">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-2xl text-rose-500 dark:text-rose-400 group-hover:scale-110 transition-transform duration-300">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Overdue Boosters</span>
                         </div>
+                        <p className="text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
+                            {upcomingVaccinations.filter(v => v.urgency === 'OVERDUE').length}
+                        </p>
                     </div>
-                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-5 rounded-2xl flex items-center gap-4">
-                        <Clock className="text-amber-500" size={32} />
-                        <div>
-                            <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{upcomingVaccinations.filter(v => v.urgency === '30_DAYS').length}</p>
-                            <p className="text-xs uppercase font-bold text-amber-500">Due in 30 Days</p>
+
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-amber-100 dark:hover:border-amber-900/50 transition-all duration-300 hover:-translate-y-1 group">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-2xl text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-transform duration-300">
+                                <Clock className="w-6 h-6" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Due in 30 Days</span>
                         </div>
+                        <p className="text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                            {upcomingVaccinations.filter(v => v.urgency === '30_DAYS').length}
+                        </p>
                     </div>
-                    <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 p-5 rounded-2xl flex items-center gap-4">
-                        <CheckCircle2 className="text-emerald-500" size={32} />
-                        <div>
-                            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                                {cattle.filter(c => ['Active', 'Quarantine'].includes(c.status)).length - upcomingVaccinations.length}
-                            </p>
-                            <p className="text-xs uppercase font-bold text-emerald-500">Fully Protected</p>
+
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-emerald-100 dark:hover:border-emerald-900/50 transition-all duration-300 hover:-translate-y-1 group">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                                <CheckCircle2 className="w-6 h-6" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fully Protected</span>
                         </div>
+                        <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                            {cattle.filter(c => ['Active', 'Quarantine'].includes(c.status)).length - upcomingVaccinations.length}
+                        </p>
                     </div>
                 </div>
 
