@@ -329,40 +329,46 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-rose-100 dark:hover:border-rose-900/50 transition-all duration-300 hover:-translate-y-1 group">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-2xl text-rose-500 dark:text-rose-400 group-hover:scale-110 transition-transform duration-300">
+                    <div className="group bg-gradient-to-br from-rose-50 via-red-50 to-rose-50 dark:from-rose-950/40 dark:to-red-950/30 p-6 rounded-3xl shadow-[0_8px_30px_rgb(244,63,94,0.15)] hover:shadow-[0_8px_30px_rgb(244,63,94,0.3)] border border-rose-100 dark:border-rose-900/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-rose-400/20 to-transparent rounded-bl-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-start justify-between mb-6 relative">
+                            <div className="p-3 bg-white dark:bg-slate-800 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300">
                                 <AlertCircle className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Overdue Boosters</span>
+                            <span className="text-[10px] bg-white/60 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 px-3 py-1 rounded-full font-bold uppercase tracking-wide backdrop-blur-sm">Alert</span>
                         </div>
-                        <p className="text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
-                            {upcomingVaccinations.filter(v => v.urgency === 'OVERDUE').length}
-                        </p>
+                        <div className="relative">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Overdue Boosters</p>
+                            <p className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{upcomingVaccinations.filter(v => v.urgency === 'OVERDUE').length}</p>
+                        </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-amber-100 dark:hover:border-amber-900/50 transition-all duration-300 hover:-translate-y-1 group">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-2xl text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-transform duration-300">
+                    <div className="group bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/40 dark:to-orange-950/30 p-6 rounded-3xl shadow-[0_8px_30px_rgb(251,191,36,0.15)] hover:shadow-[0_8px_30px_rgb(251,191,36,0.3)] border border-amber-100 dark:border-amber-900/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-400/20 to-transparent rounded-bl-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-start justify-between mb-6 relative">
+                            <div className="p-3 bg-white dark:bg-slate-800 border border-amber-100 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300">
                                 <Clock className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Due in 30 Days</span>
+                            <span className="text-[10px] bg-white/60 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full font-bold uppercase tracking-wide backdrop-blur-sm">Upcoming</span>
                         </div>
-                        <p className="text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
-                            {upcomingVaccinations.filter(v => v.urgency === '30_DAYS').length}
-                        </p>
+                        <div className="relative">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Due in 30 Days</p>
+                            <p className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{upcomingVaccinations.filter(v => v.urgency === '30_DAYS').length}</p>
+                        </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 hover:border-emerald-100 dark:hover:border-emerald-900/50 transition-all duration-300 hover:-translate-y-1 group">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl text-emerald-500 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                    <div className="group bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/40 dark:to-teal-950/30 p-6 rounded-3xl shadow-[0_8px_30px_rgb(16,185,129,0.15)] hover:shadow-[0_8px_30px_rgb(16,185,129,0.3)] border border-emerald-100 dark:border-emerald-900/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-bl-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-start justify-between mb-6 relative">
+                            <div className="p-3 bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300">
                                 <CheckCircle2 className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fully Protected</span>
+                            <span className="text-[10px] bg-white/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full font-bold uppercase tracking-wide backdrop-blur-sm">Compliant</span>
                         </div>
-                        <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                            {cattle.filter(c => ['Active', 'Quarantine'].includes(c.status)).length - upcomingVaccinations.length}
-                        </p>
+                        <div className="relative">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Fully Protected</p>
+                            <p className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{cattle.filter(c => ['Active', 'Quarantine'].includes(c.status)).length - upcomingVaccinations.length}</p>
+                        </div>
                     </div>
                 </div>
 
