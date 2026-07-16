@@ -155,6 +155,22 @@
       }
     }
 
+    @keyframes breathe {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.08);
+      }
+    }
+
+    .animate-breathe {
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+
     .animate-pulse-slow {
       animation: pulse-slow 2s ease-in-out infinite;
     }

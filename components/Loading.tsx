@@ -6,31 +6,23 @@ export const Loading = () => {
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
-            <div className="relative w-32 h-32 mb-8">
-                <svg
-                    viewBox="0 0 200 200"
-                    className="w-full h-full animate-bounce"
-                    style={{ animationDuration: '1s' }}
-                >
-                    {/* Running Cow SVG - Stylized */}
-                    <g transform="translate(40,40) scale(0.6)">
-                        {/* Body */}
-                        <path
-                            d="M160,80 C160,50 140,40 120,40 L60,40 C40,40 20,60 20,90 L20,130 C20,140 30,140 30,130 L30,110 L150,110 L150,130 C150,140 160,140 160,130 L160,80 Z"
-                            className="fill-emerald-600 dark:fill-emerald-500"
-                        />
-                        {/* Head */}
-                        <circle cx="170" cy="60" r="25" className="fill-emerald-600 dark:fill-emerald-500" />
-                        <path d="M160,45 L150,30 M180,45 L190,30" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className="text-slate-800 dark:text-slate-200" />
-                        {/* Spots */}
-                        <path d="M60,60 C70,50 80,70 60,80" className="fill-white/20" />
-                        <path d="M100,70 C110,60 120,80 100,90" className="fill-white/20" />
-                        {/* Legs - Animated via CSS/Keyframes implied by bounce */}
-                    </g>
+            <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+                {/* Expanding glow ring */}
+                <div
+                    className="absolute w-24 h-24 rounded-full bg-emerald-400/30 dark:bg-emerald-500/25 animate-ping"
+                    style={{ animationDuration: '1.8s' }}
+                ></div>
+                {/* Soft static glow */}
+                <div className="absolute w-24 h-24 rounded-full bg-emerald-400/20 dark:bg-emerald-500/20 blur-2xl"></div>
 
-                    {/* Ground Shadow */}
-                    <ellipse cx="100" cy="160" rx="60" ry="10" className="fill-black/10 dark:fill-white/10 animate-pulse" />
-                </svg>
+                <img
+                    src="/logo-icon.png"
+                    alt="FarmXpert"
+                    className="relative z-10 w-20 h-20 object-contain animate-breathe drop-shadow-lg"
+                />
+
+                {/* Ground shadow */}
+                <div className="absolute -bottom-1 w-16 h-3 bg-black/10 dark:bg-white/10 rounded-full blur-sm animate-pulse-slow"></div>
             </div>
 
             <div className="text-center space-y-2">
