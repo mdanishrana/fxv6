@@ -28,6 +28,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await db.query('DELETE FROM payment_action_tokens WHERE tenant_id = $1', [tenant.tenantId]);
+    await db.query('DELETE FROM payment_review_tokens WHERE tenant_id = $1', [tenant.tenantId]);
     await db.query('DELETE FROM payments WHERE tenant_id = $1', [tenant.tenantId]);
     await db.query('DELETE FROM sessions WHERE user_id = $1', [tenant.userId]);
     await db.query('DELETE FROM email_verification_tokens WHERE user_id = $1', [tenant.userId]);
@@ -98,6 +99,92 @@ describe('Billing: generate-monthly creates a prorated invoice and marks overdue
 
     afterAll(async () => {
         if (animalId) await db.query('DELETE FROM cattle WHERE id = $1', [animalId]);
+    });
+});
+
+describe('Billing: public payment-review checklist (bulk email flow)', () => {
+    let animalIdA, animalIdB, reviewToken;
+
+    it('creates two animals with pending invoices and a valid review token', async () => {
+        const makeAnimal = async (tag, charges) => {
+            const res = await request(app)
+                .post('/api/cattle')
+                .set('Authorization', `Bearer ${tenant.token}`)
+                .send({
+                    tagNumber: tag,
+                    type: 'Cow',
+                    breed: 'Sahiwal',
+                    gender: 'Female',
+                    status: 'Active',
+                    currentWeight: 300,
+                    entryWeight: 300,
+                    entryDate: new Date().toISOString().split('T')[0],
+                    monthlyCharges: charges
+                });
+            expect(res.status).toBe(201);
+            return res.body.id;
+        };
+        animalIdA = await makeAnimal('BILL-TEST-003', 10000);
+        animalIdB = await makeAnimal('BILL-TEST-004', 12000);
+
+        await request(app).post('/api/payments/generate-monthly').set('Authorization', `Bearer ${tenant.token}`);
+
+        const tokenRow = await db.query(
+            `INSERT INTO payment_review_tokens (tenant_id, token, expires_at)
+             VALUES ($1, $2, NOW() + INTERVAL '45 days') RETURNING token`,
+            [tenant.tenantId, `test-review-token-${Date.now()}`]
+        );
+        reviewToken = tokenRow.rows[0].token;
+    });
+
+    it('rejects an unknown token on the list endpoint', async () => {
+        const res = await request(app).get('/api/payment-review?token=does-not-exist');
+        expect(res.status).toBe(404);
+        expect(res.body.ok).toBe(false);
+        expect(res.body.reason).toBe('NOT_FOUND');
+    });
+
+    it('lists both due animals for a valid token', async () => {
+        const res = await request(app).get(`/api/payment-review?token=${reviewToken}`);
+        expect(res.status).toBe(200);
+        expect(res.body.ok).toBe(true);
+        const tags = res.body.animals.map(a => a.tagNumber);
+        expect(tags).toContain('BILL-TEST-003');
+        expect(tags).toContain('BILL-TEST-004');
+    });
+
+    it('bulk-settles only the selected animal, leaving the other due', async () => {
+        const res = await request(app)
+            .post('/api/payment-review')
+            .send({ token: reviewToken, cattleIds: [animalIdA] });
+        expect(res.status).toBe(200);
+        expect(res.body.ok).toBe(true);
+        expect(res.body.settledCount).toBe(1);
+
+        const listA = await request(app)
+            .get(`/api/payments?cattleId=${animalIdA}`)
+            .set('Authorization', `Bearer ${tenant.token}`);
+        expect(listA.body.every(p => p.status === 'PAID')).toBe(true);
+
+        const listB = await request(app)
+            .get(`/api/payments?cattleId=${animalIdB}`)
+            .set('Authorization', `Bearer ${tenant.token}`);
+        expect(listB.body.every(p => p.status === 'PENDING' || p.status === 'OVERDUE')).toBe(true);
+    });
+
+    it('the token is still valid for a second visit (not single-use)', async () => {
+        const res = await request(app).get(`/api/payment-review?token=${reviewToken}`);
+        expect(res.status).toBe(200);
+        expect(res.body.ok).toBe(true);
+        // Animal A was already settled - it should no longer show as due.
+        const tags = res.body.animals.map((a) => a.tagNumber);
+        expect(tags).not.toContain('BILL-TEST-003');
+        expect(tags).toContain('BILL-TEST-004');
+    });
+
+    afterAll(async () => {
+        if (animalIdA) await db.query('DELETE FROM cattle WHERE id = $1', [animalIdA]);
+        if (animalIdB) await db.query('DELETE FROM cattle WHERE id = $1', [animalIdB]);
     });
 });
 

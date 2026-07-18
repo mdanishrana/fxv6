@@ -437,6 +437,19 @@ CREATE TABLE public.payment_action_tokens (
 
 
 --
+-- Name: payment_review_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.payment_review_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    token character varying(255) NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
 -- Name: plan_features; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1081,6 +1094,22 @@ ALTER TABLE ONLY public.payment_action_tokens
 
 
 --
+-- Name: payment_review_tokens payment_review_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_review_tokens
+    ADD CONSTRAINT payment_review_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: payment_review_tokens payment_review_tokens_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_review_tokens
+    ADD CONSTRAINT payment_review_tokens_token_key UNIQUE (token);
+
+
+--
 -- Name: plan_features plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1425,6 +1454,13 @@ CREATE INDEX idx_payment_action_tokens_token ON public.payment_action_tokens USI
 
 
 --
+-- Name: idx_payment_review_tokens_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_payment_review_tokens_token ON public.payment_review_tokens USING btree (token);
+
+
+--
 -- Name: idx_payments_due_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1695,6 +1731,14 @@ ALTER TABLE ONLY public.payment_action_tokens
 
 ALTER TABLE ONLY public.payment_action_tokens
     ADD CONSTRAINT payment_action_tokens_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payment_review_tokens payment_review_tokens_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_review_tokens
+    ADD CONSTRAINT payment_review_tokens_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --

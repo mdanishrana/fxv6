@@ -9,6 +9,7 @@ import { Cattle, FeedItem, ViewState, Tenant, DeletionRequest, UserRole, FeedPac
 import { api } from './services/api';
 import { Loading } from './components/Loading';
 import { PaymentActionResult, PaymentActionState as PaymentActionStateType } from './components/PaymentActionResult';
+import { PaymentReviewPage } from './components/PaymentReviewPage';
 
 // Lazy-loaded: these pull in heavy deps (recharts, jspdf, html2canvas, xlsx) and are
 // only needed after login, so keeping them out of the initial bundle matters most
@@ -48,6 +49,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [paymentActionState, setPaymentActionState] = useState<PaymentActionStateType | null>(null);
+  const [paymentReviewToken, setPaymentReviewToken] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -99,6 +101,9 @@ export default function App() {
       verifyEmail(token);
     } else if (action === '/payment-action' && token) {
       handlePaymentAction(token, params.get('action') || '');
+    } else if (action === '/payment-review' && token) {
+      setPaymentReviewToken(token);
+      setIsCheckingAuth(false);
     } else {
       const savedToken = localStorage.getItem('farmxpert_token');
       if (savedToken) {
@@ -331,6 +336,10 @@ export default function App() {
 
   if (paymentActionState) {
     return <PaymentActionResult state={paymentActionState} />;
+  }
+
+  if (paymentReviewToken) {
+    return <PaymentReviewPage token={paymentReviewToken} />;
   }
 
   if (isCheckingAuth) {

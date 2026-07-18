@@ -1,6 +1,6 @@
 const db = require('../db');
 const { generateInvoicesForTenant, startOfMonth } = require('./billingProcessor');
-const { createPaymentActionToken } = require('../utils/paymentActionTokens');
+const { createReviewToken } = require('../utils/paymentReviewTokens');
 const { generatePaymentReportCSV, generatePaymentReportPDF } = require('../utils/paymentReportGenerator');
 const { sendMonthlyBillingReportEmail } = require('../services/emailService');
 
@@ -10,8 +10,11 @@ const APP_URL = () => process.env.APP_URL || 'http://localhost:5000';
  * Runs the full monthly billing check for one tenant:
  *  1. Generates any missing calendar-month invoices and marks overdue ones (billingProcessor).
  *  2. Builds the "due this cycle" list (PENDING/OVERDUE animals).
- *  3. Mints a one-click action token per animal and emails the farm owner a report
- *     (HTML + PDF + CSV attachments) with "Payment Received"/"Still Pending" links.
+ *  3. Mints one reusable review token for the whole cycle and emails the farm owner
+ *     a report (HTML + PDF + CSV attachments) with a single "Review & Update Payments"
+ *     link, so the owner can tick off several animals verified paid (e.g. from a bank
+ *     statement) and confirm them all in one submission, rather than acting on one
+ *     animal at a time.
  *
  * Returns { ok: false, reason: 'NO_TENANT'|'NO_OWNER_EMAIL' } or
  *         { ok: true, invoicesCreated, markedOverdue, dueCount, emailSent }
@@ -48,20 +51,17 @@ async function runMonthlyBillingCheckForTenant(tenantId, today = new Date()) {
         return { ok: false, reason: 'NO_OWNER_EMAIL', invoicesCreated, markedOverdue, dueCount: dueAnimals.length };
     }
 
-    const rows = [];
-    for (const a of dueAnimals) {
-        const token = await createPaymentActionToken(tenantId, a.cattle_id);
-        rows.push({
-            tagNumber: a.tag_number,
-            ownerName: a.owner_name,
-            totalDue: parseFloat(a.total_due),
-            monthsDue: parseInt(a.months_due, 10),
-            status: a.has_overdue ? 'OVERDUE' : 'PENDING',
-            oldestDueDate: a.oldest_due_date,
-            receivedUrl: `${APP_URL()}/payment-action?token=${token}&action=received`,
-            pendingUrl: `${APP_URL()}/payment-action?token=${token}&action=pending`
-        });
-    }
+    const rows = dueAnimals.map(a => ({
+        tagNumber: a.tag_number,
+        ownerName: a.owner_name,
+        totalDue: parseFloat(a.total_due),
+        monthsDue: parseInt(a.months_due, 10),
+        status: a.has_overdue ? 'OVERDUE' : 'PENDING',
+        oldestDueDate: a.oldest_due_date
+    }));
+
+    const reviewToken = await createReviewToken(tenantId);
+    const reviewUrl = `${APP_URL()}/payment-review?token=${reviewToken}`;
 
     const cycleLabel = startOfMonth(today).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const currency = tenant.currency || 'PKR';
@@ -77,7 +77,7 @@ async function runMonthlyBillingCheckForTenant(tenantId, today = new Date()) {
     ];
 
     const result = await sendMonthlyBillingReportEmail(
-        tenant.owner_email, tenant.owner_name || 'Farm Owner', tenant.name, cycleLabel, rows, currency, attachments
+        tenant.owner_email, tenant.owner_name || 'Farm Owner', tenant.name, cycleLabel, rows, currency, attachments, reviewUrl
     );
 
     return { ok: true, invoicesCreated, markedOverdue, dueCount: dueAnimals.length, emailSent: !!result.success };

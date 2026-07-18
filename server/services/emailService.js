@@ -310,7 +310,7 @@ const sendLowStockAlertEmail = async (ownerEmail, ownerName, farmName, lowStockI
 };
 
 // rows: [{ tagNumber, ownerName, totalDue, monthsDue, status, receivedUrl, pendingUrl }]
-const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cycleLabel, rows, currency, attachments) => {
+const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cycleLabel, rows, currency, attachments, reviewUrl) => {
     const totalDue = rows.reduce((sum, r) => sum + r.totalDue, 0);
 
     const rowsHtml = rows.map(r => `
@@ -320,10 +320,6 @@ const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cy
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${currency} ${r.totalDue.toLocaleString()}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
                 <span style="padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: bold; ${r.status === 'OVERDUE' ? 'background:#fee2e2;color:#991b1b;' : 'background:#fef3c7;color:#92400e;'}">${r.status}</span>
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">
-                <a href="${r.receivedUrl}" style="display:inline-block; background:#10b981; color:white; padding:6px 12px; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; margin-right:6px;">Payment Received</a>
-                <a href="${r.pendingUrl}" style="display:inline-block; background:#f1f5f9; color:#475569; padding:6px 12px; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; border:1px solid #cbd5e1;">Still Pending</a>
             </td>
         </tr>
     `).join('');
@@ -340,6 +336,7 @@ const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cy
             .table-container { background: white; border-radius: 8px; overflow: hidden; margin: 20px 0; border: 1px solid #e2e8f0; overflow-x: auto; }
             .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
             .data-table th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; }
+            .button { display: inline-block; background: #10b981; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
             .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
         </style>
     </head>
@@ -352,12 +349,16 @@ const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cy
             <div class="content">
                 <h2 style="margin-top: 0;">Dear ${ownerName},</h2>
                 <p><strong>${rows.length}</strong> animal(s) have a payment due this cycle, totaling <strong>${currency} ${totalDue.toLocaleString()}</strong>.</p>
-                <p style="color:#64748b; font-size: 13px;">Click a button below to update an animal's status directly - no login needed. A full PDF and CSV report is attached.</p>
+                <p style="color:#64748b; font-size: 13px;">A full PDF and CSV report is attached. Once you've checked which animal owners have paid (e.g. against your bank statement), use the button below to mark them received - no login needed, and you can tick off several at once.</p>
+
+                <center>
+                    <a href="${reviewUrl}" class="button">Review &amp; Update Payments</a>
+                </center>
 
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
-                            <tr><th>Tag</th><th>Owner</th><th>Amount Due</th><th>Status</th><th>Action</th></tr>
+                            <tr><th>Tag</th><th>Owner</th><th>Amount Due</th><th>Status</th></tr>
                         </thead>
                         <tbody>
                             ${rowsHtml}

@@ -82,6 +82,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/payment-actions', require('./routes/paymentActions'));
+app.use('/api/payment-review', require('./routes/paymentReview'));
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/suppliers', suppliersRoutes);
 app.use('/api/labour', labourRoutes);

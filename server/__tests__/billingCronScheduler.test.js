@@ -23,6 +23,7 @@ async function registerTenant(label) {
 async function cleanupTenant(tenant) {
     if (!tenant) return;
     await db.query('DELETE FROM payment_action_tokens WHERE tenant_id = $1', [tenant.tenantId]);
+    await db.query('DELETE FROM payment_review_tokens WHERE tenant_id = $1', [tenant.tenantId]);
     await db.query('DELETE FROM payments WHERE tenant_id = $1', [tenant.tenantId]);
     await db.query('DELETE FROM sessions WHERE user_id = $1', [tenant.userId]);
     await db.query('DELETE FROM email_verification_tokens WHERE user_id = $1', [tenant.userId]);
@@ -85,10 +86,10 @@ describe('Monthly billing cron across tenants', () => {
         expect(emptyListRes.body).toEqual([]);
     });
 
-    it('mints a fresh action token each run for a still-due animal', async () => {
-        const before = await db.query('SELECT count(*) FROM payment_action_tokens WHERE tenant_id = $1', [billableTenant.tenantId]);
+    it('mints a fresh review token each run for a tenant with animals still due', async () => {
+        const before = await db.query('SELECT count(*) FROM payment_review_tokens WHERE tenant_id = $1', [billableTenant.tenantId]);
         await runMonthlyBillingCheckAllTenants([billableTenant.tenantId, emptyTenant.tenantId]);
-        const after = await db.query('SELECT count(*) FROM payment_action_tokens WHERE tenant_id = $1', [billableTenant.tenantId]);
+        const after = await db.query('SELECT count(*) FROM payment_review_tokens WHERE tenant_id = $1', [billableTenant.tenantId]);
         expect(parseInt(after.rows[0].count, 10)).toBeGreaterThan(parseInt(before.rows[0].count, 10));
     });
 
