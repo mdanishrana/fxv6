@@ -31,6 +31,7 @@ export const PaymentReviewPage: React.FC<Props> = ({ token }) => {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [submitting, setSubmitting] = useState(false);
     const [lastSettled, setLastSettled] = useState<string[] | null>(null);
+    const [lastFailed, setLastFailed] = useState<{ tagNumber: string; reason: string }[] | null>(null);
 
     const loadList = async () => {
         setLoading(true);
@@ -83,11 +84,17 @@ export const PaymentReviewPage: React.FC<Props> = ({ token }) => {
             });
             const data = await res.json();
             if (res.ok && data.ok) {
-                const settledTags = animals
-                    .filter(a => selected.has(a.cattleId) && data.results.find((r: any) => r.cattleId === a.cattleId && r.ok))
-                    .map(a => a.tagNumber);
-                setLastSettled(settledTags);
-                setAnimals(prev => prev.filter(a => !selected.has(a.cattleId)));
+                const succeededIds = new Set<string>(data.results.filter((r: any) => r.ok).map((r: any) => r.cattleId));
+                const failed = data.results
+                    .filter((r: any) => !r.ok)
+                    .map((r: any) => ({
+                        tagNumber: animals.find(a => a.cattleId === r.cattleId)?.tagNumber || r.cattleId,
+                        reason: r.reason
+                    }));
+
+                setLastSettled(animals.filter(a => succeededIds.has(a.cattleId)).map(a => a.tagNumber));
+                setLastFailed(failed.length > 0 ? failed : null);
+                setAnimals(prev => prev.filter(a => !succeededIds.has(a.cattleId)));
                 setSelected(new Set());
             } else {
                 alert(data.reason || 'Something went wrong confirming these payments.');
@@ -134,10 +141,19 @@ export const PaymentReviewPage: React.FC<Props> = ({ token }) => {
                 </div>
 
                 {lastSettled && lastSettled.length > 0 && (
-                    <div className="mb-6 flex items-start gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl p-4">
+                    <div className="mb-4 flex items-start gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl p-4">
                         <CheckCircle2 size={22} className="shrink-0 mt-0.5" />
                         <p className="text-sm leading-relaxed">
                             Marked <strong>{lastSettled.join(', ')}</strong> as received. The animal owner(s) have been notified automatically.
+                        </p>
+                    </div>
+                )}
+
+                {lastFailed && lastFailed.length > 0 && (
+                    <div className="mb-6 flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 rounded-2xl p-4">
+                        <XCircle size={22} className="shrink-0 mt-0.5" />
+                        <p className="text-sm leading-relaxed">
+                            Could not confirm <strong>{lastFailed.map(f => f.tagNumber).join(', ')}</strong> - they're still marked pending. Try again, or check the app directly.
                         </p>
                     </div>
                 )}
