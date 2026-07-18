@@ -1726,10 +1726,13 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
     const branchFilteredCattle = cattle.filter(c => filterBranch === 'All' || c.branch === filterBranch || (!c.branch && filterBranch === 'Main Farm'));
 
     const totalHeadcount = branchFilteredCattle.filter(c => c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
-    const totalCows = branchFilteredCattle.filter(c => c.type === AnimalType.COW && c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
-    const totalBulls = branchFilteredCattle.filter(c => c.type === AnimalType.BULL && c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
-    const totalHeifers = branchFilteredCattle.filter(c => c.type === AnimalType.HEIFER && c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
-    const totalGoats = branchFilteredCattle.filter(c => c.type === AnimalType.GOAT && c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
+    // Dynamic per-type breakdown - covers every type actually present on the farm
+    // (legacy Cow/Bull/Heifer/Goat/Calf/Kid or the new full Cattle/Goat/Sheep taxonomy),
+    // rather than a handful of hardcoded categories that silently omit the rest.
+    const activeCattleForBreakdown = branchFilteredCattle.filter(c => c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED);
+    const typeBreakdown: { type: string; count: number }[] = Object.values(AnimalType)
+        .map(t => ({ type: t as string, count: activeCattleForBreakdown.filter(c => c.type === t).length }))
+        .filter(t => t.count > 0);
     const totalInvestment = branchFilteredCattle.filter(c => c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).reduce((sum, c) => sum + (Number(c.purchasePrice) || 0), 0);
     const sickCount = branchFilteredCattle.filter(c => c.status === CattleStatus.SICK || c.healthStatus?.toLowerCase() === 'sick').length;
     const pregnantCount = branchFilteredCattle.filter(c => c.isPregnant && c.status !== CattleStatus.SOLD && c.status !== CattleStatus.DEAD && c.status !== CattleStatus.DECEASED).length;
@@ -1797,10 +1800,9 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                         <div className="relative">
                             <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Gender & Type</p>
                             <div className="flex flex-wrap items-center gap-1.5 mt-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-                                <span className="bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{totalCows} Cows</span>
-                                <span className="bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{totalBulls} Bulls</span>
-                                <span className="bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{totalHeifers} Heifers</span>
-                                {totalGoats > 0 && <span className="bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{totalGoats} Goats</span>}
+                                {typeBreakdown.map(({ type, count }) => (
+                                    <span key={type} className="bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{count} {type}</span>
+                                ))}
                             </div>
                         </div>
                     </div>

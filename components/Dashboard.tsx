@@ -37,12 +37,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
    // Calculate metrics
    const totalCattle = displayCattle.length;
-   const cowCount = displayCattle.filter(c => c.type === 'Cow').length;
-   const bullCount = displayCattle.filter(c => c.type === 'Bull').length;
-   const goatCount = displayCattle.filter(c => c.type === 'Goat').length;
-   const heiferCount = displayCattle.filter(c => c.type === 'Heifer').length;
-   const calfCount = displayCattle.filter(c => c.type === 'Calf' || (c.type as string) === 'Calves').length;
-   const kidCount = displayCattle.filter(c => c.type === 'Kid' || (c.type as string) === 'Kids').length;
+   // Dynamic per-type breakdown - covers every type actually on the farm (legacy
+   // Cow/Bull/Heifer/Goat/Calf/Kid or the full new Cattle/Goat/Sheep taxonomy)
+   // instead of a fixed set of categories that silently omit the rest.
+   const herdTypeBreakdown: { type: string; count: number }[] = Object.values(AnimalType)
+       .map(t => ({ type: t as string, count: displayCattle.filter(c => c.type === t).length }))
+       .filter(t => t.count > 0);
 
    const valuationStock = displayCattle.filter(c => ['Active', 'Ready for Sale', 'Quarantine'].includes(c.status));
    const activeCount = valuationStock.length;
@@ -607,31 +607,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                      </div>
                      <span className="text-[10px] bg-white/60 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full font-bold uppercase tracking-wide backdrop-blur-sm">Herd Breakdown</span>
                   </div>
-                  <div className="relative grid grid-cols-2 gap-y-2 gap-x-4">
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Cows</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{cowCount}</span>
-                     </div>
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Bulls</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{bullCount}</span>
-                     </div>
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Heifers</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{heiferCount}</span>
-                     </div>
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Calves</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{calfCount}</span>
-                     </div>
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Goats</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{goatCount}</span>
-                     </div>
-                     <div className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kids</span>
-                        <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{kidCount}</span>
-                     </div>
+                  <div className="relative grid grid-cols-2 gap-y-2 gap-x-4 max-h-40 overflow-y-auto">
+                     {herdTypeBreakdown.map(({ type, count }) => (
+                        <div key={type} className="flex justify-between items-end border-b border-purple-200/50 dark:border-purple-800/30 pb-1">
+                           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{type}</span>
+                           <span className="font-black text-slate-800 dark:text-slate-100 text-lg leading-none">{count}</span>
+                        </div>
+                     ))}
                   </div>
                </div>
             </div>
