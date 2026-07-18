@@ -1616,6 +1616,30 @@ ALTER TABLE ONLY public.cattle_costs
 
 
 --
+-- Name: breeding_events breeding_events_animal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.breeding_events
+    ADD CONSTRAINT breeding_events_animal_id_fkey FOREIGN KEY (animal_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pregnancy_cycles pregnancy_cycles_animal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pregnancy_cycles
+    ADD CONSTRAINT pregnancy_cycles_animal_id_fkey FOREIGN KEY (animal_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
+-- Name: milk_logs milk_logs_animal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.milk_logs
+    ADD CONSTRAINT milk_logs_animal_id_fkey FOREIGN KEY (animal_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
 -- Name: cattle_costs cattle_costs_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

@@ -675,7 +675,7 @@ router.delete('/:id', async (req, res) => {
         await db.query('DELETE FROM breeding_events WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
         await db.query('DELETE FROM pregnancy_cycles WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
         await db.query('DELETE FROM cattle_costs WHERE tenant_id = $1 AND cattle_id = $2', [req.tenantId, id]);
-        await db.query('DELETE FROM milk_records WHERE tenant_id = $1 AND cattle_id = $2', [req.tenantId, id]).catch(() => console.log('No milk records table yet'));
+        await db.query('DELETE FROM milk_logs WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
 
         // Delete the main record
         await db.query('DELETE FROM cattle WHERE id = $1 AND tenant_id = $2', [id, req.tenantId]);

@@ -158,4 +158,46 @@ describe('Cattle CRUD', () => {
         const costsAfter = await db.query('SELECT id FROM cattle_costs WHERE cattle_id = $1', [cattleId]);
         expect(costsAfter.rows.length).toBe(0);
     });
+
+    it('cascade-deletes milk_logs, breeding_events, and pregnancy_cycles when the animal is deleted', async () => {
+        // Found live: the delete route's own DELETE FROM milk_records query targeted a
+        // table name that doesn't exist (the real table is milk_logs), silently caught
+        // and swallowed - so milk log rows were never actually cleaned up. Also, none
+        // of these three tables had a database-level FK, so nothing would have caught
+        // it even if some other code path deleted a cattle row directly. Fixed both:
+        // the query now targets the right table, and all three now have an
+        // ON DELETE CASCADE foreign key to cattle(id) as a backstop.
+        const animalRes = await request(app)
+            .post('/api/cattle')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .set('x-tenant-id', tenant.tenantId)
+            .send({ tagNumber: 'CRUD-TEST-CASCADE', type: 'Cow', breed: 'Sahiwal', gender: 'Female', currentWeight: 300, entryWeight: 300 });
+        const animalId = animalRes.body.id;
+
+        await db.query(
+            `INSERT INTO milk_logs (tenant_id, animal_id, log_date, morning_yield, evening_yield) VALUES ($1, $2, CURRENT_DATE, 5, 5)`,
+            [tenant.tenantId, animalId]
+        );
+        const cycleRes = await db.query(
+            `INSERT INTO pregnancy_cycles (tenant_id, animal_id, cycle_start_date, status) VALUES ($1, $2, CURRENT_DATE, 'CONFIRMED_PREGNANT') RETURNING id`,
+            [tenant.tenantId, animalId]
+        );
+        await db.query(
+            `INSERT INTO breeding_events (tenant_id, animal_id, cycle_id, event_type, event_date, details) VALUES ($1, $2, $3, 'PREG_CHECK', CURRENT_DATE, '{"result":"POSITIVE"}')`,
+            [tenant.tenantId, animalId, cycleRes.rows[0].id]
+        );
+
+        const res = await request(app)
+            .delete(`/api/cattle/${animalId}`)
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .set('x-tenant-id', tenant.tenantId);
+        expect(res.status).toBe(200);
+
+        const milk = await db.query('SELECT id FROM milk_logs WHERE animal_id = $1', [animalId]);
+        expect(milk.rows.length).toBe(0);
+        const cycles = await db.query('SELECT id FROM pregnancy_cycles WHERE animal_id = $1', [animalId]);
+        expect(cycles.rows.length).toBe(0);
+        const events = await db.query('SELECT id FROM breeding_events WHERE animal_id = $1', [animalId]);
+        expect(events.rows.length).toBe(0);
+    });
 });
