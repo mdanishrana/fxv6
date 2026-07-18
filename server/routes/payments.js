@@ -3,6 +3,8 @@ const router = express.Router();
 const db = require('../db');
 const nodemailer = require('nodemailer');
 const { authMiddleware } = require('../middleware/auth');
+const { settleAllDueForAnimal } = require('../utils/paymentSettlement');
+const { runMonthlyBillingCheckForTenant } = require('../jobs/billingReportSender');
 
 router.use(authMiddleware);
 router.use((req, res, next) => {
@@ -100,64 +102,32 @@ router.delete('/:id', async (req, res) => {
 });
 
 
+// Runs the same monthly billing check the automated cron runs on the 2nd of each
+// month: generates any missing calendar-month invoices (prorated for an animal's
+// first partial month), marks overdue ones, and - if anything is due - emails the
+// farm owner a report with one-click Payment Received/Still Pending action links.
+// Kept as an on-demand "Run Checks" button alongside the automatic monthly run.
 router.post('/generate-monthly', async (req, res) => {
     try {
-        const cattleResult = await db.query(
-            `SELECT id, entry_date, monthly_charges FROM cattle 
-             WHERE tenant_id = $1 AND status = 'Active' AND monthly_charges > 0`,
-            [req.tenantId]
-        );
+        const outcome = await runMonthlyBillingCheckForTenant(req.tenantId);
 
-        let created = 0;
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayDate = new Date(todayStr);
-
-        for (const cattle of cattleResult.rows) {
-            if (!cattle.entry_date) continue;
-
-            const latestRes = await db.query(
-                `SELECT due_date FROM payments 
-                 WHERE tenant_id = $1 AND cattle_id = $2 
-                 ORDER BY due_date DESC LIMIT 1`,
-                [req.tenantId, cattle.id]
-            );
-
-            let latestDate;
-            if (latestRes.rows.length === 0) {
-                // Create initial payment for entry_date (arrival date)
-                await db.query(
-                    `INSERT INTO payments (tenant_id, cattle_id, amount, due_date, status, notes)
-                     VALUES ($1, $2, $3, $4, 'PENDING', 'Initial Arrival Payment')`,
-                    [req.tenantId, cattle.id, cattle.monthly_charges, cattle.entry_date]
-                );
-                created++;
-                latestDate = new Date(cattle.entry_date);
-            } else {
-                latestDate = new Date(latestRes.rows[0].due_date);
+        if (!outcome.ok) {
+            if (outcome.reason === 'NO_OWNER_EMAIL') {
+                return res.json({
+                    message: `Generated ${outcome.invoicesCreated} invoice(s), ${outcome.dueCount} animal(s) due - but no owner email is set for this farm, so no report was sent.`
+                });
             }
-
-            // Check if at least 30 days have passed since the latest invoice date
-            const diffTime = todayDate.getTime() - latestDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays >= 30) {
-                const latestDateStr = latestDate.toISOString().split('T')[0];
-                // Ensure we don't insert a duplicate for today
-                if (latestDateStr !== todayStr) {
-                    await db.query(
-                        `INSERT INTO payments (tenant_id, cattle_id, amount, due_date, status, notes)
-                         VALUES ($1, $2, $3, $4, 'PENDING', 'Monthly Checkin/Cycle')`,
-                        [req.tenantId, cattle.id, cattle.monthly_charges, todayStr]
-                    );
-                    created++;
-                }
-            }
+            return res.status(404).json({ error: 'Tenant not found' });
         }
 
-        res.json({ message: `Daily Cycle Check complete: Generated ${created} missing invoices` });
+        const message = outcome.dueCount === 0
+            ? `Check complete: generated ${outcome.invoicesCreated} invoice(s). Nothing currently due.`
+            : `Check complete: generated ${outcome.invoicesCreated} invoice(s). ${outcome.dueCount} animal(s) due - report ${outcome.emailSent ? 'emailed to farm owner' : 'FAILED to send'}.`;
+
+        res.json({ message });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to generate monthly payments' });
+        res.status(500).json({ error: 'Failed to run monthly billing check' });
     }
 });
 
@@ -238,103 +208,45 @@ router.get('/summary', async (req, res) => {
 // POST /settle/:cattleId - Pay off all debt for an animal
 router.post('/settle/:cattleId', async (req, res) => {
     const { cattleId } = req.params;
-    const client = await db.pool.connect(); // Use transaction
-
     try {
-        await client.query('BEGIN');
+        const result = await settleAllDueForAnimal(req.tenantId, cattleId, req.body.amountPaid);
 
-        // Fetch Owner and Billing Details early
-        const cattleRes = await client.query(
-            `SELECT tag_number, owner_name, owner_email, monthly_charges, entry_date FROM cattle WHERE id = $1 AND tenant_id = $2`,
-            [cattleId, req.tenantId]
-        );
-        const cattle = cattleRes.rows[0];
-        const monthlyCharges = parseFloat(cattle.monthly_charges || 0);
+        if (!result.ok) {
+            const message = result.reason === 'CATTLE_NOT_FOUND'
+                ? 'Animal not found'
+                : 'No unpaid dues found for this animal and no advance payment provided';
+            return res.status(400).json({ error: message });
+        }
 
-        // 1. Get total amount currently pending before updating
-        const dueResult = await client.query(
-            `SELECT SUM(amount) as total, STRING_AGG(id::text, ',') as ids
-             FROM payments 
-             WHERE tenant_id = $1 AND cattle_id = $2 AND (status = 'PENDING' OR status = 'OVERDUE')`,
-             [req.tenantId, cattleId]
-        );
-
-        const totalAmountDue = dueResult.rows[0].total != null ? parseFloat(dueResult.rows[0].total) : 0;
-        const amountPaid = req.body.amountPaid ? parseFloat(req.body.amountPaid) : totalAmountDue;
+        const { cattle, amountPaid, totalAmountDue } = result;
         const paidDate = new Date().toISOString().split('T')[0];
 
-        if (totalAmountDue === 0 && amountPaid <= 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: 'No unpaid dues found for this animal and no advance payment provided' });
-        }
-
-        // 2. Mark existing pending/overdue as PAID
-        if (totalAmountDue > 0) {
-            await client.query(
-                `UPDATE payments 
-                 SET status = 'PAID', paid_date = $1, payment_method = 'Cash', updated_at = NOW()
-                 WHERE tenant_id = $2 AND cattle_id = $3 AND (status = 'PENDING' OR status = 'OVERDUE')`,
-                [paidDate, req.tenantId, cattleId]
-            );
-        }
-
-        // 3. Handle Advance/Overpayments safely
-        if (amountPaid > totalAmountDue && monthlyCharges > 0 && cattle.entry_date) {
-            const overpayment = amountPaid - totalAmountDue;
-            const extraMonths = Math.floor(overpayment / monthlyCharges);
-            
-            if (extraMonths > 0) {
-                const existingRes = await client.query(
-                    `SELECT COUNT(*) as count FROM payments WHERE tenant_id = $1 AND cattle_id = $2`,
-                    [req.tenantId, cattleId]
-                );
-                const existingBillsCount = parseInt(existingRes.rows[0].count, 10);
-                const entryDate = new Date(cattle.entry_date);
-
-                for (let i = 0; i < extraMonths; i++) {
-                    const nextDate = new Date(entryDate);
-                    nextDate.setDate(nextDate.getDate() + ((existingBillsCount + i) * 30));
-                    
-                    await client.query(
-                        `INSERT INTO payments (tenant_id, cattle_id, amount, due_date, status, paid_date, payment_method, notes)
-                         VALUES ($1, $2, $3, $4, 'PAID', $5, 'Cash', 'Advance Payment')`,
-                        [req.tenantId, cattleId, monthlyCharges, nextDate.toISOString().split('T')[0], paidDate]
-                    );
-                }
-            }
-        }
-
-        await client.query('COMMIT');
-
-        // 4. Send Confirmation Email (Non-blocking)
-        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD && cattle.owner_email) {
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
-            });
-
-            // Fetch tenant name
+        // Send Confirmation Email + Push (Non-blocking)
+        if (cattle.owner_email) {
             const tRes = await db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]);
             const tenantName = tRes.rows[0]?.name || 'FarmXpert';
 
-            transporter.sendMail({
-                from: `"${tenantName}" <${process.env.GMAIL_USER}>`,
-                to: cattle.owner_email,
-                subject: `Payment Received - Cattle ${cattle.tag_number}`,
-                html: `
-                    <h2>Payment Confirmation</h2>
-                    <p>Dear ${cattle.owner_name},</p>
-                    <p>We have received your payment of <strong>PKR ${amountPaid.toLocaleString()}</strong> for animal <strong>${cattle.tag_number}</strong>.</p>
-                    <p><strong>Date:</strong> ${paidDate}</p>
-                    <p>Thank you for your timely payment.</p>
-                    <p>Regards,<br/>${tenantName}</p>
-                `
-            }).catch(e => console.error("Email failed", e));
-        }
+            if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+                });
+                transporter.sendMail({
+                    from: `"${tenantName}" <${process.env.GMAIL_USER}>`,
+                    to: cattle.owner_email,
+                    subject: `Payment Received - Cattle ${cattle.tag_number}`,
+                    html: `
+                        <h2>Payment Confirmation</h2>
+                        <p>Dear ${cattle.owner_name},</p>
+                        <p>We have received your payment of <strong>PKR ${amountPaid.toLocaleString()}</strong> for animal <strong>${cattle.tag_number}</strong>.</p>
+                        <p><strong>Date:</strong> ${paidDate}</p>
+                        <p>Thank you for your timely payment.</p>
+                        <p>Regards,<br/>${tenantName}</p>
+                    `
+                }).catch(e => console.error("Email failed", e));
+            }
 
-        // 5. Send Push Notification
-        const { sendToEmail } = require('../services/notificationService');
-        if (cattle.owner_email) {
+            const { sendToEmail } = require('../services/notificationService');
             sendToEmail(
                 cattle.owner_email,
                 `Payment Received - ${cattle.tag_number}`,
@@ -344,11 +256,8 @@ router.post('/settle/:cattleId', async (req, res) => {
 
         res.json({ success: true, message: 'Payment settled successfully', totalPaid: amountPaid });
     } catch (err) {
-        await client.query('ROLLBACK');
         console.error(err);
         res.status(500).json({ error: 'Failed to settle payments' });
-    } finally {
-        client.release();
     }
 });
 
@@ -432,150 +341,5 @@ router.post('/remind/:cattleId', async (req, res) => {
     }
 });
 
-// Check Overdue + Send 'Due Today' Reminders
-router.post('/check-overdue', async (req, res) => {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-
-        // 1. Mark as OVERDUE if due_date < today
-        const result = await db.query(
-            `UPDATE payments 
-             SET status = 'OVERDUE', reminder_sent = FALSE, updated_at = NOW()
-             WHERE tenant_id = $1 AND status = 'PENDING' AND due_date < $2`,
-            [req.tenantId, today]
-        );
-
-        let emailsSent = 0;
-
-        if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
-            });
-
-            const tenantRes = await db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]);
-            const tenantName = tenantRes.rows[0]?.name;
-
-            // 2. Identify "Due Today" items that haven't been reminded
-            const dueToday = await db.query(
-                `SELECT p.*, c.tag_number, c.owner_name, c.owner_email
-                 FROM payments p
-                 JOIN cattle c ON p.cattle_id = c.id
-                 WHERE p.tenant_id = $1 AND p.status = 'PENDING' AND p.due_date = $2 AND p.reminder_sent = FALSE
-                   AND c.owner_email IS NOT NULL AND c.owner_email != ''`,
-                [req.tenantId, today]
-            );
-
-            // Group by cattle to send one email per animal
-            const processedDue = new Set();
-            for (const payment of dueToday.rows) {
-                if (processedDue.has(payment.cattle_id)) continue;
-                processedDue.add(payment.cattle_id);
-
-                const totalRes = await db.query(
-                    `SELECT SUM(amount) as total FROM payments 
-                     WHERE cattle_id = $1 AND due_date = $2 AND status = 'PENDING'`,
-                    [payment.cattle_id, today]
-                );
-                const totalAmt = totalRes.rows[0].total;
-
-                try {
-                    await transporter.sendMail({
-                        from: `"${tenantName}" <${process.env.GMAIL_USER}>`,
-                        to: payment.owner_email,
-                        subject: `Payment Due Today - Cattle ${payment.tag_number}`,
-                        html: `
-                            <h2>Payment Due Notification</h2>
-                            <p>Dear ${payment.owner_name},</p>
-                            <p>This is a reminder that a payment of <strong>Rs. ${parseFloat(totalAmt).toLocaleString()}</strong> for animal <strong>${payment.tag_number}</strong> is due <strong>TODAY</strong>.</p>
-                            <p>Please arrange payment to avoid overdue charges.</p>
-                            <p>Thank you.</p>
-                        `
-                    });
-                    // Mark reminder_sent = TRUE for due today items
-                    await db.query(
-                        `UPDATE payments SET reminder_sent = TRUE WHERE tenant_id = $1 AND cattle_id = $2 AND due_date = $3 AND status = 'PENDING'`,
-                        [req.tenantId, payment.cattle_id, today]
-                    );
-                    emailsSent++;
-
-                    // Send Push
-                    const { sendToEmail } = require('../services/notificationService');
-                    sendToEmail(
-                        payment.owner_email,
-                        `Payment Due Today - ${payment.tag_number}`,
-                        `Payment of Rs. ${parseFloat(totalAmt).toLocaleString()} is due today.`
-                    ).catch(e => console.error("Push failed", e));
-
-                } catch (e) { console.error(e); }
-            }
-
-            // 3. Process Overdue (Existing Logic) - Send reminders for OVERDUE items not yet reminded
-            // (Similar logic to step 2 but for OVERDUE status)
-            // ... (We can reuse or keep simple if user focus is just on the Due Today part primarily, but let's be thorough)
-            // For now, let's assume the previous logic for Overdue bulk sending was good, but let's ensure we don't spam.
-            // The `reminder_sent = FALSE` reset in step 1 ensures newly overdue get a fresh email.
-
-            const overduePayments = await db.query(
-                `SELECT p.*, c.tag_number, c.owner_name, c.owner_email
-                 FROM payments p
-                 JOIN cattle c ON p.cattle_id = c.id
-                 WHERE p.tenant_id = $1 AND p.status = 'OVERDUE' AND p.reminder_sent = FALSE
-                   AND c.owner_email IS NOT NULL AND c.owner_email != ''`,
-                [req.tenantId]
-            );
-
-            const processedOverdue = new Set();
-            for (const payment of overduePayments.rows) {
-                if (processedOverdue.has(payment.cattle_id)) continue;
-                processedOverdue.add(payment.cattle_id);
-
-                const totalRes = await db.query(
-                    `SELECT SUM(amount) as total FROM payments 
-                     WHERE cattle_id = $1 AND status = 'OVERDUE'`,
-                    [payment.cattle_id]
-                );
-
-                try {
-                    await transporter.sendMail({
-                        from: `"${tenantName}" <${process.env.GMAIL_USER}>`,
-                        to: payment.owner_email,
-                        subject: `Payment Overdue - Cattle ${payment.tag_number}`,
-                        html: `
-                            <h2>Payment Overdue Notice</h2>
-                            <p>Dear ${payment.owner_name},</p>
-                            <p>This is a reminder that payments totaling <strong>Rs. ${parseFloat(totalRes.rows[0].total).toLocaleString()}</strong> for animal <strong>${payment.tag_number}</strong> are now <strong>OVERDUE</strong>.</p>
-                            <p>Please arrange payment immediately.</p>
-                            <p>Thank you.</p>
-                        `
-                    });
-                    await db.query(
-                        `UPDATE payments SET reminder_sent = TRUE WHERE tenant_id = $1 AND cattle_id = $2 AND status = 'OVERDUE'`,
-                        [req.tenantId, payment.cattle_id]
-                    );
-                    emailsSent++;
-
-                    // Send Push
-                    const { sendToEmail } = require('../services/notificationService');
-                    sendToEmail(
-                        payment.owner_email,
-                        `Payment Overdue - ${payment.tag_number}`,
-                        `Payments totaling Rs. ${parseFloat(totalRes.rows[0].total).toLocaleString()} are OVERDUE.`
-                    ).catch(e => console.error("Push failed", e));
-
-                } catch (e) { console.error(e); }
-            }
-        }
-
-        res.json({
-            overdueCount: result.rowCount,
-            emailsSent,
-            message: `Daily checks complete. Updated ${result.rowCount} items to Overdue. Sent ${emailsSent} emails.`
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to run daily checks' });
-    }
-});
 
 module.exports = router;

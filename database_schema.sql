@@ -414,7 +414,25 @@ CREATE TABLE public.payments (
     notes text,
     reminder_sent boolean DEFAULT false,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    billing_period_start date,
+    billing_period_end date
+);
+
+
+--
+-- Name: payment_action_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.payment_action_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    cattle_id uuid NOT NULL,
+    token character varying(255) NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    used_at timestamp without time zone,
+    used_action character varying(20),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -1047,6 +1065,22 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: payment_action_tokens payment_action_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_action_tokens
+    ADD CONSTRAINT payment_action_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: payment_action_tokens payment_action_tokens_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_action_tokens
+    ADD CONSTRAINT payment_action_tokens_token_key UNIQUE (token);
+
+
+--
 -- Name: plan_features plan_features_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1384,6 +1418,13 @@ CREATE INDEX idx_medical_tenant_type ON public.medical_inventory USING btree (te
 
 
 --
+-- Name: idx_payment_action_tokens_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_payment_action_tokens_token ON public.payment_action_tokens USING btree (token);
+
+
+--
 -- Name: idx_payments_due_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1638,6 +1679,22 @@ ALTER TABLE ONLY public.payments
 
 ALTER TABLE ONLY public.payments
     ADD CONSTRAINT payments_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payment_action_tokens payment_action_tokens_cattle_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_action_tokens
+    ADD CONSTRAINT payment_action_tokens_cattle_id_fkey FOREIGN KEY (cattle_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payment_action_tokens payment_action_tokens_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_action_tokens
+    ADD CONSTRAINT payment_action_tokens_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --

@@ -6,16 +6,20 @@ This is the developer-facing record — see `FarmXpert_FXV6_Change_Tracking.xlsx
 
 ## 2026-07-18
 
-### Fixed
-- **Feed Management**: daily feed processing (`/process-daily`, `/process-multiple-days`) never deducted `ROUGHAGE` or `CONCENTRATE_FIXED` package items from inventory — only ratio-based `CONCENTRATE` items were ever subtracted, even though their cost was already counted correctly in every financial report. Extracted the correct per-animal consumption calc into a shared `computeAnimalFeedConsumption()`. (`52ecdc0`)
-- **Feed Management**: `feed_items.price_history` was never an actual database column. Despite the frontend computing and sending a `priceHistory` array on every price change, the backend silently dropped it on every create/update — the "Market Price Trends" chart has likely never shown real data. Added the column and wired persistence. (`164c76a`)
-- **Feed Management**: historical feed-cost backfill (`feedCostSync.js`) always priced backfilled days at *today's* rate. Now resolves the price actually in effect on each day from `price_history`. (`164c76a`)
-
 ### Added
+- **Billing & Payments**: reworked the billing cycle to be calendar-month aligned, anchored to each animal's registration date, with a prorated first invoice for a partial month. Added an automated monthly check (09:00 on the 2nd of every month) that emails the farm owner a report — HTML, PDF, and CSV — of everything due that cycle, with one-click "Payment Received" / "Still Pending" links that update status directly from the email, no login required (same single-use-token pattern as password reset / email verification). Whichever way the owner responds, the animal owner gets notified automatically, CC'ing the farm owner. See `BILLING_PAYMENTS_CHECKLIST.md`. (`server/jobs/billingProcessor.js`, `billingReportSender.js`, `billingScheduler.js`; `server/routes/paymentActions.js`; `components/PaymentActionResult.tsx`)
 - **Feed Management**: automated nightly cron (`node-cron`, 00:15 daily) runs the same processing logic as the manual "Process Today's Feed" button, for every tenant — removes reliance on someone remembering to click it. Per-tenant error isolation; skips (not errors) tenants already processed or with no active animals. (`164c76a`)
 - **Feed Management**: low-stock email/WhatsApp alerts now also fire immediately after processing pushes an item below threshold, not only when an item is manually edited. (`164c76a`)
 - `FEED_MANAGEMENT_CHECKLIST.md` — tracks 6 best-practice recommendations for the module; 3 done, 3 backlog with reasons.
-- 15 new backend tests: roughage+concentrate deduction, price history persistence, cron skip/process/error-isolation behavior.
+- 28 new backend tests across both features: roughage+concentrate deduction, price history persistence, feed cron skip/process/error-isolation, billing proration/idempotency/legacy-transition, single-use action token enforcement, billing cron per-tenant isolation.
+
+### Fixed
+- **Billing & Payments**: `cattle.js` had its own legacy invoice-generation hook firing on animal registration, using incompatible non-calendar-aligned math — it conflicted with the new generator and was removed.
+- **Billing & Payments**: a silent off-by-one-day bug from reading `pg`-returned `date` columns via `.toISOString()` (which converts local-midnight `Date` objects to UTC, shifting the date backward in this server's +3 timezone) — was producing an extra invoice per animal. Fixed by always reading dates through their local getters.
+- **Billing & Payments**: removed the `check-overdue` payments route — confirmed unused by the frontend, and its logic is now correctly subsumed by the new monthly generator, avoiding two overdue-marking implementations drifting apart.
+- **Feed Management**: daily feed processing (`/process-daily`, `/process-multiple-days`) never deducted `ROUGHAGE` or `CONCENTRATE_FIXED` package items from inventory — only ratio-based `CONCENTRATE` items were ever subtracted, even though their cost was already counted correctly in every financial report. Extracted the correct per-animal consumption calc into a shared `computeAnimalFeedConsumption()`. (`52ecdc0`)
+- **Feed Management**: `feed_items.price_history` was never an actual database column. Despite the frontend computing and sending a `priceHistory` array on every price change, the backend silently dropped it on every create/update — the "Market Price Trends" chart has likely never shown real data. Added the column and wired persistence. (`164c76a`)
+- **Feed Management**: historical feed-cost backfill (`feedCostSync.js`) always priced backfilled days at *today's* rate. Now resolves the price actually in effect on each day from `price_history`. (`164c76a`)
 
 ## 2026-07-16
 

@@ -8,6 +8,7 @@ import { AuthPage } from './components/AuthPage';
 import { Cattle, FeedItem, ViewState, Tenant, DeletionRequest, UserRole, FeedPackage } from './types';
 import { api } from './services/api';
 import { Loading } from './components/Loading';
+import { PaymentActionResult, PaymentActionState as PaymentActionStateType } from './components/PaymentActionResult';
 
 // Lazy-loaded: these pull in heavy deps (recharts, jspdf, html2canvas, xlsx) and are
 // only needed after login, so keeping them out of the initial bundle matters most
@@ -46,6 +47,7 @@ export default function App() {
   const [appView, setAppView] = useState<AppView>('landing');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [resetToken, setResetToken] = useState<string | null>(null);
+  const [paymentActionState, setPaymentActionState] = useState<PaymentActionStateType | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -95,6 +97,8 @@ export default function App() {
       setIsCheckingAuth(false);
     } else if (action === '/verify-email' && token) {
       verifyEmail(token);
+    } else if (action === '/payment-action' && token) {
+      handlePaymentAction(token, params.get('action') || '');
     } else {
       const savedToken = localStorage.getItem('farmxpert_token');
       if (savedToken) {
@@ -120,6 +124,19 @@ export default function App() {
     window.history.replaceState({}, '', '/');
     setAppView('auth');
     setAuthMode('login');
+    setIsCheckingAuth(false);
+  };
+
+  const handlePaymentAction = async (token: string, action: string) => {
+    try {
+      const res = await fetch(`/api/payment-actions?token=${encodeURIComponent(token)}&action=${encodeURIComponent(action)}`);
+      const data = await res.json();
+      setPaymentActionState(data);
+    } catch (err) {
+      console.error('Payment action error:', err);
+      setPaymentActionState({ ok: false, reason: 'SERVER_ERROR' });
+    }
+    window.history.replaceState({}, '', '/');
     setIsCheckingAuth(false);
   };
 
@@ -311,6 +328,10 @@ export default function App() {
   const onDataRefresh = () => {
     if (tenant) refreshData(tenant.id);
   };
+
+  if (paymentActionState) {
+    return <PaymentActionResult state={paymentActionState} />;
+  }
 
   if (isCheckingAuth) {
     if (isCheckingAuth) {

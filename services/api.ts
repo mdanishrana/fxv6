@@ -521,13 +521,6 @@ export const api = {
             }),
             async () => ({ message: 'Generated monthly payments' })
         ),
-        checkOverdue: (tenantId: string) => handleRequest(
-            fetch(`${API_URL}/payments/check-overdue`, {
-                method: 'POST',
-                headers: getHeaders(tenantId)
-            }),
-            async () => ({ overdueCount: 0, emailsSent: 0 })
-        ),
         getSummary: (tenantId: string) => handleRequest(
             fetch(`${API_URL}/payments/summary`, { headers: getHeaders(tenantId) }),
             async () => []

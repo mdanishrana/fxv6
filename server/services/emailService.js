@@ -20,7 +20,7 @@ const transporter = GMAIL_APP_PASSWORD ? nodemailer.createTransport({
     }
 }) : null;
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, html, extra = {}) => {
     if (!isEmailConfigured() || !transporter) {
         console.log(`Email NOT sent (no credentials configured): To=${to}, Subject=${subject}`);
         return { success: false, error: 'Email service not configured. Please set GMAIL_APP_PASSWORD.' };
@@ -33,6 +33,8 @@ const sendEmail = async (to, subject, html) => {
             subject,
             html
         };
+        if (extra.cc) mailOptions.cc = extra.cc;
+        if (extra.attachments) mailOptions.attachments = extra.attachments;
 
         console.log(`Attempting to send email to: ${to}`);
         const result = await transporter.sendMail(mailOptions);
@@ -307,6 +309,118 @@ const sendLowStockAlertEmail = async (ownerEmail, ownerName, farmName, lowStockI
     return sendEmail(ownerEmail, `⚠️ URGENT: Low Feed Stock Alert - ${farmName}`, html);
 };
 
+// rows: [{ tagNumber, ownerName, totalDue, monthsDue, status, receivedUrl, pendingUrl }]
+const sendMonthlyBillingReportEmail = async (ownerEmail, ownerName, farmName, cycleLabel, rows, currency, attachments) => {
+    const totalDue = rows.reduce((sum, r) => sum + r.totalDue, 0);
+
+    const rowsHtml = rows.map(r => `
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${r.tagNumber}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${r.ownerName}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${currency} ${r.totalDue.toLocaleString()}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                <span style="padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: bold; ${r.status === 'OVERDUE' ? 'background:#fee2e2;color:#991b1b;' : 'background:#fef3c7;color:#92400e;'}">${r.status}</span>
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">
+                <a href="${r.receivedUrl}" style="display:inline-block; background:#10b981; color:white; padding:6px 12px; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; margin-right:6px;">Payment Received</a>
+                <a href="${r.pendingUrl}" style="display:inline-block; background:#f1f5f9; color:#475569; padding:6px 12px; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; border:1px solid #cbd5e1;">Still Pending</a>
+            </td>
+        </tr>
+    `).join('');
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e2e8f0; }
+            .table-container { background: white; border-radius: 8px; overflow: hidden; margin: 20px 0; border: 1px solid #e2e8f0; overflow-x: auto; }
+            .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            .data-table th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;">Monthly Billing Report</h1>
+                <p style="margin:10px 0 0; opacity: 0.85;">${farmName} &middot; ${cycleLabel}</p>
+            </div>
+            <div class="content">
+                <h2 style="margin-top: 0;">Dear ${ownerName},</h2>
+                <p><strong>${rows.length}</strong> animal(s) have a payment due this cycle, totaling <strong>${currency} ${totalDue.toLocaleString()}</strong>.</p>
+                <p style="color:#64748b; font-size: 13px;">Click a button below to update an animal's status directly - no login needed. A full PDF and CSV report is attached.</p>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Tag</th><th>Owner</th><th>Amount Due</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="footer">
+                <p>This is an automated monthly billing report from FarmXpert.</p>
+                <p>© ${new Date().getFullYear()} FarmXpert - Pakistan's Premier Farm Management Solution</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return sendEmail(ownerEmail, `Monthly Billing Report - ${farmName} (${cycleLabel})`, html, { attachments });
+};
+
+const sendPaymentStatusUpdateEmail = async (animalOwnerEmail, animalOwnerName, farmOwnerEmail, farmName, animalTag, action, amountDue, currency) => {
+    const isReceived = action === 'received';
+    const subject = isReceived
+        ? `Payment Confirmed - ${animalTag}`
+        : `Payment Reminder - ${animalTag}`;
+
+    const bodyHtml = isReceived
+        ? `<p>Good news! ${farmName} has confirmed that your payment for animal <strong>${animalTag}</strong> has been received. Thank you for your prompt payment.</p>`
+        : `<p>This is a reminder from ${farmName} that your payment of <strong>${currency} ${amountDue.toLocaleString()}</strong> for animal <strong>${animalTag}</strong> is still pending. Please arrange payment at your earliest convenience.</p>`;
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: ${isReceived ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e2e8f0; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;">${isReceived ? 'Payment Confirmed' : 'Payment Reminder'}</h1>
+                <p style="margin:10px 0 0; opacity: 0.9;">${farmName}</p>
+            </div>
+            <div class="content">
+                <h2 style="margin-top: 0;">Dear ${animalOwnerName},</h2>
+                ${bodyHtml}
+                <p>Thank you.</p>
+            </div>
+            <div class="footer">
+                <p>© ${new Date().getFullYear()} FarmXpert - Pakistan's Premier Farm Management Solution</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return sendEmail(animalOwnerEmail, subject, html, { cc: farmOwnerEmail });
+};
+
 const sendAnimalReportEmail = async (email, name, reportData) => {
     const html = `
     <!DOCTYPE html>
@@ -449,5 +563,7 @@ module.exports = {
     sendWelcomeEmail,
     sendAnimalOwnerWelcomeEmail,
     sendAnimalReportEmail,
-    sendLowStockAlertEmail
+    sendLowStockAlertEmail,
+    sendMonthlyBillingReportEmail,
+    sendPaymentStatusUpdateEmail
 };
