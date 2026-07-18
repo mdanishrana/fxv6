@@ -244,8 +244,10 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
         return Array.from(types);
     }, [selectedCattleIds, cattle]);
 
-    const isOnlyCattle = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Cow', 'Bull', 'Heifer', 'Calf'].includes(t));
-    const isOnlySmall = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Goat', 'Kid'].includes(t));
+    const isOnlyCattle = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Cow', 'Bull', 'Heifer', 'Calf', 'Male Calf', 'Female Calf'].includes(t));
+    // Sheep vaccine needs mirror goats' in this app's protocol library (PAKISTAN_PROTOCOLS
+    // already groups them under one "Goats / Sheep" target), so they share this bucket.
+    const isOnlySmall = selectedAnimalTypes.length > 0 && selectedAnimalTypes.every(t => ['Goat', 'Kid', 'Buck', 'Doe', 'Male Kid', 'Female Kid', 'Ram', 'Ewe', 'Male Lamb', 'Female Lamb'].includes(t));
 
     const availableVaccines = useMemo(() => {
         return medicalInventory.filter(item => {
@@ -299,12 +301,28 @@ export const VaccinationReport: React.FC<VaccinationReportProps> = ({ cattle, te
                                     className="px-3 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                                 >
                                     <option value="All">All Types</option>
-                                    <option value="Cow">Cow</option>
-                                    <option value="Bull">Bull</option>
-                                    <option value="Heifer">Heifer</option>
-                                    <option value="Goat">Goat</option>
-                                    <option value="Calf">Calf</option>
-                                    <option value="Kid">Kid</option>
+                                    <optgroup label="Cattle">
+                                        <option value="Cow">Cow</option>
+                                        <option value="Bull">Bull</option>
+                                        <option value="Heifer">Heifer</option>
+                                        <option value="Calf">Calf</option>
+                                        <option value="Male Calf">Male Calf</option>
+                                        <option value="Female Calf">Female Calf</option>
+                                    </optgroup>
+                                    <optgroup label="Goats">
+                                        <option value="Goat">Goat</option>
+                                        <option value="Kid">Kid</option>
+                                        <option value="Buck">Buck</option>
+                                        <option value="Doe">Doe</option>
+                                        <option value="Male Kid">Male Kid</option>
+                                        <option value="Female Kid">Female Kid</option>
+                                    </optgroup>
+                                    <optgroup label="Sheep">
+                                        <option value="Ram">Ram</option>
+                                        <option value="Ewe">Ewe</option>
+                                        <option value="Male Lamb">Male Lamb</option>
+                                        <option value="Female Lamb">Female Lamb</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>

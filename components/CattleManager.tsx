@@ -13,6 +13,11 @@ import { checkVaccineEligibility } from '../utils/vaccinationEligibility';
 import { PedigreeTree } from './PedigreeTree';
 import { appEvents } from '../utils/events';
 import { PAKISTAN_PROTOCOLS } from './VaccinationProtocols';
+import { NEW_SCHEME_TYPE_META, NEW_SCHEME_TYPES_BY_SPECIES } from '../utils/animalTagging';
+
+// Types offered to legacy-scheme tenants (unchanged from before the global
+// sequential tagging rollout) - new-scheme tenants get NEW_SCHEME_TYPES_BY_SPECIES instead.
+const LEGACY_ANIMAL_TYPES: AnimalType[] = [AnimalType.COW, AnimalType.BULL, AnimalType.HEIFER, AnimalType.GOAT, AnimalType.CALF, AnimalType.KID];
 
 interface CattleManagerProps {
     cattle: Cattle[];
@@ -101,6 +106,11 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
     const [showEndLactationModal, setShowEndLactationModal] = useState(false);
     const [endLactationForm, setEndLactationForm] = useState({ endDate: new Date().toISOString().split('T')[0], reason: '' });
     const [reportTab, setReportTab] = useState<'weight' | 'medical' | 'alerts' | 'financial' | 'breeding' | 'info' | 'pedigree' | 'notes' | 'gallery' | 'documents'>('weight');
+
+    // New-scheme tenants (global sequential PREFIX+4-digit tagging): server-computed
+    // preview of the tag the next registration will actually receive.
+    const isNewTagScheme = tenant.legacyTagScheme === false;
+    const [newSchemeTagPreview, setNewSchemeTagPreview] = useState('');
 
     // Breeding & Lactation State
     const [activeLactation, setActiveLactation] = useState<any>(null);
@@ -360,10 +370,25 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
             return match ? parseInt(match[0], 10) : 0;
         });
         const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 1000;
-        return `${prefix}${maxNum + 1} `;
+        return `${prefix}${maxNum + 1}`;
+    };
+
+    const fetchNewSchemeTagPreview = async (type: AnimalType) => {
+        try {
+            const res = await api.cattle.getNextTag(tenant.id, type);
+            setNewSchemeTagPreview(res.preview || '');
+        } catch {
+            setNewSchemeTagPreview('');
+        }
     };
 
     const handleAnimalTypeChange = (type: AnimalType) => {
+        if (isNewTagScheme) {
+            const gender = NEW_SCHEME_TYPE_META[type]?.gender ?? Gender.MALE;
+            setNewAnimal(prev => ({ ...prev, type, gender, tagNumber: '' }));
+            fetchNewSchemeTagPreview(type);
+            return;
+        }
         const gender = (type === AnimalType.COW || type === AnimalType.HEIFER) ? Gender.FEMALE : Gender.MALE;
         const nextTag = generateNextTag(type);
         setNewAnimal(prev => ({ ...prev, type: type, gender: gender, tagNumber: nextTag }));
@@ -371,8 +396,14 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
 
     const handleOpenRegisterModal = () => {
         const defaultType = AnimalType.BULL;
-        const nextTag = generateNextTag(defaultType);
-        setNewAnimal({ ...INITIAL_FORM_STATE, type: defaultType, tagNumber: nextTag });
+        if (isNewTagScheme) {
+            const gender = NEW_SCHEME_TYPE_META[defaultType]?.gender ?? Gender.MALE;
+            setNewAnimal({ ...INITIAL_FORM_STATE, type: defaultType, gender, tagNumber: '' });
+            fetchNewSchemeTagPreview(defaultType);
+        } else {
+            const nextTag = generateNextTag(defaultType);
+            setNewAnimal({ ...INITIAL_FORM_STATE, type: defaultType, tagNumber: nextTag });
+        }
         setEditingId(null);
         setShowAddModal(true);
     };
@@ -2120,19 +2151,30 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                             className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                                             disabled={!!editingId}
                                         >
-                                            {Object.values(AnimalType).map(t => <option key={t} value={t}>{t}</option>)}
+                                            {isNewTagScheme
+                                                ? NEW_SCHEME_TYPES_BY_SPECIES.map(group => (
+                                                    <optgroup key={group.species} label={group.species}>
+                                                        {group.types.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </optgroup>
+                                                ))
+                                                : LEGACY_ANIMAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tag Number <span className="text-red-500">*</span></label>
                                         <input
                                             type="text"
-                                            value={newAnimal.tagNumber}
+                                            value={isNewTagScheme && !editingId ? (newSchemeTagPreview || 'Generating...') : newAnimal.tagNumber}
                                             onChange={(e) => setNewAnimal({ ...newAnimal, tagNumber: e.target.value })}
-                                            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900/50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                                            readOnly={isNewTagScheme && !editingId}
+                                            className={`w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900/50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all ${isNewTagScheme && !editingId ? 'opacity-70 cursor-not-allowed' : ''}`}
                                             placeholder="e.g. B1001"
                                         />
-                                        {!editingId && <p className="text-xs text-slate-400 mt-1.5 mx-1">Auto-generated based on type. Can be edited.</p>}
+                                        {!editingId && (
+                                            <p className="text-xs text-slate-400 mt-1.5 mx-1">
+                                                {isNewTagScheme ? 'Auto-generated - one running sequence across every animal type on your farm.' : 'Auto-generated based on type. Can be edited.'}
+                                            </p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Name (Optional)</label>

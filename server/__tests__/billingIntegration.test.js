@@ -24,6 +24,10 @@ beforeAll(async () => {
     // Give the tenant an owner_email so the monthly report has somewhere to send to.
     const tRes = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${tenant.token}`);
     await db.query('UPDATE tenants SET owner_email = $1 WHERE id = $2', [tRes.body.user.email, tenant.tenantId]);
+    // This file asserts on the exact tagNumber values it sends (BILL-TEST-*) - that's
+    // legacy-scheme behavior. New tenants default to the new global-sequence scheme
+    // (see tagGeneration.test.js), so pin this fixture to legacy explicitly.
+    await db.query('UPDATE tenants SET legacy_tag_scheme = true WHERE id = $1', [tenant.tenantId]);
 });
 
 afterAll(async () => {

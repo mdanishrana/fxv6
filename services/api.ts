@@ -215,6 +215,12 @@ export const api = {
             }),
             () => MockService.cattle.update(tenantId, id, data)
         ),
+        getNextTag: async (tenantId: string, type: string): Promise<{ legacyTagScheme: boolean; preview?: string }> => {
+            if (USE_MOCK) return { legacyTagScheme: true };
+            const res = await fetch(`${API_URL}/cattle/next-tag?type=${encodeURIComponent(type)}`, { headers: getHeaders(tenantId) });
+            if (!res.ok) return { legacyTagScheme: true };
+            return res.json();
+        },
         delete: (tenantId: string, id: string) => handleRequest(
             fetch(`${API_URL}/cattle/${id}`, {
                 method: 'DELETE',

@@ -12,9 +12,25 @@ export enum CattleStatus {
 }
 
 export enum AnimalType {
+  // Cattle
   COW = 'Cow',
   BULL = 'Bull',
   HEIFER = 'Heifer',
+  MALE_CALF = 'Male Calf',
+  FEMALE_CALF = 'Female Calf',
+  // Goats
+  BUCK = 'Buck',
+  DOE = 'Doe',
+  MALE_KID = 'Male Kid',
+  FEMALE_KID = 'Female Kid',
+  // Sheep
+  RAM = 'Ram',
+  EWE = 'Ewe',
+  MALE_LAMB = 'Male Lamb',
+  FEMALE_LAMB = 'Female Lamb',
+  // Legacy values - kept so already-registered animals keep displaying/filtering
+  // correctly. No longer offered in the registration form; superseded by the
+  // gendered types above.
   GOAT = 'Goat',
   CALF = 'Calf',
   KID = 'Kid'
@@ -110,6 +126,7 @@ export interface Tenant {
   herdValueRate?: number; // Per kg rate for herd value calculation (default: 1100 PKR)
   logoUrl?: string;
   weightUnit?: string;
+  legacyTagScheme?: boolean; // true = keep old per-type client-guessed tag numbering; false = new global sequential PREFIX+4-digit scheme
 }
 
 // --- Domain Types ---

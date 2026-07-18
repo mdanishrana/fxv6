@@ -133,7 +133,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     try {
         const userResult = await db.query(
-            `SELECT u.*, t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches
+            `SELECT u.*, t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches, t.legacy_tag_scheme as tenant_legacy_tag_scheme
              FROM users u
              LEFT JOIN tenants t ON u.tenant_id = t.id
              WHERE u.email = $1`,
@@ -188,7 +188,8 @@ router.post('/login', loginLimiter, async (req, res) => {
                 logoUrl: user.tenant_logo_url,
                 currency: user.tenant_currency || 'PKR',
                 weightUnit: user.tenant_weight_unit || 'kg',
-                branches: user.tenant_branches || []
+                branches: user.tenant_branches || [],
+                legacyTagScheme: user.tenant_legacy_tag_scheme !== false
             } : null
         });
 
@@ -356,7 +357,7 @@ router.get('/me', async (req, res) => {
 
         const userResult = await db.query(
             `SELECT u.id, u.name, u.email, u.role, u.is_verified,
-                    t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches
+                    t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches, t.legacy_tag_scheme as tenant_legacy_tag_scheme
              FROM users u
              LEFT JOIN tenants t ON u.tenant_id = t.id
              WHERE u.id = $1`,
@@ -387,7 +388,8 @@ router.get('/me', async (req, res) => {
                 logoUrl: user.tenant_logo_url,
                 currency: user.tenant_currency || 'PKR',
                 weightUnit: user.tenant_weight_unit || 'kg',
-                branches: user.tenant_branches || []
+                branches: user.tenant_branches || [],
+                legacyTagScheme: user.tenant_legacy_tag_scheme !== false
             } : null
         });
 

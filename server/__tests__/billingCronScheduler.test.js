@@ -37,6 +37,9 @@ beforeAll(async () => {
 
     const meRes = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${billableTenant.token}`);
     await db.query('UPDATE tenants SET owner_email = $1 WHERE id = $2', [meRes.body.user.email, billableTenant.tenantId]);
+    // Pin to legacy scheme - this file isn't testing the new tag-generation feature
+    // and expects its 'CRON-BILL-001' tag to persist as-is (see tagGeneration.test.js).
+    await db.query('UPDATE tenants SET legacy_tag_scheme = true WHERE id = $1', [billableTenant.tenantId]);
 });
 
 afterAll(async () => {

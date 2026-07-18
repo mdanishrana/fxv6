@@ -11,6 +11,7 @@ const generateRandomToken = () => {
 };
 
 const { syncAnimalFeedCosts } = require('../utils/feedCostSync');
+const { formatNewSchemeTag } = require('../utils/animalTagging');
 
 const mapCattleRow = (row) => {
     if (!row) return null;
@@ -66,6 +67,29 @@ router.use(authMiddleware);
 router.use((req, res, next) => {
     req.tenantId = req.user.tenantId;
     next();
+});
+
+// GET the tag this tenant's next registered animal would receive, for a given
+// type - preview only, does not consume the sequence. Legacy-scheme tenants get
+// legacyTagScheme: true and no preview (the frontend keeps its own client-side
+// suggestion logic for them, unchanged).
+router.get('/next-tag', async (req, res) => {
+    try {
+        const tenantResult = await db.query('SELECT legacy_tag_scheme, next_animal_seq FROM tenants WHERE id = $1', [req.tenantId]);
+        if (tenantResult.rows.length === 0) return res.status(404).json({ error: 'Tenant not found' });
+        const tenant = tenantResult.rows[0];
+
+        if (tenant.legacy_tag_scheme) {
+            return res.json({ legacyTagScheme: true });
+        }
+
+        const type = req.query.type;
+        const preview = type ? formatNewSchemeTag(type, tenant.next_animal_seq) : null;
+        res.json({ legacyTagScheme: false, nextSeq: tenant.next_animal_seq, preview });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to compute next tag' });
+    }
 });
 
 // GET all cattle for tenant
@@ -197,7 +221,7 @@ router.post('/', async (req, res) => {
     const c = req.body;
     try {
         // Enforce FREE tier animal limit of 5
-        const tenantResult = await db.query('SELECT tier FROM tenants WHERE id = $1', [req.tenantId]);
+        const tenantResult = await db.query('SELECT tier, legacy_tag_scheme FROM tenants WHERE id = $1', [req.tenantId]);
         if (tenantResult.rows.length > 0 && tenantResult.rows[0].tier === 'FREE') {
             const countResult = await db.query('SELECT COUNT(*) FROM cattle WHERE tenant_id = $1', [req.tenantId]);
             if (parseInt(countResult.rows[0].count) >= 5) {
@@ -209,6 +233,20 @@ router.post('/', async (req, res) => {
         }
 
         let finalTagNumber = c.tagNumber;
+
+        // New-scheme tenants (registered after the global sequential tagging rollout):
+        // ignore any client-supplied tag and assign PREFIX+4-digit atomically from the
+        // tenant's own running counter, so the number can never collide or skip under
+        // concurrent registrations - unlike the old client-side "guess the max" approach.
+        if (tenantResult.rows.length > 0 && tenantResult.rows[0].legacy_tag_scheme === false) {
+            const seqResult = await db.query(
+                `UPDATE tenants SET next_animal_seq = next_animal_seq + 1 WHERE id = $1 RETURNING next_animal_seq`,
+                [req.tenantId]
+            );
+            const seq = seqResult.rows[0].next_animal_seq - 1;
+            finalTagNumber = formatNewSchemeTag(c.type, seq);
+        }
+
         let result;
         let maxRetries = 3;
 

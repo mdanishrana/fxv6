@@ -21,6 +21,11 @@ async function registerTenant() {
 
 beforeAll(async () => {
     tenant = await registerTenant();
+    // This file's assertions assume the client-supplied tagNumber is used as-is
+    // (including the duplicate-tag collision fallback below) - that's the legacy
+    // tag scheme's behavior. New tenants default to the new global-sequence scheme
+    // (see tagGeneration.test.js), so pin this fixture to legacy explicitly.
+    await db.query('UPDATE tenants SET legacy_tag_scheme = true WHERE id = $1', [tenant.tenantId]);
 });
 
 afterAll(async () => {
