@@ -175,7 +175,8 @@ export default function App() {
             logoUrl: data.tenant.logoUrl || '',
             status: data.tenant.status || 'ACTIVE',
             users: [],
-            branches: data.tenant.branches || []
+            branches: data.tenant.branches || [],
+            legacyTagScheme: data.tenant.legacyTagScheme
           };
           setTenant(tenantData);
           setAppView('app');
@@ -195,7 +196,8 @@ export default function App() {
             logoUrl: data.tenant.logoUrl || '',
             status: data.tenant.status || 'ACTIVE',
             users: [],
-            branches: data.tenant.branches || []
+            branches: data.tenant.branches || [],
+            legacyTagScheme: data.tenant.legacyTagScheme
           };
           setTenant(tenantData);
           setAppView('app');
@@ -251,7 +253,8 @@ export default function App() {
         logoUrl: tenantData.logoUrl || '',
         status: 'ACTIVE',
         users: [],
-        branches: tenantData.branches || []
+        branches: tenantData.branches || [],
+        legacyTagScheme: tenantData.legacyTagScheme
       };
       setTenant(tenant);
       setAppView('app');
@@ -271,7 +274,8 @@ export default function App() {
         logoUrl: tenantData.logoUrl || '',
         status: 'ACTIVE',
         users: [],
-        branches: tenantData.branches || []
+        branches: tenantData.branches || [],
+        legacyTagScheme: tenantData.legacyTagScheme
       };
       setTenant(tenant);
       setAppView('app');
@@ -391,7 +395,8 @@ export default function App() {
               onLoginAsTenant={(t) => {
                 const tenantData: Tenant = {
                   ...t,
-                  users: t.users || []
+                  users: t.users || [],
+                  legacyTagScheme: t.legacyTagScheme ?? (t as any).legacy_tag_scheme
                 };
                 setTenant(tenantData);
                 setCurrentUserRole('OWNER');
