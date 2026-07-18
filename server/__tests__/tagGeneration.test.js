@@ -103,14 +103,40 @@ describe('respectProvidedTag lets bulk CSV import keep its own tags', () => {
         expect(res.body.tagNumber).toBe('MY-OWN-EAR-TAG-001');
     });
 
-    it('does not consume the auto-sequence counter', async () => {
+    it('leaves the counter alone when the respected tag has no trailing number', async () => {
         const before = await db.query('SELECT next_animal_seq FROM tenants WHERE id = $1', [tenant.tenantId]);
         await request(app)
             .post('/api/cattle')
             .set('Authorization', `Bearer ${tenant.token}`)
-            .send({ tagNumber: 'MY-OWN-EAR-TAG-002', type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100, respectProvidedTag: true });
+            .send({ tagNumber: 'MY-OWN-EAR-TAG-NO-NUMBER', type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100, respectProvidedTag: true });
         const after = await db.query('SELECT next_animal_seq FROM tenants WHERE id = $1', [tenant.tenantId]);
         expect(after.rows[0].next_animal_seq).toBe(before.rows[0].next_animal_seq);
+    });
+
+    it('advances the counter past a respected tag\'s number, so the next auto-generated tag continues the single sequence rather than colliding with the imported range', async () => {
+        // Fresh tenant so this isn't order-dependent on prior tests' effect on the shared one.
+        const freshTenant = await registerTenant();
+        try {
+            for (const tag of ['B0001', 'C0037', 'KF0072']) {
+                const res = await request(app)
+                    .post('/api/cattle')
+                    .set('Authorization', `Bearer ${freshTenant.token}`)
+                    .send({ tagNumber: tag, type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100, respectProvidedTag: true });
+                expect(res.body.tagNumber).toBe(tag);
+            }
+
+            const nextTag = await request(app)
+                .post('/api/cattle')
+                .set('Authorization', `Bearer ${freshTenant.token}`)
+                .send({ tagNumber: 'ignored', type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100 });
+            expect(nextTag.body.tagNumber).toBe('B0073');
+        } finally {
+            await db.query('DELETE FROM cattle WHERE tenant_id = $1', [freshTenant.tenantId]);
+            await db.query('DELETE FROM sessions WHERE user_id = $1', [freshTenant.userId]);
+            await db.query('DELETE FROM email_verification_tokens WHERE user_id = $1', [freshTenant.userId]);
+            await db.query('DELETE FROM users WHERE id = $1', [freshTenant.userId]);
+            await db.query('DELETE FROM tenants WHERE id = $1', [freshTenant.tenantId]);
+        }
     });
 });
 

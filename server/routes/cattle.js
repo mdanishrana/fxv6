@@ -297,6 +297,22 @@ router.post('/', async (req, res) => {
 
         const newCattle = result.rows[0];
 
+        // A respected tag (e.g. from CSV import) is outside the auto-sequence, but if
+        // it happens to end in a number - which is exactly what the new tagging
+        // convention's own tags look like - advance the counter past it. Otherwise the
+        // next interactively-registered animal would start back at 0001 and collide
+        // with the imported range instead of continuing the single running sequence.
+        if (c.respectProvidedTag && tenantResult.rows.length > 0 && tenantResult.rows[0].legacy_tag_scheme === false) {
+            const match = String(newCattle.tag_number).match(/(\d+)$/);
+            if (match) {
+                const usedNum = parseInt(match[1], 10);
+                await db.query(
+                    `UPDATE tenants SET next_animal_seq = GREATEST(next_animal_seq, $2) WHERE id = $1`,
+                    [req.tenantId, usedNum + 1]
+                );
+            }
+        }
+
         if (c.ownerEmail && c.ownerName) {
             try {
                 const existingUser = await db.query(
