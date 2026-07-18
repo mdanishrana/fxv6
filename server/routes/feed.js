@@ -10,6 +10,43 @@ router.use((req, res, next) => {
     next();
 });
 
+// Computes one animal's actual daily feed consumption, itemized by feed_item_id.
+// Mirrors the cost logic in utils/financials.ts and server/utils/feedCostSync.js:
+// ROUGHAGE/CONCENTRATE_FIXED items are a fixed kg/day amount on top of the
+// weight-based intake budget, which only governs the ratio-based CONCENTRATE mix.
+function computeAnimalFeedConsumption(animal) {
+    const weight = parseFloat(animal.current_weight) || 0;
+    const intakePercent = parseFloat(animal.daily_intake_percent) || 2.5;
+    const concentrateIntakeKg = weight * (intakePercent / 100);
+
+    const packageItems = animal.package_items || [];
+    const fixedItems = packageItems.filter(i => i.type === 'ROUGHAGE' || i.type === 'CONCENTRATE_FIXED');
+    const concentrateItems = packageItems.filter(i => i.type !== 'ROUGHAGE' && i.type !== 'CONCENTRATE_FIXED');
+    const totalRatio = concentrateItems.reduce((sum, item) => sum + (item.ratioPercent || 0), 0) || 1;
+
+    const itemConsumption = [];
+    let totalIntakeKg = 0;
+
+    for (const item of fixedItems) {
+        const amountKg = (parseFloat(item.manualKgPerFeeding) || 0) * (parseFloat(item.manualFeedings) || 1);
+        if (amountKg > 0) {
+            itemConsumption.push({ feedItemId: item.feedItemId, amountKg });
+            totalIntakeKg += amountKg;
+        }
+    }
+
+    for (const item of concentrateItems) {
+        const ratio = (item.ratioPercent || 0) / totalRatio;
+        const amountKg = concentrateIntakeKg * ratio;
+        if (amountKg > 0) {
+            itemConsumption.push({ feedItemId: item.feedItemId, amountKg });
+        }
+    }
+    totalIntakeKg += concentrateIntakeKg;
+
+    return { weight, totalIntakeKg, itemConsumption };
+}
+
 // --- INGREDIENTS ---
 
 router.get('/items', async (req, res) => {
@@ -318,26 +355,18 @@ router.post('/process-multiple-days', async (req, res) => {
             const dayFeedConsumption = {};
 
             for (const animal of animals) {
-                const weight = parseFloat(animal.current_weight) || 0;
-                const intakePercent = parseFloat(animal.daily_intake_percent) || 2.5;
-                const dailyIntake = weight * (intakePercent / 100);
+                const { weight, totalIntakeKg, itemConsumption } = computeAnimalFeedConsumption(animal);
 
                 totalWeight += weight;
-                totalFeedConsumed += dailyIntake;
+                totalFeedConsumed += totalIntakeKg;
 
-                const packageItems = animal.package_items || [];
-                const totalRatio = packageItems.reduce((sum, item) => sum + (item.ratioPercent || 0), 0) || 1;
-
-                for (const item of packageItems) {
-                    const ratio = (item.ratioPercent || 0) / totalRatio;
-                    const amountKg = dailyIntake * ratio;
-
-                    if (feedInventory[item.feedItemId]) {
-                        if (!dayFeedConsumption[item.feedItemId]) {
-                            dayFeedConsumption[item.feedItemId] = 0;
+                for (const { feedItemId, amountKg } of itemConsumption) {
+                    if (feedInventory[feedItemId]) {
+                        if (!dayFeedConsumption[feedItemId]) {
+                            dayFeedConsumption[feedItemId] = 0;
                         }
-                        dayFeedConsumption[item.feedItemId] += amountKg;
-                        feedInventory[item.feedItemId].totalConsumed += amountKg;
+                        dayFeedConsumption[feedItemId] += amountKg;
+                        feedInventory[feedItemId].totalConsumed += amountKg;
                     }
                 }
             }
@@ -472,28 +501,18 @@ router.post('/process-daily', async (req, res) => {
 
         // Calculate feed consumption for each animal
         for (const animal of animals) {
-            const weight = parseFloat(animal.current_weight) || 0;
-            const intakePercent = parseFloat(animal.daily_intake_percent) || 2.5;
-            const dailyIntake = weight * (intakePercent / 100);
+            const { weight, totalIntakeKg, itemConsumption } = computeAnimalFeedConsumption(animal);
 
             totalWeight += weight;
-            totalFeedConsumed += dailyIntake;
+            totalFeedConsumed += totalIntakeKg;
 
-            const packageItems = animal.package_items || [];
             const itemBreakdown = [];
-
-            // Distribute intake among package items based on their ratioPercent
-            const totalRatio = packageItems.reduce((sum, item) => sum + (item.ratioPercent || 0), 0) || 1;
-
-            for (const item of packageItems) {
-                const ratio = (item.ratioPercent || 0) / totalRatio;
-                const amountKg = dailyIntake * ratio;
-
-                if (feedInventory[item.feedItemId]) {
-                    feedInventory[item.feedItemId].consumed += amountKg;
+            for (const { feedItemId, amountKg } of itemConsumption) {
+                if (feedInventory[feedItemId]) {
+                    feedInventory[feedItemId].consumed += amountKg;
                     itemBreakdown.push({
-                        feedItemId: item.feedItemId,
-                        feedName: feedInventory[item.feedItemId].name,
+                        feedItemId,
+                        feedName: feedInventory[feedItemId].name,
                         amountKg: Math.round(amountKg * 100) / 100
                     });
                 }
@@ -504,7 +523,7 @@ router.post('/process-daily', async (req, res) => {
                 tagNumber: animal.tag_number,
                 weight: weight,
                 packageName: animal.package_name || 'Unassigned',
-                dailyIntake: Math.round(dailyIntake * 100) / 100,
+                dailyIntake: Math.round(totalIntakeKg * 100) / 100,
                 items: itemBreakdown
             });
         }
