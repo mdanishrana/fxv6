@@ -12,6 +12,7 @@ const generateRandomToken = () => {
 
 const { syncAnimalFeedCosts } = require('../utils/feedCostSync');
 const { formatNewSchemeTag, NEW_SCHEME_TYPE_META } = require('../utils/animalTagging');
+const { pgDateToStr } = require('../utils/dateUtils');
 
 const mapCattleRow = (row) => {
     if (!row) return null;
@@ -26,7 +27,7 @@ const mapCattleRow = (row) => {
         ],
         qurbaniDetails: typeof row.qurbani_details === 'string' ? JSON.parse(row.qurbani_details) : row.qurbani_details || null,
         tagNumber: row.tag_number,
-        entryDate: row.entry_date,
+        entryDate: pgDateToStr(row.entry_date),
         entryWeight: parseFloat(row.entry_weight) || 0,
         currentWeight: parseFloat(row.current_weight) || 0,
         targetWeight: row.target_weight !== null && row.target_weight !== undefined ? parseFloat(row.target_weight) : null,
@@ -41,8 +42,8 @@ const mapCattleRow = (row) => {
         imageUrl: row.image_url,
         vaccinationStatus: row.vaccination_status,
         healthStatus: row.health_status || 'Healthy',
-        expectedCalvingDate: row.expected_calving_date,
-        expectedConceivingDate: row.expected_conceiving_date || null,
+        expectedCalvingDate: pgDateToStr(row.expected_calving_date),
+        expectedConceivingDate: pgDateToStr(row.expected_conceiving_date),
         pregnancyType: row.pregnancy_type || null,
         pregnancySireOrEmbryo: row.pregnancy_sire_embryo || null,
         lactationNumber: row.lactation_number ? parseInt(row.lactation_number) : null,
@@ -56,7 +57,7 @@ const mapCattleRow = (row) => {
         motherTag: row.mother_tag || '',
         fatherTag: row.father_tag || '',
         historicalFeedCost: parseFloat(row.historical_feed_cost) || 0,
-        lastFeedLogDate: row.last_feed_log_date,
+        lastFeedLogDate: pgDateToStr(row.last_feed_log_date),
         isLactating: row.is_lactating === true,
         groupId: row.group_id || null,
         branch: row.branch || undefined

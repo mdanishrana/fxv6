@@ -64,6 +64,36 @@ describe('Cattle CRUD', () => {
         expect(cattleId).toBeTruthy();
     });
 
+    it('returns entryDate as the exact plain date sent, not shifted a day by timezone conversion', async () => {
+        // node-postgres parses `date` columns to local-midnight JS Dates; serializing
+        // that straight to JSON (res.json() calls toISOString()) converts to UTC first,
+        // which silently shifts the date backward a day on this server's +3 timezone.
+        // mapCattleRow must read it back through pgDateToStr(), not pass the raw Date.
+        const res = await request(app)
+            .post('/api/cattle')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .set('x-tenant-id', tenant.tenantId)
+            .send({
+                tagNumber: 'CRUD-TEST-ENTRYDATE',
+                type: 'Bull',
+                breed: 'Sahiwal',
+                gender: 'Male',
+                entryDate: '2024-10-25',
+                entryWeight: 200,
+                currentWeight: 220
+            });
+        expect(res.status).toBe(201);
+        expect(res.body.entryDate).toBe('2024-10-25');
+
+        const getRes = await request(app)
+            .get(`/api/cattle/${res.body.id}`)
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .set('x-tenant-id', tenant.tenantId);
+        expect(getRes.body.entryDate).toBe('2024-10-25');
+
+        await db.query('DELETE FROM cattle WHERE id = $1', [res.body.id]);
+    });
+
     it('rejects creating a second animal with the same tag by auto-suffixing rather than erroring', async () => {
         // cattle.js retries with a random suffix on a unique_violation instead of failing outright
         const res = await request(app)
