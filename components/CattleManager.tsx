@@ -13,11 +13,7 @@ import { checkVaccineEligibility } from '../utils/vaccinationEligibility';
 import { PedigreeTree } from './PedigreeTree';
 import { appEvents } from '../utils/events';
 import { PAKISTAN_PROTOCOLS } from './VaccinationProtocols';
-import { NEW_SCHEME_TYPE_META, NEW_SCHEME_TYPES_BY_SPECIES } from '../utils/animalTagging';
-
-// Types offered to legacy-scheme tenants (unchanged from before the global
-// sequential tagging rollout) - new-scheme tenants get NEW_SCHEME_TYPES_BY_SPECIES instead.
-const LEGACY_ANIMAL_TYPES: AnimalType[] = [AnimalType.COW, AnimalType.BULL, AnimalType.HEIFER, AnimalType.GOAT, AnimalType.CALF, AnimalType.KID];
+import { NEW_SCHEME_TYPE_META, NEW_SCHEME_TYPES_BY_SPECIES, LEGACY_ANIMAL_TYPES } from '../utils/animalTagging';
 
 // Splits one CSV row into fields, respecting double-quoted fields that contain
 // commas (e.g. "Farm Sector, Region A") - a naive line.split(',') silently
@@ -1903,7 +1899,13 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                     onChange={(e) => setFilterType(e.target.value)}
                                 >
                                     <option value="All">All Types</option>
-                                    {Object.values(AnimalType).map(t => <option key={t} value={t}>{t}</option>)}
+                                    {isNewTagScheme
+                                        ? NEW_SCHEME_TYPES_BY_SPECIES.map(group => (
+                                            <optgroup key={group.species} label={group.species}>
+                                                {group.types.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </optgroup>
+                                        ))
+                                        : LEGACY_ANIMAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                             <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 rounded-full"></div>

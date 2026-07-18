@@ -25,6 +25,10 @@ export const NEW_SCHEME_TYPES_BY_SPECIES: { species: string; types: AnimalType[]
     { species: 'Sheep', types: [AnimalType.RAM, AnimalType.EWE, AnimalType.MALE_LAMB, AnimalType.FEMALE_LAMB] },
 ];
 
+// Types offered to legacy-scheme tenants (unchanged from before the global
+// sequential tagging rollout) - new-scheme tenants get NEW_SCHEME_TYPES_BY_SPECIES instead.
+export const LEGACY_ANIMAL_TYPES: AnimalType[] = [AnimalType.COW, AnimalType.BULL, AnimalType.HEIFER, AnimalType.GOAT, AnimalType.CALF, AnimalType.KID];
+
 export function formatNewSchemeTag(type: AnimalType, seq: number): string {
     const meta = NEW_SCHEME_TYPE_META[type];
     const prefix = meta ? meta.prefix : '';

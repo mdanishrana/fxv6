@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { Cattle, FeedItem, Tenant, UserRole, DeletionRequest, FeedPackage, AnimalType } from '../types';
 import { calculateCattleFinancials } from '../utils/financials';
+import { NEW_SCHEME_TYPES_BY_SPECIES, LEGACY_ANIMAL_TYPES } from '../utils/animalTagging';
 import { TrendingUp, Beef, Scale, DollarSign, Download, AlertCircle, Check, X, Target, ArrowUpRight, AlertTriangle, Info, TrendingDown, Activity, Calendar, Zap, ChevronRight, Package, Users, Syringe, PieChart as PieChartIcon, BarChart3, Heart } from 'lucide-react';
 
 interface DashboardProps {
@@ -28,6 +29,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
    const [filterType, setFilterType] = useState<string>('ALL');
 
    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+   const isNewTagScheme = tenant.legacyTagScheme === false;
 
    // Apply filters
    const displayCattle = cattle.filter(c => 
@@ -415,7 +417,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         }`}
                      >
                         <option className="text-black" value="ALL">All Types</option>
-                        {Object.values(AnimalType).map(t => <option className="text-black" key={t} value={t}>{t}</option>)}
+                        {isNewTagScheme
+                           ? NEW_SCHEME_TYPES_BY_SPECIES.map(group => (
+                              <optgroup className="text-black" key={group.species} label={group.species}>
+                                 {group.types.map(t => <option className="text-black" key={t} value={t}>{t}</option>)}
+                              </optgroup>
+                           ))
+                           : LEGACY_ANIMAL_TYPES.map(t => <option className="text-black" key={t} value={t}>{t}</option>)}
                      </select>
                      
                      <div className={`w-px h-6 mx-2 ${isDarkMode ? 'bg-white/20' : 'bg-emerald-200'}`}></div>
