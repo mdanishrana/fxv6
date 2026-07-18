@@ -27,8 +27,17 @@ Tracking the billing/payments rework requested 2026-07-18: calendar-month billin
 
 ## Verified
 
-- 13 new backend tests (`billingProcessor.test.js`, `billingIntegration.test.js`, `billingCronScheduler.test.js`): proration math, multi-month catch-up, idempotency, legacy-invoice transition, overdue marking, single-use token enforcement, cron per-tenant isolation.
+- 21 new backend tests (`billingProcessor.test.js`, `billingIntegration.test.js`, `billingCronScheduler.test.js`): proration math, multi-month catch-up, idempotency, legacy-invoice transition, overdue marking, single-use token enforcement, bulk-review list/settle/multi-use-token behavior, cron per-tenant isolation.
 - Manually verified end-to-end in the browser: registered an animal a month back, ran the check, confirmed 2 correctly-priced invoices (17 days overdue as expected), clicked both the "Received" and "Still Pending" email actions via their real tokens and confirmed the right one settles invoices and the other doesn't, confirmed a used token is rejected on replay.
+- Live-tested the bulk review checklist on production against 103 real due animals: selected 3 real animals via the actual email link, confirmed via DB that all 3 settled correctly and owner-notification emails fired. Caught and fixed a real bug in the process (see checklist item below).
+
+## Bulk payment review (added same day, after initial release)
+
+Farm owners board animals for outside customers and pay per-animal monthly fees; the original one-click-per-animal email design didn't match how they actually reconcile payments (check the bank once, confirm several animals at once). Replaced the per-animal links with a single "Review & Update Payments" link per email, backed by a new multi-use `payment_review_tokens` table (valid for the cycle, not single-use), opening a checklist page (`components/PaymentReviewPage.tsx`) where multiple animals can be ticked and confirmed in one submission.
+
+**Bug found live**: the checklist removed every *selected* animal from the visible list after submitting, regardless of whether the server actually confirmed it - a failed settle looked identical to a successful one. Fixed to only remove server-confirmed successes, with a visible error banner for anything that failed.
+
+**Data cleanup performed same day**: the pre-rework `/generate-monthly` route had no real idempotency guard. Repeated "Run Checks" clicks on different days had left 82 duplicate/stale PENDING rows across 15 real animals on production - same animal+due-date+amount inserted 2-8x, some already-PAID periods still showing due, a few animals billed twice in the same month. Cleaned up via direct SQL (kept earliest row per animal+period), verified zero duplicates/same-month stacking remain tenant-wide. The new generator is idempotent by `billing_period_start` and won't reproduce this going forward.
 
 ## Known limitation, not addressed here
 
