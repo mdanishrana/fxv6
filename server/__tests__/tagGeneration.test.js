@@ -93,6 +93,27 @@ describe('Server ignores client-supplied tag and assigns PREFIX+4-digit atomical
     });
 });
 
+describe('respectProvidedTag lets bulk CSV import keep its own tags', () => {
+    it('uses the client-supplied tag as-is when respectProvidedTag is set, unlike the interactive form', async () => {
+        const res = await request(app)
+            .post('/api/cattle')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .send({ tagNumber: 'MY-OWN-EAR-TAG-001', type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100, respectProvidedTag: true });
+        expect(res.status).toBe(201);
+        expect(res.body.tagNumber).toBe('MY-OWN-EAR-TAG-001');
+    });
+
+    it('does not consume the auto-sequence counter', async () => {
+        const before = await db.query('SELECT next_animal_seq FROM tenants WHERE id = $1', [tenant.tenantId]);
+        await request(app)
+            .post('/api/cattle')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .send({ tagNumber: 'MY-OWN-EAR-TAG-002', type: 'Bull', gender: 'Male', breed: 'Sahiwal', currentWeight: 100, entryWeight: 100, respectProvidedTag: true });
+        const after = await db.query('SELECT next_animal_seq FROM tenants WHERE id = $1', [tenant.tenantId]);
+        expect(after.rows[0].next_animal_seq).toBe(before.rows[0].next_animal_seq);
+    });
+});
+
 describe('GET /api/cattle/next-tag previews without consuming the sequence', () => {
     it('returns the same preview twice if nothing is registered in between', async () => {
         const first = await request(app)

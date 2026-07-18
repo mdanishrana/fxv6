@@ -236,10 +236,13 @@ router.post('/', async (req, res) => {
         let finalTagNumber = c.tagNumber;
 
         // New-scheme tenants (registered after the global sequential tagging rollout):
-        // ignore any client-supplied tag and assign PREFIX+4-digit atomically from the
-        // tenant's own running counter, so the number can never collide or skip under
-        // concurrent registrations - unlike the old client-side "guess the max" approach.
-        if (tenantResult.rows.length > 0 && tenantResult.rows[0].legacy_tag_scheme === false) {
+        // assign PREFIX+4-digit atomically from the tenant's own running counter, so
+        // the number can never collide or skip under concurrent registrations - unlike
+        // the old client-side "guess the max" approach. Bulk CSV import is the one
+        // exception: it sends respectProvidedTag so a farm migrating real records with
+        // already-assigned tags (e.g. physical ear tags) keeps them as-is rather than
+        // being silently renumbered - the interactive single-add form never sets this.
+        if (!c.respectProvidedTag && tenantResult.rows.length > 0 && tenantResult.rows[0].legacy_tag_scheme === false) {
             if (!NEW_SCHEME_TYPE_META[c.type]) {
                 // Validated before touching the sequence counter, so a bad request never
                 // burns a number - and so we never silently emit a tag with no prefix.

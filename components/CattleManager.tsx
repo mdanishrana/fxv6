@@ -1281,8 +1281,9 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                         arrivalType: ArrivalType.PURCHASED, entryDate, entryWeight: entryWeight, currentWeight: entryWeight,
                         purchasePrice, targetWeight, dailyTargetGain: 1.0, weightHistory: [{ date: entryDate, weight: entryWeight }], transactions: [],
                         ownerName, ownerEmail, ownerMobile, ownerAddress, monthlyPackageId, monthlyCharges, notes: 'Imported via CSV template',
-                        branch, currentDailyMilkYield
-                    });
+                        branch, currentDailyMilkYield,
+                        respectProvidedTag: true
+                    } as any);
                     success++;
                 } catch (err) {
                     console.error("Failed to import row", idx, err);
