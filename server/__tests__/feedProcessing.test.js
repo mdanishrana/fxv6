@@ -120,3 +120,52 @@ describe('Daily feed processing deducts every package item type', () => {
         if (roughageId) await db.query('DELETE FROM feed_items WHERE id = $1', [roughageId]);
     });
 });
+
+describe('Feed item price history is actually persisted', () => {
+    let itemId;
+
+    afterAll(async () => {
+        if (itemId) await db.query('DELETE FROM feed_items WHERE id = $1', [itemId]);
+    });
+
+    it('saves priceHistory sent on create, and round-trips it back on GET', async () => {
+        const createRes = await request(app)
+            .post('/api/feed/items')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .send({
+                name: 'Test Price History Item',
+                quantityKg: 100,
+                costPerKg: 40,
+                priceHistory: [{ date: '2026-01-01', price: 40 }]
+            });
+        expect(createRes.status).toBe(201);
+        itemId = createRes.body.id;
+        expect(createRes.body.priceHistory).toEqual([{ date: '2026-01-01', price: 40 }]);
+
+        const getRes = await request(app)
+            .get('/api/feed/items')
+            .set('Authorization', `Bearer ${tenant.token}`);
+        const item = getRes.body.find(f => f.id === itemId);
+        expect(item.priceHistory).toEqual([{ date: '2026-01-01', price: 40 }]);
+    });
+
+    it('appends to priceHistory on update rather than discarding it', async () => {
+        const updateRes = await request(app)
+            .put(`/api/feed/items/${itemId}`)
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .send({
+                name: 'Test Price History Item',
+                quantityKg: 100,
+                costPerKg: 55,
+                priceHistory: [
+                    { date: '2026-01-01', price: 40 },
+                    { date: '2026-02-01', price: 55 }
+                ]
+            });
+        expect(updateRes.status).toBe(200);
+        expect(updateRes.body.priceHistory).toEqual([
+            { date: '2026-01-01', price: 40 },
+            { date: '2026-02-01', price: 55 }
+        ]);
+    });
+});

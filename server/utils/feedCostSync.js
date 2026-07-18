@@ -6,93 +6,109 @@ const safeNum = (val) => {
     return isNaN(parsed) ? 0 : parsed;
 };
 
-/**
- * Accurately calculates the current pure daily feed cost of an animal based on 
- * its current package, prices, and weight.
- * This function mirrors the exact logic in the frontend financials.ts utility.
- */
-const calculateCurrentDailyFeedCost = async (client, tenantId, animal) => {
-    let dailyFeedCost = 0;
-
-    if (!animal.monthly_package_id && !animal.monthly_charges) {
-        return 0; // No feed package and no manual charges
+// Finds the price that was actually in effect for a feed item on a given date,
+// using its price_history (an array of { date, price } entries, oldest to newest
+// as they're appended). Falls back to the item's current cost_per_kg if there's
+// no history entry at or before that date (e.g. the item predates price tracking,
+// or its price has never changed).
+const resolvePriceAsOf = (feedItem, dateStr) => {
+    const history = feedItem.price_history || [];
+    let best = null;
+    for (const entry of history) {
+        if (entry.date <= dateStr && (!best || entry.date > best.date)) {
+            best = entry;
+        }
     }
+    return best ? safeNum(best.price) : safeNum(feedItem.cost_per_kg);
+};
 
-    if (animal.monthly_package_id) {
-        // Fetch the package
-        const pkgRes = await client.query(
-            'SELECT * FROM feed_packages WHERE id = $1 AND tenant_id = $2',
-            [animal.monthly_package_id, tenantId]
-        );
+/**
+ * Fetches the (mostly date-invariant) inputs needed to cost an animal's feed for
+ * any given day: its package definition and the master feed items it references.
+ * Fetched once per sync run rather than once per backfilled day.
+ */
+const fetchFeedCostInputs = async (client, tenantId, animal) => {
+    if (!animal.monthly_package_id) return null;
 
-        if (pkgRes.rows.length > 0) {
-            const pkg = pkgRes.rows[0];
+    const pkgRes = await client.query(
+        'SELECT * FROM feed_packages WHERE id = $1 AND tenant_id = $2',
+        [animal.monthly_package_id, tenantId]
+    );
+    if (pkgRes.rows.length === 0) return null;
+    const pkg = pkgRes.rows[0];
 
-            // Fetch items from the package JSON array
-            const itemsList = typeof pkg.items === 'string' ? JSON.parse(pkg.items) : (pkg.items || []);
-            const itemIds = itemsList.map(i => i.feedItemId || i.feed_item_id).filter(id => id);
+    const itemsList = typeof pkg.items === 'string' ? JSON.parse(pkg.items) : (pkg.items || []);
+    const itemIds = itemsList.map(i => i.feedItemId || i.feed_item_id).filter(id => id);
+    if (itemIds.length === 0) return null;
 
-            let ingredientDailyCost = 0;
+    const feedMasterRes = await client.query(
+        `SELECT * FROM feed_items WHERE tenant_id = $1 AND id = ANY($2::uuid[])`,
+        [tenantId, itemIds]
+    );
+    const feedMasterMap = new Map(feedMasterRes.rows.map(f => [f.id, f]));
 
-            if (itemIds.length > 0) {
-                // Fetch current master feed item prices for this tenant
-                const feedMasterRes = await client.query(
-                    `SELECT * FROM feed_items WHERE tenant_id = $1 AND id = ANY($2::uuid[])`,
-                    [tenantId, itemIds]
-                );
-                const feedMasterMap = new Map(feedMasterRes.rows.map(f => [f.id, f]));
+    return { pkg, itemsList, feedMasterMap };
+};
 
-                let totalMixCost = 0;
-                let totalMixRatio = 0;
-                const mixItems = [];
+/**
+ * Computes an animal's daily feed cost for a specific date, using whatever price
+ * was actually in effect on that date (via each feed item's price_history) rather
+ * than always pricing at today's rate. Mirrors the ingredient-cost logic in the
+ * frontend's utils/financials.ts.
+ */
+const computeDailyCostForDate = (inputs, animal, dateStr) => {
+    let ingredientDailyCost = 0;
 
-                itemsList.forEach(item => {
-                    const f = feedMasterMap.get(item.feedItemId || item.feed_item_id);
-                    if (f) {
-                        if (item.type === 'ROUGHAGE' || item.type === 'CONCENTRATE_FIXED') {
-                            // Fixed Daily Amount
-                            const dailyQty = safeNum(item.manualKgPerFeeding || item.manual_kg_per_feeding) * safeNum(item.manualFeedings || item.manual_feedings || 1);
-                            ingredientDailyCost += dailyQty * safeNum(f.cost_per_kg);
-                        } else {
-                            // Gather Concentrate Mix Items (Ratio based)
-                            const r = safeNum(item.ratioPercent || item.ratio_percent);
-                            mixItems.push({ f, ratio: r });
-                            totalMixRatio += r;
-                            totalMixCost += safeNum(f.cost_per_kg) * r;
-                        }
-                    }
-                });
+    if (inputs) {
+        const { pkg, itemsList, feedMasterMap } = inputs;
+        let totalMixCost = 0;
+        let totalMixRatio = 0;
+        const mixItems = [];
 
-                // Calculate Concentrate Mix Cost
-                if (totalMixRatio > 0 && mixItems.length > 0) {
-                    const mixCostPerKg = totalMixCost / totalMixRatio;
-                    const currentWeight = safeNum(animal.current_weight);
-                    const intakeKg = currentWeight * (safeNum(pkg.daily_intake_percent) / 100);
-                    ingredientDailyCost += intakeKg * mixCostPerKg;
-                }
-
-                if (ingredientDailyCost > 0) {
-                    dailyFeedCost = ingredientDailyCost;
+        itemsList.forEach(item => {
+            const f = feedMasterMap.get(item.feedItemId || item.feed_item_id);
+            if (f) {
+                const priceAsOf = resolvePriceAsOf(f, dateStr);
+                if (item.type === 'ROUGHAGE' || item.type === 'CONCENTRATE_FIXED') {
+                    const dailyQty = safeNum(item.manualKgPerFeeding || item.manual_kg_per_feeding) * safeNum(item.manualFeedings || item.manual_feedings || 1);
+                    ingredientDailyCost += dailyQty * priceAsOf;
+                } else {
+                    const r = safeNum(item.ratioPercent || item.ratio_percent);
+                    mixItems.push({ price: priceAsOf, ratio: r });
+                    totalMixRatio += r;
+                    totalMixCost += priceAsOf * r;
                 }
             }
+        });
+
+        if (totalMixRatio > 0 && mixItems.length > 0) {
+            const mixCostPerKg = totalMixCost / totalMixRatio;
+            const currentWeight = safeNum(animal.current_weight);
+            const intakeKg = currentWeight * (safeNum(pkg.daily_intake_percent) / 100);
+            ingredientDailyCost += intakeKg * mixCostPerKg;
         }
     }
 
-    // Fallback: If no ingredient cost was computed but monthly charges fall back to manual flat rate
-    if (dailyFeedCost === 0 && animal.monthly_charges) {
-        dailyFeedCost = safeNum(animal.monthly_charges) / 30;
+    if (ingredientDailyCost > 0) {
+        return ingredientDailyCost;
     }
 
-    return dailyFeedCost;
+    // Fallback: no ingredient cost computed, but a manual flat monthly rate is set.
+    if (animal.monthly_charges) {
+        return safeNum(animal.monthly_charges) / 30;
+    }
+
+    return 0;
 };
 
 /**
  * Synchronizes the historical feed costs for a specific animal up to YESTERDAY.
  * - Finds the last logged date (or animal entry date).
- * - Leaves "today" unlogged because prices could still change. 
- * - Loops forward from the last unlogged day to yesterday, inserting rows 
- *   using the *current* state. 
- * 
+ * - Leaves "today" unlogged because prices could still change.
+ * - Loops forward from the last unlogged day to yesterday, pricing each day at
+ *   whatever rate was actually in effect that day (via price_history) rather
+ *   than applying one current-day price across the whole backfilled range.
+ *
  * IMPORTANT: This must be called BEFORE a price or weight change is committed.
  */
 const syncAnimalFeedCosts = async (tenantId, animalId, providedClient = null) => {
@@ -132,20 +148,22 @@ const syncAnimalFeedCosts = async (tenantId, animalId, providedClient = null) =>
             return;
         }
 
-        // 4. Calculate Current Rate using EXACT logic as frontend
-        const dailyCost = await calculateCurrentDailyFeedCost(client, tenantId, animal);
+        // 4. Fetch package/feed-item inputs once (price_history is read per-day below)
+        const inputs = await fetchFeedCostInputs(client, tenantId, animal);
 
         // Minor optimization: Skip inserts if cost is strictly $0 (e.g no package) to save db junk?
         // Actually, no, we must log $0 so if the plan is turned on later, we know those days were 0.
 
-        // 5. Build bulk insertion arrays for missing days
+        // 5. Build bulk insertion arrays for missing days, pricing each day independently
         // To be safe against timezone shifts, just use string YYYY-MM-DD
         const values = [];
         let currDate = new Date(startDate);
         currDate.setHours(0, 0, 0, 0);
 
         while (currDate <= endDate) {
-            values.push(`('${tenantId}', '${animal.id}', '${currDate.toISOString().split('T')[0]}', ${dailyCost})`);
+            const dateStr = currDate.toISOString().split('T')[0];
+            const dailyCost = computeDailyCostForDate(inputs, animal, dateStr);
+            values.push(`('${tenantId}', '${animal.id}', '${dateStr}', ${dailyCost})`);
             currDate.setDate(currDate.getDate() + 1);
         }
 

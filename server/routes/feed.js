@@ -2,50 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { syncTenantFeedCosts } = require('../utils/feedCostSync');
+const { sendLowStockAlertForTenant } = require('../utils/lowStockAlert');
 const { authMiddleware } = require('../middleware/auth');
+const { computeAnimalFeedConsumption, processDailyFeedForTenant } = require('../jobs/dailyFeedProcessor');
 
 router.use(authMiddleware);
 router.use((req, res, next) => {
     req.tenantId = req.user.tenantId;
     next();
 });
-
-// Computes one animal's actual daily feed consumption, itemized by feed_item_id.
-// Mirrors the cost logic in utils/financials.ts and server/utils/feedCostSync.js:
-// ROUGHAGE/CONCENTRATE_FIXED items are a fixed kg/day amount on top of the
-// weight-based intake budget, which only governs the ratio-based CONCENTRATE mix.
-function computeAnimalFeedConsumption(animal) {
-    const weight = parseFloat(animal.current_weight) || 0;
-    const intakePercent = parseFloat(animal.daily_intake_percent) || 2.5;
-    const concentrateIntakeKg = weight * (intakePercent / 100);
-
-    const packageItems = animal.package_items || [];
-    const fixedItems = packageItems.filter(i => i.type === 'ROUGHAGE' || i.type === 'CONCENTRATE_FIXED');
-    const concentrateItems = packageItems.filter(i => i.type !== 'ROUGHAGE' && i.type !== 'CONCENTRATE_FIXED');
-    const totalRatio = concentrateItems.reduce((sum, item) => sum + (item.ratioPercent || 0), 0) || 1;
-
-    const itemConsumption = [];
-    let totalIntakeKg = 0;
-
-    for (const item of fixedItems) {
-        const amountKg = (parseFloat(item.manualKgPerFeeding) || 0) * (parseFloat(item.manualFeedings) || 1);
-        if (amountKg > 0) {
-            itemConsumption.push({ feedItemId: item.feedItemId, amountKg });
-            totalIntakeKg += amountKg;
-        }
-    }
-
-    for (const item of concentrateItems) {
-        const ratio = (item.ratioPercent || 0) / totalRatio;
-        const amountKg = concentrateIntakeKg * ratio;
-        if (amountKg > 0) {
-            itemConsumption.push({ feedItemId: item.feedItemId, amountKg });
-        }
-    }
-    totalIntakeKg += concentrateIntakeKg;
-
-    return { weight, totalIntakeKg, itemConsumption };
-}
 
 // --- INGREDIENTS ---
 
@@ -84,17 +49,21 @@ router.post('/items', async (req, res) => {
             // Merge with existing item
             const item = existing.rows[0];
             const newQuantity = (parseFloat(item.stock_quantity) || 0) + (parseFloat(f.quantityKg) || 0);
+            const mergedHistory = f.priceHistory && f.priceHistory.length > 0
+                ? f.priceHistory
+                : (item.price_history || []);
 
             const result = await db.query(
-                `UPDATE feed_items SET 
-                stock_quantity = $1, 
+                `UPDATE feed_items SET
+                stock_quantity = $1,
                 cost_per_kg = $2,
                 protein_percentage = $3,
                 energy_mcal = $4,
                 min_stock_level = $5,
+                price_history = $6,
                 updated_at = NOW()
-                WHERE id = $6 AND tenant_id = $7 RETURNING *`,
-                [newQuantity, f.costPerKg || 0, f.proteinPercent || 0, f.energyMcal || 0, f.lowStockThreshold || 500, item.id, req.tenantId]
+                WHERE id = $7 AND tenant_id = $8 RETURNING *`,
+                [newQuantity, f.costPerKg || 0, f.proteinPercent || 0, f.energyMcal || 0, f.lowStockThreshold || 500, JSON.stringify(mergedHistory), item.id, req.tenantId]
             );
 
             const row = result.rows[0];
@@ -106,18 +75,18 @@ router.post('/items', async (req, res) => {
                 proteinPercent: parseFloat(row.protein_percentage) || 0,
                 energyMcal: parseFloat(row.energy_mcal) || 0,
                 lowStockThreshold: parseFloat(row.min_stock_level) || 500,
-                priceHistory: []
+                priceHistory: row.price_history || []
             });
         }
 
         const result = await db.query(
             `INSERT INTO feed_items (
-                tenant_id, name, stock_quantity, cost_per_kg, protein_percentage, energy_mcal, 
-                min_stock_level
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                tenant_id, name, stock_quantity, cost_per_kg, protein_percentage, energy_mcal,
+                min_stock_level, price_history
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
             [
                 req.tenantId, f.name, f.quantityKg || 0, f.costPerKg || 0, f.proteinPercent || 0,
-                f.energyMcal || 0, f.lowStockThreshold || 500
+                f.energyMcal || 0, f.lowStockThreshold || 500, JSON.stringify(f.priceHistory || [])
             ]
         );
         console.log('Feed item created:', result.rows[0].id);
@@ -130,7 +99,7 @@ router.post('/items', async (req, res) => {
             proteinPercent: parseFloat(row.protein_percentage) || 0,
             energyMcal: parseFloat(row.energy_mcal) || 0,
             lowStockThreshold: parseFloat(row.min_stock_level) || 500,
-            priceHistory: []
+            priceHistory: row.price_history || []
         });
     } catch (err) {
         console.error('Error creating feed item:', err);
@@ -146,13 +115,13 @@ router.put('/items/:id', async (req, res) => {
         await syncTenantFeedCosts(req.tenantId);
 
         const result = await db.query(
-            `UPDATE feed_items SET 
-                name = $1, stock_quantity = $2, cost_per_kg = $3, protein_percentage = $4, 
-                energy_mcal = $5, min_stock_level = $6, updated_at = NOW()
-             WHERE id = $7 AND tenant_id = $8 RETURNING *`,
+            `UPDATE feed_items SET
+                name = $1, stock_quantity = $2, cost_per_kg = $3, protein_percentage = $4,
+                energy_mcal = $5, min_stock_level = $6, price_history = $7, updated_at = NOW()
+             WHERE id = $8 AND tenant_id = $9 RETURNING *`,
             [
                 f.name, f.quantityKg || 0, f.costPerKg || 0, f.proteinPercent || 0, f.energyMcal || 0,
-                f.lowStockThreshold || 500, req.params.id, req.tenantId
+                f.lowStockThreshold || 500, JSON.stringify(f.priceHistory || []), req.params.id, req.tenantId
             ]
         );
         if (result.rows.length === 0) {
@@ -168,7 +137,7 @@ router.put('/items/:id', async (req, res) => {
             proteinPercent: parseFloat(row.protein_percentage) || 0,
             energyMcal: parseFloat(row.energy_mcal) || 0,
             lowStockThreshold: parseFloat(row.min_stock_level) || 500,
-            priceHistory: []
+            priceHistory: row.price_history || []
         });
     } catch (err) {
         console.error('Error updating feed item:', err);
@@ -452,140 +421,23 @@ router.post('/process-daily', async (req, res) => {
     const processDate = date || new Date().toISOString().split('T')[0];
 
     try {
-        // Check if already processed for this date
-        const existingLog = await db.query(
-            'SELECT id FROM feed_usage_log WHERE tenant_id = $1 AND date = $2',
-            [req.tenantId, processDate]
-        );
+        const outcome = await processDailyFeedForTenant(req.tenantId, processDate);
 
-        if (existingLog.rows.length > 0) {
-            return res.status(400).json({
-                error: `Feed already processed for ${processDate}. Each day can only be processed once.`
-            });
-        }
-
-        // Get all active animals with their packages
-        const animalsResult = await db.query(
-            `SELECT c.id, c.tag_number, c.current_weight, c.monthly_package_id,
-                    fp.name as package_name, fp.daily_intake_percent, fp.items as package_items
-             FROM cattle c
-             LEFT JOIN feed_packages fp ON c.monthly_package_id = fp.id
-             WHERE c.tenant_id = $1 AND c.status = 'Active'`,
-            [req.tenantId]
-        );
-
-        const animals = animalsResult.rows;
-
-        if (animals.length === 0) {
+        if (!outcome.ok) {
+            if (outcome.reason === 'ALREADY_PROCESSED') {
+                return res.status(400).json({
+                    error: `Feed already processed for ${processDate}. Each day can only be processed once.`
+                });
+            }
             return res.status(400).json({ error: 'No active animals found to process feed for.' });
         }
 
-        // Get current feed inventory
-        const feedResult = await db.query(
-            'SELECT id, name, stock_quantity FROM feed_items WHERE tenant_id = $1',
-            [req.tenantId]
-        );
-        const feedInventory = {};
-        feedResult.rows.forEach(f => {
-            feedInventory[f.id] = {
-                id: f.id,
-                name: f.name,
-                stock: parseFloat(f.stock_quantity) || 0,
-                consumed: 0
-            };
-        });
-
-        let totalWeight = 0;
-        let totalFeedConsumed = 0;
-        const animalBreakdown = [];
-
-        // Calculate feed consumption for each animal
-        for (const animal of animals) {
-            const { weight, totalIntakeKg, itemConsumption } = computeAnimalFeedConsumption(animal);
-
-            totalWeight += weight;
-            totalFeedConsumed += totalIntakeKg;
-
-            const itemBreakdown = [];
-            for (const { feedItemId, amountKg } of itemConsumption) {
-                if (feedInventory[feedItemId]) {
-                    feedInventory[feedItemId].consumed += amountKg;
-                    itemBreakdown.push({
-                        feedItemId,
-                        feedName: feedInventory[feedItemId].name,
-                        amountKg: Math.round(amountKg * 100) / 100
-                    });
-                }
-            }
-
-            animalBreakdown.push({
-                animalId: animal.id,
-                tagNumber: animal.tag_number,
-                weight: weight,
-                packageName: animal.package_name || 'Unassigned',
-                dailyIntake: Math.round(totalIntakeKg * 100) / 100,
-                items: itemBreakdown
-            });
+        if (outcome.newlyLowStock.length > 0) {
+            sendLowStockAlertForTenant(req.tenantId, outcome.newlyLowStock)
+                .catch(err => console.error('Low stock alert failed after processing:', err));
         }
 
-        // Deduct feed from inventory
-        const insufficientFeed = [];
-        for (const feedId in feedInventory) {
-            const feed = feedInventory[feedId];
-            if (feed.consumed > 0) {
-                const newStock = Math.max(0, feed.stock - feed.consumed);
-                if (feed.consumed > feed.stock) {
-                    insufficientFeed.push({
-                        name: feed.name,
-                        required: Math.round(feed.consumed * 100) / 100,
-                        available: Math.round(feed.stock * 100) / 100,
-                        shortage: Math.round((feed.consumed - feed.stock) * 100) / 100
-                    });
-                }
-                await db.query(
-                    'UPDATE feed_items SET stock_quantity = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3',
-                    [newStock, feedId, req.tenantId]
-                );
-            }
-        }
-
-        // Create usage log entry
-        const feedBreakdown = Object.values(feedInventory)
-            .filter(f => f.consumed > 0)
-            .map(f => ({
-                feedItemId: f.id,
-                feedName: f.name,
-                consumedKg: Math.round(f.consumed * 100) / 100
-            }));
-
-        await db.query(
-            `INSERT INTO feed_usage_log (tenant_id, date, total_animals, total_weight_kg, total_feed_consumed_kg, breakdown)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-                req.tenantId,
-                processDate,
-                animals.length,
-                Math.round(totalWeight * 100) / 100,
-                Math.round(totalFeedConsumed * 100) / 100,
-                JSON.stringify({ animals: animalBreakdown, feed: feedBreakdown })
-            ]
-        );
-
-        res.json({
-            success: true,
-            date: processDate,
-            summary: {
-                totalAnimals: animals.length,
-                totalWeightKg: Math.round(totalWeight * 100) / 100,
-                totalFeedConsumedKg: Math.round(totalFeedConsumed * 100) / 100,
-                feedBreakdown: feedBreakdown
-            },
-            warnings: insufficientFeed.length > 0 ? {
-                message: 'Some feed items had insufficient stock',
-                items: insufficientFeed
-            } : null
-        });
-
+        res.json(outcome.result);
     } catch (err) {
         console.error('Error processing daily feed:', err);
         res.status(500).json({ error: err.message });
@@ -657,42 +509,14 @@ router.post('/send-low-stock-alert', async (req, res) => {
     }
 
     try {
-        // Get tenant info for email
-        const tenantResult = await db.query(
-            'SELECT name, owner_name, owner_email, whatsapp_number, whatsapp_apikey FROM tenants WHERE id = $1',
-            [req.tenantId]
-        );
-
-        if (tenantResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Tenant not found' });
-        }
-
-        const tenant = tenantResult.rows[0];
-
-        if (!tenant.owner_email) {
-            return res.status(400).json({ error: 'No owner email configured for this farm' });
-        }
-
-        const { sendLowStockAlertEmail } = require('../services/emailService');
-
-        const result = await sendLowStockAlertEmail(
-            tenant.owner_email,
-            tenant.owner_name,
-            tenant.name,
-            lowStockItems
-        );
-
-        if (tenant.whatsapp_number && tenant.whatsapp_apikey) {
-            const { sendLowStockAlertWhatsApp } = require('../services/whatsappService');
-            await sendLowStockAlertWhatsApp(tenant.whatsapp_number, tenant.whatsapp_apikey, tenant.owner_name, tenant.name, lowStockItems);
-        }
+        const result = await sendLowStockAlertForTenant(req.tenantId, lowStockItems);
 
         if (result.success) {
-            console.log(`Low stock alert sent to ${tenant.owner_email} for tenant ${tenant.name}`);
-            res.json({ success: true, message: `Alert sent to ${tenant.owner_email}` });
+            console.log(`Low stock alert sent for tenant ${req.tenantId}`);
+            res.json({ success: true, message: result.message || 'Alert sent' });
         } else {
             console.error('Failed to send low stock alert:', result.error);
-            res.status(500).json({ error: result.error || 'Failed to send email' });
+            res.status(result.error === 'Tenant not found' ? 404 : 400).json({ error: result.error || 'Failed to send email' });
         }
 
     } catch (err) {

@@ -241,7 +241,8 @@ CREATE TABLE public.feed_items (
     fiber_percentage numeric(5,2) DEFAULT 0,
     notes text,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    price_history jsonb DEFAULT '[]'::jsonb
 );
 
 
