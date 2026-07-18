@@ -11,7 +11,7 @@ const generateRandomToken = () => {
 };
 
 const { syncAnimalFeedCosts } = require('../utils/feedCostSync');
-const { formatNewSchemeTag } = require('../utils/animalTagging');
+const { formatNewSchemeTag, NEW_SCHEME_TYPE_META } = require('../utils/animalTagging');
 
 const mapCattleRow = (row) => {
     if (!row) return null;
@@ -239,6 +239,11 @@ router.post('/', async (req, res) => {
         // tenant's own running counter, so the number can never collide or skip under
         // concurrent registrations - unlike the old client-side "guess the max" approach.
         if (tenantResult.rows.length > 0 && tenantResult.rows[0].legacy_tag_scheme === false) {
+            if (!NEW_SCHEME_TYPE_META[c.type]) {
+                // Validated before touching the sequence counter, so a bad request never
+                // burns a number - and so we never silently emit a tag with no prefix.
+                return res.status(400).json({ error: `Unrecognized animal type "${c.type}" for this farm's tagging scheme.` });
+            }
             const seqResult = await db.query(
                 `UPDATE tenants SET next_animal_seq = next_animal_seq + 1 WHERE id = $1 RETURNING next_animal_seq`,
                 [req.tenantId]

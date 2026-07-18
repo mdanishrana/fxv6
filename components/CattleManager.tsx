@@ -19,6 +19,87 @@ import { NEW_SCHEME_TYPE_META, NEW_SCHEME_TYPES_BY_SPECIES } from '../utils/anim
 // sequential tagging rollout) - new-scheme tenants get NEW_SCHEME_TYPES_BY_SPECIES instead.
 const LEGACY_ANIMAL_TYPES: AnimalType[] = [AnimalType.COW, AnimalType.BULL, AnimalType.HEIFER, AnimalType.GOAT, AnimalType.CALF, AnimalType.KID];
 
+// Splits one CSV row into fields, respecting double-quoted fields that contain
+// commas (e.g. "Farm Sector, Region A") - a naive line.split(',') silently
+// shifts every column after the first quoted comma.
+const TAG_PREFIX_TO_TYPE: Record<string, AnimalType> = Object.entries(NEW_SCHEME_TYPE_META).reduce((acc, [type, meta]) => {
+    if (meta) acc[meta.prefix] = type as AnimalType;
+    return acc;
+}, {} as Record<string, AnimalType>);
+TAG_PREFIX_TO_TYPE['H'] = AnimalType.HEIFER; // lenient alias - some real-world exports use H instead of HF
+const TAG_PREFIX_CANDIDATES = Object.keys(TAG_PREFIX_TO_TYPE).sort((a, b) => b.length - a.length);
+
+// CSV import type detection, in priority order:
+//  1. The tag number's own letter prefix, if it matches a known type exactly -
+//     the most reliable signal when present, since it's what the farm actually labeled the animal.
+//  2. Otherwise Type + Gender + Age (Cow/Bull/Heifer/Goat/Sheep + Male/Female + <12mo = juvenile).
+// Species detection deliberately requires exactly one of sheep/goat/cattle to be
+// mentioned - malformed exports sometimes carry the literal column header text
+// (e.g. "Cow/Bull/Heifer/Goat") as a placeholder value, which must not silently
+// resolve to any one species.
+function inferTypeFromTagPrefix(tag: string): AnimalType | null {
+    const match = tag.match(/^([A-Za-z]+)/);
+    if (!match) return null;
+    const prefix = match[1].toUpperCase();
+    const candidate = TAG_PREFIX_CANDIDATES.find(p => p === prefix);
+    return candidate ? TAG_PREFIX_TO_TYPE[candidate] : null;
+}
+
+function inferTypeFromFields(typeStr: string, genderStr: string, ageMonths: number | undefined): AnimalType | null {
+    const t = typeStr.toLowerCase();
+    const isFemale = genderStr.toLowerCase().includes('female');
+    const isJuvenile = typeof ageMonths === 'number' && !isNaN(ageMonths) && ageMonths < 12;
+
+    const mentionsSheep = t.includes('sheep');
+    const mentionsGoat = t.includes('goat');
+    const mentionsCattle = t.includes('cow') || t.includes('bull') || t.includes('heifer') || t.includes('calf');
+    if (Number(mentionsSheep) + Number(mentionsGoat) + Number(mentionsCattle) !== 1) return null;
+
+    if (mentionsSheep) {
+        if (isJuvenile) return isFemale ? AnimalType.FEMALE_LAMB : AnimalType.MALE_LAMB;
+        return isFemale ? AnimalType.EWE : AnimalType.RAM;
+    }
+    if (mentionsGoat) {
+        if (isJuvenile) return isFemale ? AnimalType.FEMALE_KID : AnimalType.MALE_KID;
+        return isFemale ? AnimalType.DOE : AnimalType.BUCK;
+    }
+    if (isJuvenile) return isFemale ? AnimalType.FEMALE_CALF : AnimalType.MALE_CALF;
+    if (isFemale) return t.includes('heifer') ? AnimalType.HEIFER : AnimalType.COW;
+    return AnimalType.BULL;
+}
+
+function resolveImportedType(tag: string, typeStr: string, genderStr: string, ageMonths: number | undefined): AnimalType | null {
+    return inferTypeFromTagPrefix(tag) || inferTypeFromFields(typeStr, genderStr, ageMonths);
+}
+
+function parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+            if (ch === '"') {
+                if (line[i + 1] === '"') { current += '"'; i++; }
+                else { inQuotes = false; }
+            } else {
+                current += ch;
+            }
+        } else {
+            if (ch === '"') {
+                inQuotes = true;
+            } else if (ch === ',') {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
 interface CattleManagerProps {
     cattle: Cattle[];
     setCattle: React.Dispatch<React.SetStateAction<Cattle[]>>;
@@ -258,7 +339,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
     const [loadingFeedTimeline, setLoadingFeedTimeline] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
-    const [importStats, setImportStats] = useState<{ total: number, success: number, failed: number } | null>(null);
+    const [importStats, setImportStats] = useState<{ total: number, success: number, failed: number, duplicate: number } | null>(null);
     const [isImporting, setIsImporting] = useState(false);
 
     const [newAnimal, setNewAnimal] = useState(INITIAL_FORM_STATE);
@@ -1072,15 +1153,18 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
 
     const handleDownloadTemplate = () => {
         const headers = [
-            'Tag Number', 'Name', 'Type (Cow/Bull/Heifer/Goat)', 'Breed (Sahiwal/Cholistani/Dhanni/Red Sindhi/Friesian Cross/Brahman Cross/Desi (Non-Descript))',
+            'Tag Number', 'Name', 'Type (Cow/Bull/Heifer/Goat/Sheep)', 'Breed (Sahiwal/Cholistani/Dhanni/Red Sindhi/Friesian Cross/Brahman Cross/Desi (Non-Descript))',
             'Gender (Male/Female)', 'Age (Months)', 'Teeth', 'Color', 'Pregnant (Pregnant/Not Pregnant)', 'Expected Calving Date (YYYY-MM-DD)',
             'Entry Date (YYYY-MM-DD)', 'Entry Weight (kg)', 'Target Weight (kg)', 'Purchase Price', 'Owner Name', 'Owner Email', 'Owner Mobile',
             'Monthly Package', 'Monthly Charges', 'Owner Address', 'Branch / Location', 'Conception Method (AI/Natural/Embryo)', 'Semen Code / Bull ID', 'Current Daily Milk Yield (Liters)'
         ];
+        // Type + Gender + Age (months) together determine the exact category on import:
+        // Cattle under 12mo -> Male/Female Calf, Goat under 12mo -> Male/Female Kid,
+        // Sheep under 12mo -> Male/Female Lamb; 12mo+ -> Bull/Cow/Heifer, Buck/Doe, Ram/Ewe.
         const sampleRow = [
             'A1001', 'Bessie', 'Cow', 'Sahiwal', 'Female', '24', '2', 'Red', 'Pregnant', '2026-10-15',
             '2026-01-01', '350', '450', '250000', 'John Doe', 'john@example.com', '1234567890',
-            'Basic Plan', '20000', '123 Farm Lane', 'Main Farm', 'AI', 'HO12345', '12.5'
+            'Basic Plan', '20000', '"123 Farm Lane, Sector 4"', 'Main Farm', 'AI', 'HO12345', '12.5'
         ];
 
         const csvContent = headers.join(',') + '\n' + sampleRow.join(',');
@@ -1107,13 +1191,23 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
 
             let success = 0;
             let failed = 0;
+            let duplicate = 0;
+
+            // Guards against re-importing the same file (or an accidental duplicate
+            // row within one file): an animal is treated as "already imported" if its
+            // name, breed, owner, and entry date all match one that's already on
+            // record. Tag numbers alone aren't a reliable key here - new-scheme farms
+            // get a fresh auto-generated tag on every import, so a re-run would never
+            // collide on tag_number even though it's importing the same animals again.
+            const importKey = (n: string, b: string, o: string, d: string) => `${n.trim().toLowerCase()}|${b.trim().toLowerCase()}|${o.trim().toLowerCase()}|${d.trim()}`;
+            const seenKeys = new Set(cattle.map(c => importKey(c.name || '', c.breed, c.ownerName || '', c.entryDate)));
 
             // Skip header row
             const dataLines = lines.slice(1);
 
             for (let idx = 0; idx < dataLines.length; idx++) {
                 const line = dataLines[idx];
-                const cols = line.split(',').map(c => c.trim());
+                const cols = parseCsvLine(line);
                 if (cols.length < 2) continue;
 
                 const tag = cols[0];
@@ -1160,13 +1254,9 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                     continue;
                 }
 
-                let type = AnimalType.BULL;
-                const typeMatcher = typeStr.toLowerCase();
-                if (typeMatcher.includes('cow')) type = AnimalType.COW;
-                else if (typeMatcher.includes('heifer')) type = AnimalType.HEIFER;
-                else if (typeMatcher.includes('goat')) type = AnimalType.GOAT;
-                else if (!typeMatcher.includes('bull')) {
-                    console.error("Row import failed: Unknown Animal Type for Tag", tag);
+                const type = resolveImportedType(tag, typeStr, genderStr, ageMonths);
+                if (!type) {
+                    console.error("Row import failed: Could not determine animal type (checked tag prefix and Type/Gender/Age) for Tag", tag);
                     failed++;
                     continue;
                 }
@@ -1176,6 +1266,14 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
 
                 let gender = Gender.MALE;
                 if (genderStr.includes('female')) gender = Gender.FEMALE;
+
+                const key = importKey(name, breed, ownerName, entryDate);
+                if (seenKeys.has(key)) {
+                    console.warn("Row skipped: an animal with this Name/Breed/Owner/Entry Date is already on record for Tag", tag);
+                    duplicate++;
+                    continue;
+                }
+                seenKeys.add(key);
 
                 try {
                     await api.cattle.create(tenant.id, {
@@ -1196,7 +1294,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                 }
             }
 
-            setImportStats({ total: dataLines.length, success, failed });
+            setImportStats({ total: dataLines.length, success, failed, duplicate });
             setIsImporting(false);
             appEvents.emit('CATTLE_UPDATED');
             onRefresh?.();
@@ -4386,7 +4484,7 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                             {importStats && (
                                 <div className={`p-4 rounded-xl border ${importStats.failed === 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'}`}>
                                     <h4 className={`font-bold text-sm mb-2 ${importStats.failed === 0 ? 'text-emerald-800 dark:text-emerald-400' : 'text-orange-800 dark:text-orange-400'}`}>Import Complete</h4>
-                                    <div className="grid grid-cols-3 gap-2 text-center text-xs font-medium">
+                                    <div className="grid grid-cols-4 gap-2 text-center text-xs font-medium">
                                         <div className="bg-white dark:bg-slate-900/50 p-2 rounded-lg">
                                             <span className="block text-slate-500">Total Rows</span>
                                             <span className="text-lg text-slate-800 dark:text-slate-200">{importStats.total}</span>
@@ -4394,6 +4492,10 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                         <div className="bg-white dark:bg-slate-900/50 p-2 rounded-lg">
                                             <span className="block text-emerald-600 dark:text-emerald-500">Succeeded</span>
                                             <span className="text-lg text-emerald-700 dark:text-emerald-400">{importStats.success}</span>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-900/50 p-2 rounded-lg">
+                                            <span className="block text-amber-500 dark:text-amber-400">Duplicate</span>
+                                            <span className="text-lg text-amber-600 dark:text-amber-400">{importStats.duplicate}</span>
                                         </div>
                                         <div className="bg-white dark:bg-slate-900/50 p-2 rounded-lg">
                                             <span className="block text-red-500 dark:text-red-400">Failed</span>

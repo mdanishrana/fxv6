@@ -48,7 +48,10 @@ describe('Billing: generate-monthly creates a prorated invoice and marks overdue
         const lastMonth = new Date();
         lastMonth.setMonth(lastMonth.getMonth() - 1);
         lastMonth.setDate(1);
-        const entryDate = lastMonth.toISOString().split('T')[0];
+        // Read back through local getters, not toISOString() (which converts to UTC
+        // first and can shift the date a day backward here, GMT+3) - same bug class
+        // documented in billingProcessor.js's own toDateStr() helper.
+        const entryDate = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}-${String(lastMonth.getDate()).padStart(2, '0')}`;
 
         const res = await request(app)
             .post('/api/cattle')
