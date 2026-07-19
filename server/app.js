@@ -21,6 +21,13 @@ if (process.env.SENTRY_DSN) {
 
 const app = express();
 
+// Production runs behind a single nginx proxy hop. Without this, req.ip is
+// always nginx's own address (useless for registration monitoring / abuse
+// tracing) and express-rate-limit errors on every request with
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR because the forwarded header arrives
+// from a proxy Express wasn't told to trust.
+app.set('trust proxy', 1);
+
 // Security headers. CSP is disabled for now since the built frontend isn't
 // set up with nonces/hashes for its inline scripts/styles yet.
 app.use(helmet({ contentSecurityPolicy: false }));

@@ -779,6 +779,8 @@ CREATE TABLE public.tenants (
     whatsapp_apikey character varying(50),
     legacy_tag_scheme boolean DEFAULT false NOT NULL,
     next_animal_seq integer DEFAULT 1 NOT NULL,
+    registration_ip character varying(64),
+    registration_user_agent text,
     CONSTRAINT tenants_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('SUSPENDED'::character varying)::text, ('TRIAL'::character varying)::text]))),
     CONSTRAINT tenants_tier_check CHECK (((tier)::text = ANY (ARRAY[('BASIC'::character varying)::text, ('STANDARD'::character varying)::text, ('PREMIUM'::character varying)::text])))
 );

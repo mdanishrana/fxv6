@@ -68,10 +68,15 @@ router.post('/register', registerLimiter, async (req, res) => {
                 ? ['CORE', 'QURBANI_TRACKING', 'FEED_OPTIMIZER', 'AI_ADVISOR']
                 : ['CORE', 'QURBANI_TRACKING'];
 
+        // Registration origin, for the SaaS admin's monitoring view. req.ip is the
+        // real client address because app.js sets trust proxy for the nginx hop.
+        const registrationIp = req.ip || null;
+        const registrationUserAgent = (req.headers['user-agent'] || '').slice(0, 500) || null;
+
         const tenantResult = await db.query(
-            `INSERT INTO tenants (name, owner_name, owner_email, owner_mobile, tier, status, modules, locale, currency)
-             VALUES ($1, $2, $3, $4, $5, 'ACTIVE', $6, 'en-PK', 'PKR') RETURNING *`,
-            [farmName, name, email.toLowerCase(), mobile, tier, modules]
+            `INSERT INTO tenants (name, owner_name, owner_email, owner_mobile, tier, status, modules, locale, currency, registration_ip, registration_user_agent)
+             VALUES ($1, $2, $3, $4, $5, 'ACTIVE', $6, 'en-PK', 'PKR', $7, $8) RETURNING *`,
+            [farmName, name, email.toLowerCase(), mobile, tier, modules, registrationIp, registrationUserAgent]
         );
         const tenant = tenantResult.rows[0];
 

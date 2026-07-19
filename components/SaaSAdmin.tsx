@@ -11,7 +11,26 @@ interface SaaSAdminProps {
     onLoginAsTenant: (tenant: Tenant) => void;
 }
 
-type AdminTab = 'farms' | 'plans' | 'subscriptions' | 'content' | 'notifications';
+type AdminTab = 'farms' | 'registrations' | 'plans' | 'subscriptions' | 'content' | 'notifications';
+
+// Crude but readable browser/OS summary from a raw user-agent string - the full
+// UA is shown on hover, this just keeps the table scannable.
+function summarizeUserAgent(ua?: string | null): string {
+    if (!ua) return '-';
+    const browser = ua.includes('Edg/') ? 'Edge'
+        : ua.includes('OPR/') || ua.includes('Opera') ? 'Opera'
+        : ua.includes('Firefox/') ? 'Firefox'
+        : ua.includes('Chrome/') ? 'Chrome'
+        : ua.includes('Safari/') ? 'Safari'
+        : 'Other';
+    const os = ua.includes('Windows') ? 'Windows'
+        : ua.includes('Android') ? 'Android'
+        : ua.includes('iPhone') || ua.includes('iPad') ? 'iOS'
+        : ua.includes('Mac OS') ? 'macOS'
+        : ua.includes('Linux') ? 'Linux'
+        : 'Unknown OS';
+    return `${browser} / ${os}`;
+}
 
 export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLoginAsTenant }) => {
     const [activeTab, setActiveTab] = useState<AdminTab>('farms');
@@ -645,6 +664,16 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                     Farms
                 </button>
                 <button
+                    onClick={() => setActiveTab('registrations')}
+                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'registrations'
+                        ? 'border-emerald-600 text-emerald-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    <Eye size={16} className="inline mr-2" />
+                    Registrations
+                </button>
+                <button
                     onClick={() => setActiveTab('plans')}
                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'plans'
                         ? 'border-emerald-600 text-emerald-600'
@@ -866,6 +895,79 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         ))}
                     </div>
                 </>
+            )}
+
+            {activeTab === 'registrations' && (
+                <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
+                        <div className="relative w-full sm:w-72 md:w-96">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by farm, owner, email, IP..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none text-sm"
+                            />
+                        </div>
+                        <p className="text-sm text-slate-500">{tenants.length} farm(s) registered</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                    <th className="px-4 py-3">Registered</th>
+                                    <th className="px-4 py-3">Farm</th>
+                                    <th className="px-4 py-3">Owner</th>
+                                    <th className="px-4 py-3">Email</th>
+                                    <th className="px-4 py-3">Mobile</th>
+                                    <th className="px-4 py-3">Tier</th>
+                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3">IP Address</th>
+                                    <th className="px-4 py-3">Device</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...tenants]
+                                    .sort((a, b) => new Date(b.createdAt || b.joinedDate || 0).getTime() - new Date(a.createdAt || a.joinedDate || 0).getTime())
+                                    .filter(t => {
+                                        const q = searchTerm.toLowerCase();
+                                        if (!q) return true;
+                                        return [t.name, t.ownerName, t.ownerEmail, t.registrationIp]
+                                            .some(v => v && v.toLowerCase().includes(q));
+                                    })
+                                    .map(t => {
+                                        const reg = t.createdAt || t.joinedDate;
+                                        return (
+                                            <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                                <td className="px-4 py-3 whitespace-nowrap text-slate-700">
+                                                    {reg ? new Date(reg).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                </td>
+                                                <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">{t.name}</td>
+                                                <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{t.ownerName || '-'}</td>
+                                                <td className="px-4 py-3 text-slate-600">{t.ownerEmail || '-'}</td>
+                                                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{(t as any).owner_mobile || (t as any).ownerMobile || '-'}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600">{t.tier}</span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${t.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{t.status || '-'}</span>
+                                                </td>
+                                                <td className="px-4 py-3 font-mono text-xs text-slate-600 whitespace-nowrap">{t.registrationIp || '-'}</td>
+                                                <td className="px-4 py-3 text-slate-600 whitespace-nowrap" title={t.registrationUserAgent || undefined}>
+                                                    {summarizeUserAgent(t.registrationUserAgent)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                            </tbody>
+                        </table>
+                        <p className="px-4 py-3 text-xs text-slate-400 border-t border-slate-100">
+                            IP and device are captured at signup. Farms registered before this feature show "-".
+                        </p>
+                    </div>
+                </div>
             )}
 
             {activeTab === 'plans' && (

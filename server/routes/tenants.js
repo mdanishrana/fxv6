@@ -31,6 +31,9 @@ router.get('/', optionalAuth, async (req, res) => {
                 currency: t.currency || 'PKR',
                 weightUnit: t.weight_unit || 'kg',
                 branches: t.branches || [],
+                createdAt: t.created_at,
+                registrationIp: t.registration_ip || null,
+                registrationUserAgent: t.registration_user_agent || null,
                 users: userRes.rows
             };
         }));

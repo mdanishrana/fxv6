@@ -127,6 +127,9 @@ export interface Tenant {
   logoUrl?: string;
   weightUnit?: string;
   legacyTagScheme?: boolean; // true = keep old per-type client-guessed tag numbering; false = new global sequential PREFIX+4-digit scheme
+  createdAt?: string; // tenant registration timestamp (SaaS admin monitoring)
+  registrationIp?: string | null; // client IP at signup (SaaS admin monitoring)
+  registrationUserAgent?: string | null; // browser/device at signup (SaaS admin monitoring)
 }
 
 // --- Domain Types ---
