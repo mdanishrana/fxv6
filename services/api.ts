@@ -166,11 +166,27 @@ export const api = {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             }), MockService.tenants.list);
         },
-        create: (data: Partial<Tenant>) => handleRequest(fetch(`${API_URL}/tenants`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        }), () => MockService.tenants.create(data)),
+        create: (data: Partial<Tenant>) => {
+            const token = localStorage.getItem('farmxpert_token');
+            return handleRequest(fetch(`${API_URL}/tenants`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(data)
+            }), () => MockService.tenants.create(data));
+        },
+        impersonate: async (tenantId: string): Promise<{ token: string; user: any; tenant: any }> => {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`${API_URL}/tenants/${tenantId}/impersonate`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to open farm session');
+            return json;
+        },
         update: (tenantId: string, data: { name?: string; ownerEmail?: string; managerEmail?: string; whatsappNumber?: string; whatsappApiKey?: string; smtpSettings?: any; herdValueRate?: number; logoUrl?: string; currency?: string; weightUnit?: string; branches?: string[]; }) => {
             const token = localStorage.getItem('farmxpert_token');
             return fetch(`${API_URL}/tenants/${tenantId}`, {

@@ -107,6 +107,15 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
 
     const { isSubscribed, subscribeToPush, loading: loadingPush, error: pushError } = usePushNotifications();
 
+    // Lightweight toast in place of the old bare browser alerts. Style is
+    // inferred from the message so all 20+ existing call sites map 1:1.
+    const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
+    const showToast = (message: string) => {
+        const kind: 'success' | 'error' = /fail|error|cannot|invalid|required|denied/i.test(message) ? 'error' : 'success';
+        setToast({ message, kind });
+        window.setTimeout(() => setToast(null), 4000);
+    };
+
     const sendBroadcast = async () => {
         if (!broadcastTitle || !broadcastBody) return;
         setSendingBroadcast(true);
@@ -118,19 +127,25 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 body: JSON.stringify({ title: broadcastTitle, body: broadcastBody })
             });
             if (res.ok) {
-                alert('Broadcast sent successfully!');
+                showToast('Broadcast sent successfully!');
                 setBroadcastTitle('');
                 setBroadcastBody('');
             } else {
-                alert('Failed to send broadcast');
+                showToast('Failed to send broadcast');
             }
         } catch (err) {
             console.error(err);
-            alert('Failed to send broadcast');
+            showToast('Failed to send broadcast');
         } finally {
             setSendingBroadcast(false);
         }
     };
+
+    // Plans load on mount (not just when the Plans tab opens) so the header MRR
+    // card can price tiers from real plan data instead of hardcoded guesses.
+    useEffect(() => {
+        loadPlans();
+    }, []);
 
     useEffect(() => {
         if (activeTab === 'plans') {
@@ -184,7 +199,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
 
     const handleCreateSubscription = async () => {
         if (!newSubForm.tenantId || !newSubForm.amount) {
-            alert('Tenant and amount are required');
+            showToast('Tenant and amount are required');
             return;
         }
         setIsSaving(true);
@@ -207,10 +222,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 setNewSubForm({ tenantId: '', planId: '', billingCycle: 'MONTHLY', amount: '', trialDays: '' });
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to create subscription');
+                showToast(data.error || 'Failed to create subscription');
             }
         } catch (err) {
-            alert('Failed to create subscription');
+            showToast('Failed to create subscription');
         } finally {
             setIsSaving(false);
         }
@@ -230,7 +245,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             });
             if (res.ok) await loadSubscriptionData();
         } catch (err) {
-            alert('Failed to update invoice');
+            showToast('Failed to update invoice');
         }
     };
 
@@ -244,11 +259,11 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             });
             if (res.ok) {
                 const data = await res.json();
-                alert(data.message);
+                showToast(data.message);
                 await loadSubscriptionData();
             }
         } catch (err) {
-            alert('Failed to generate invoices');
+            showToast('Failed to generate invoices');
         }
     };
 
@@ -261,11 +276,11 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             });
             if (res.ok) {
                 const data = await res.json();
-                alert(`Marked ${data.overdueInvoices} invoices as overdue, ${data.pastDueSubscriptions} subscriptions as past due`);
+                showToast(`Marked ${data.overdueInvoices} invoices as overdue, ${data.pastDueSubscriptions} subscriptions as past due`);
                 await loadSubscriptionData();
             }
         } catch (err) {
-            alert('Failed to check overdue');
+            showToast('Failed to check overdue');
         }
     };
 
@@ -286,9 +301,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         setSavingContent(true);
         try {
             await api.content.update('landing_page', content);
-            alert('Content updated successfully!');
+            showToast('Content updated successfully!');
         } catch (err) {
-            alert('Failed to update content');
+            showToast('Failed to update content');
         } finally {
             setSavingContent(false);
         }
@@ -331,10 +346,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 setTenants(prev => prev.map(t => t.id === tenant.id ? { ...t, status: newStatus } : t));
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to update status');
+                showToast(data.error || 'Failed to update status');
             }
         } catch (err) {
-            alert('Failed to update status');
+            showToast('Failed to update status');
         }
     };
 
@@ -396,10 +411,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 setShowModuleModal(false);
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to save tier');
+                showToast(data.error || 'Failed to save tier');
             }
         } catch (err) {
-            alert('Failed to save tier');
+            showToast('Failed to save tier');
         } finally {
             setIsSaving(false);
         }
@@ -439,10 +454,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 setNewUser({ name: '', email: '', role: 'LABOR' });
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to add user');
+                showToast(data.error || 'Failed to add user');
             }
         } catch (err) {
-            alert('Failed to add user');
+            showToast('Failed to add user');
         } finally {
             setIsSaving(false);
         }
@@ -458,10 +473,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             if (res.ok) {
                 setTenantUsers(prev => prev.filter(u => u.id !== userId));
             } else {
-                alert('Failed to remove user');
+                showToast('Failed to remove user');
             }
         } catch (err) {
-            alert('Failed to remove user');
+            showToast('Failed to remove user');
         }
     };
 
@@ -554,7 +569,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
 
     const handleSavePlan = async () => {
         if (!planForm.name || !planForm.code) {
-            alert('Plan name and code are required');
+            showToast('Plan name and code are required');
             return;
         }
 
@@ -580,7 +595,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             await loadPlans();
             setShowPlanModal(false);
         } catch (err: any) {
-            alert(err.message || 'Failed to save plan');
+            showToast(err.message || 'Failed to save plan');
         } finally {
             setIsSaving(false);
         }
@@ -593,7 +608,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             await api.plans.delete(planId);
             await loadPlans();
         } catch (err: any) {
-            alert(err.message || 'Failed to delete plan');
+            showToast(err.message || 'Failed to delete plan');
         }
     };
 
@@ -605,7 +620,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             setNewFeature('');
             await loadPlans();
         } catch (err: any) {
-            alert(err.message || 'Failed to add feature');
+            showToast(err.message || 'Failed to add feature');
         }
     };
 
@@ -614,7 +629,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             await api.plans.deleteFeature(planId, featureId);
             await loadPlans();
         } catch (err: any) {
-            alert(err.message || 'Failed to delete feature');
+            showToast(err.message || 'Failed to delete feature');
         }
     };
 
@@ -627,6 +642,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
 
     return (
         <div className="space-y-4 md:space-y-6 animate-fade-in px-2 md:px-0">
+            {toast && (
+                <div className={`fixed top-4 right-4 z-[100] max-w-sm px-4 py-3 rounded-xl shadow-2xl text-sm font-medium flex items-center gap-2 animate-fade-in ${toast.kind === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+                    {toast.kind === 'success' ? <Check size={16} /> : <AlertTriangle size={16} />}
+                    <span>{toast.message}</span>
+                    <button onClick={() => setToast(null)} className="ml-2 opacity-70 hover:opacity-100"><X size={14} /></button>
+                </div>
+            )}
             <div className="bg-slate-900 text-white p-4 md:p-8 rounded-xl md:rounded-2xl shadow-xl">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div>
@@ -644,7 +666,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         </div>
                         <div className="text-center md:text-right border-l border-slate-700 pl-4">
                             <p className="text-xl md:text-2xl font-bold text-emerald-400">
-                                Rs. {(plans.length > 0 ? calculateMRR() : tenants.reduce((acc, t) => acc + Number(t.tier === 'PREMIUM' ? 5000 : t.tier === 'STANDARD' ? 3000 : 1000), 0)).toLocaleString()}
+                                {plans.length > 0 ? `Rs. ${calculateMRR().toLocaleString()}` : '—'}
                             </p>
                             <p className="text-[10px] md:text-xs text-slate-400 uppercase">MRR</p>
                         </div>

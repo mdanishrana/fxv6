@@ -297,6 +297,20 @@ export default function App() {
       }
     }
 
+    // If this session was an admin impersonating a farm, signing out returns to
+    // the admin console (restoring the stashed admin token) instead of fully out.
+    const adminReturnToken = localStorage.getItem('farmxpert_admin_return_token');
+    if (adminReturnToken) {
+      localStorage.removeItem('farmxpert_admin_return_token');
+      localStorage.setItem('farmxpert_token', adminReturnToken);
+      setTenant(null);
+      setCattle([]);
+      setFeed([]);
+      setPackages([]);
+      await checkAuth(adminReturnToken);
+      return;
+    }
+
     localStorage.removeItem('farmxpert_token');
     setAuthToken(null);
     setTenant(null);
@@ -392,17 +406,23 @@ export default function App() {
             <SaaSAdmin
               tenants={allTenants}
               setTenants={setAllTenants}
-              onLoginAsTenant={(t) => {
-                const tenantData: Tenant = {
-                  ...t,
-                  users: t.users || [],
-                  legacyTagScheme: t.legacyTagScheme ?? (t as any).legacy_tag_scheme
-                };
-                setTenant(tenantData);
-                setCurrentUserRole('OWNER');
-                setIsSaasAdmin(false);
-                navigate('/');
-                refreshData(t.id);
+              onLoginAsTenant={async (t) => {
+                // Real impersonation: the backend issues a short-lived session as the
+                // farm's OWNER (routes derive the tenant from the JWT, so swapping
+                // frontend state alone showed empty data). The admin token is stashed
+                // and restored on Sign Out.
+                try {
+                  const session = await api.tenants.impersonate(t.id);
+                  const currentToken = localStorage.getItem('farmxpert_token');
+                  if (currentToken) localStorage.setItem('farmxpert_admin_return_token', currentToken);
+                  localStorage.setItem('farmxpert_token', session.token);
+                  setAuthToken(session.token);
+                  setIsSaasAdmin(false);
+                  handleAuthLogin(session.token, session.user, session.tenant);
+                  navigate('/');
+                } catch (err: any) {
+                  alert(err.message || 'Failed to open farm session');
+                }
               }}
             />
           </React.Suspense>

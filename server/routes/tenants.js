@@ -3,16 +3,19 @@ const router = express.Router();
 const db = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
+const jwt = require('jsonwebtoken');
 
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     try {
-        // SAAS_ADMIN sees all tenants (including suspended), others see only active
-        const isSaasAdmin = req.user && req.user.role === 'SAAS_ADMIN';
-        const query = isSaasAdmin
-            ? 'SELECT * FROM tenants ORDER BY created_at DESC'
-            : 'SELECT * FROM tenants WHERE status = \'ACTIVE\' ORDER BY created_at DESC';
+        // Admin-only: rows carry owner contact details, SMTP settings, WhatsApp API
+        // keys, registration IPs, and each farm's full user list. This was briefly
+        // reachable unauthenticated (optionalAuth) for a long-dead login screen -
+        // nothing outside the SaaS admin panel consumes it.
+        if (req.user.role !== 'SAAS_ADMIN') {
+            return res.status(403).json({ error: 'Only SaaS Admin can list farms' });
+        }
 
-        const result = await db.query(query);
+        const result = await db.query('SELECT * FROM tenants ORDER BY created_at DESC');
 
         // We also need the users for each tenant
         const tenants = await Promise.all(result.rows.map(async (t) => {
@@ -44,7 +47,12 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
+    // Admin-only farm creation (the public path is /api/auth/register). This route
+    // previously had no auth at all - anyone could create tenants anonymously.
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can create farms directly' });
+    }
     const t = req.body;
     try {
         const modules = t.tier === 'PREMIUM'
@@ -61,6 +69,68 @@ router.post('/', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// POST impersonate: issues a real, short-lived session as the farm's OWNER so the
+// admin panel's "Login as Farm" actually works. The old implementation only swapped
+// frontend state while every API call still carried the admin's own token - and
+// since routes derive the tenant strictly from the JWT (the tenant-isolation fix),
+// the admin just saw empty data. Impersonation sessions last 4 hours, not 7 days.
+router.post('/:tenantId/impersonate', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can impersonate farms' });
+    }
+    const { tenantId } = req.params;
+    try {
+        const ownerRes = await db.query(
+            `SELECT u.id, u.name, u.email, u.role FROM users u
+             WHERE u.tenant_id = $1 AND u.role = 'OWNER' ORDER BY u.created_at LIMIT 1`,
+            [tenantId]
+        );
+        if (ownerRes.rows.length === 0) {
+            return res.status(404).json({ error: 'This farm has no OWNER user to impersonate' });
+        }
+        const owner = ownerRes.rows[0];
+
+        const tenantRes = await db.query('SELECT * FROM tenants WHERE id = $1', [tenantId]);
+        if (tenantRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Farm not found' });
+        }
+        const t = tenantRes.rows[0];
+
+        const expiresInMs = 4 * 60 * 60 * 1000;
+        const token = jwt.sign({ userId: owner.id }, process.env.JWT_SECRET, { expiresIn: '4h' });
+        await db.query(
+            `INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+            [owner.id, token, new Date(Date.now() + expiresInMs)]
+        );
+
+        await logActivity(tenantId, req.user.id, 'UPDATE', 'TENANT', tenantId, {
+            message: `SaaS Admin ${req.user.email} started an impersonation session as ${owner.email}`
+        });
+
+        res.json({
+            token,
+            user: { id: owner.id, name: owner.name, email: owner.email, role: owner.role },
+            tenant: {
+                id: t.id,
+                name: t.name,
+                tier: t.tier,
+                modules: t.modules || ['CORE'],
+                status: t.status,
+                herdValueRate: Number(t.herd_value_rate) || 1100,
+                smtpSettings: t.smtp_settings,
+                logoUrl: t.logo_url,
+                currency: t.currency || 'PKR',
+                weightUnit: t.weight_unit || 'kg',
+                branches: t.branches || [],
+                legacyTagScheme: t.legacy_tag_scheme !== false
+            }
+        });
+    } catch (err) {
+        console.error('Impersonation error:', err);
+        res.status(500).json({ error: 'Failed to start impersonation session' });
     }
 });
 

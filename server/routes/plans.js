@@ -175,6 +175,35 @@ router.post('/:planId/features', authMiddleware, async (req, res) => {
     }
 });
 
+// Declared before '/:planId/features/:featureId' - otherwise that route captures
+// 'reorder' as a featureId and this one is unreachable (Express matches in order).
+router.put('/:planId/features/reorder', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can reorder features' });
+    }
+    
+    const { planId } = req.params;
+    const { featureIds } = req.body;
+    
+    if (!featureIds || !Array.isArray(featureIds)) {
+        return res.status(400).json({ error: 'Feature IDs array is required' });
+    }
+    
+    try {
+        for (let i = 0; i < featureIds.length; i++) {
+            await db.query(
+                'UPDATE plan_features SET display_order = $1 WHERE id = $2 AND plan_id = $3',
+                [i + 1, featureIds[i], planId]
+            );
+        }
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error reordering features:', err);
+        res.status(500).json({ error: 'Failed to reorder features' });
+    }
+});
+
 router.put('/:planId/features/:featureId', authMiddleware, async (req, res) => {
     if (req.user.role !== 'SAAS_ADMIN') {
         return res.status(403).json({ error: 'Only SaaS Admin can update features' });
@@ -231,31 +260,6 @@ router.delete('/:planId/features/:featureId', authMiddleware, async (req, res) =
     }
 });
 
-router.put('/:planId/features/reorder', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'SAAS_ADMIN') {
-        return res.status(403).json({ error: 'Only SaaS Admin can reorder features' });
-    }
-    
-    const { planId } = req.params;
-    const { featureIds } = req.body;
-    
-    if (!featureIds || !Array.isArray(featureIds)) {
-        return res.status(400).json({ error: 'Feature IDs array is required' });
-    }
-    
-    try {
-        for (let i = 0; i < featureIds.length; i++) {
-            await db.query(
-                'UPDATE plan_features SET display_order = $1 WHERE id = $2 AND plan_id = $3',
-                [i + 1, featureIds[i], planId]
-            );
-        }
-        
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Error reordering features:', err);
-        res.status(500).json({ error: 'Failed to reorder features' });
-    }
-});
+
 
 module.exports = router;

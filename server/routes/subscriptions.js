@@ -29,7 +29,13 @@ router.get('/dashboard', requireSaaSAdmin, async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'TRIAL') as trial_subscriptions,
                 COUNT(*) FILTER (WHERE status = 'PAST_DUE') as past_due_subscriptions,
                 COUNT(*) FILTER (WHERE status = 'CANCELLED') as cancelled_subscriptions,
-                COALESCE(SUM(CASE WHEN status = 'ACTIVE' THEN amount ELSE 0 END), 0) as mrr
+                COALESCE(SUM(CASE WHEN status = 'ACTIVE' THEN
+                    CASE
+                        WHEN billing_cycle = 'QUARTERLY' THEN amount / 3
+                        WHEN billing_cycle = 'YEARLY' THEN amount / 12
+                        ELSE amount
+                    END
+                ELSE 0 END), 0) as mrr
             FROM tenant_subscriptions
         `);
         
@@ -333,46 +339,6 @@ router.get('/farm-payments/:tenantId', requireSaaSAdmin, async (req, res) => {
     }
 });
 
-router.get('/dashboard', requireSaaSAdmin, async (req, res) => {
-    try {
-        const mrr = await db.query(`
-            SELECT COALESCE(SUM(
-                CASE 
-                    WHEN billing_cycle = 'MONTHLY' THEN amount
-                    WHEN billing_cycle = 'QUARTERLY' THEN amount / 3
-                    WHEN billing_cycle = 'YEARLY' THEN amount / 12
-                END
-            ), 0) as mrr
-            FROM tenant_subscriptions WHERE status IN ('ACTIVE', 'TRIAL')
-        `);
 
-        const stats = await db.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE status = 'ACTIVE') as active_subscriptions,
-                COUNT(*) FILTER (WHERE status = 'TRIAL') as trial_subscriptions,
-                COUNT(*) FILTER (WHERE status = 'PAST_DUE') as past_due_subscriptions,
-                COUNT(*) FILTER (WHERE status = 'CANCELLED') as cancelled_subscriptions
-            FROM tenant_subscriptions
-        `);
-
-        const invoiceStats = await db.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE status = 'PENDING') as pending_invoices,
-                COUNT(*) FILTER (WHERE status = 'OVERDUE') as overdue_invoices,
-                COALESCE(SUM(total_amount) FILTER (WHERE status = 'PAID' AND paid_date >= DATE_TRUNC('month', CURRENT_DATE)), 0) as revenue_this_month
-            FROM subscription_invoices
-        `);
-
-        res.json({
-            mrr: parseFloat(mrr.rows[0].mrr),
-            ...stats.rows[0],
-            ...invoiceStats.rows[0],
-            revenueThisMonth: parseFloat(invoiceStats.rows[0].revenue_this_month || 0)
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch dashboard' });
-    }
-});
 
 module.exports = router;
