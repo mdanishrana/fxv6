@@ -1640,6 +1640,14 @@ ALTER TABLE ONLY public.milk_logs
 
 
 --
+-- Name: lactations lactations_animal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lactations
+    ADD CONSTRAINT lactations_animal_id_fkey FOREIGN KEY (animal_id) REFERENCES public.cattle(id) ON DELETE CASCADE;
+
+
+--
 -- Name: cattle_costs cattle_costs_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

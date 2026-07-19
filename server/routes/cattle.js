@@ -674,6 +674,7 @@ router.delete('/:id', async (req, res) => {
         // Cascade delete from dependent tables first
         await db.query('DELETE FROM breeding_events WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
         await db.query('DELETE FROM pregnancy_cycles WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
+        await db.query('DELETE FROM lactations WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
         await db.query('DELETE FROM cattle_costs WHERE tenant_id = $1 AND cattle_id = $2', [req.tenantId, id]);
         await db.query('DELETE FROM milk_logs WHERE tenant_id = $1 AND animal_id = $2', [req.tenantId, id]);
 

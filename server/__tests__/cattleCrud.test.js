@@ -159,14 +159,15 @@ describe('Cattle CRUD', () => {
         expect(costsAfter.rows.length).toBe(0);
     });
 
-    it('cascade-deletes milk_logs, breeding_events, and pregnancy_cycles when the animal is deleted', async () => {
+    it('cascade-deletes milk_logs, breeding_events, pregnancy_cycles, and lactations when the animal is deleted', async () => {
         // Found live: the delete route's own DELETE FROM milk_records query targeted a
         // table name that doesn't exist (the real table is milk_logs), silently caught
-        // and swallowed - so milk log rows were never actually cleaned up. Also, none
-        // of these three tables had a database-level FK, so nothing would have caught
-        // it even if some other code path deleted a cattle row directly. Fixed both:
-        // the query now targets the right table, and all three now have an
-        // ON DELETE CASCADE foreign key to cattle(id) as a backstop.
+        // and swallowed - so milk log rows were never actually cleaned up. lactations
+        // was missing from the route's cleanup entirely. None of these four tables had
+        // a database-level FK either, so nothing would have caught it even if some
+        // other code path deleted a cattle row directly. Fixed all of it: the query
+        // targets the right table, lactations cleanup was added, and all four now have
+        // an ON DELETE CASCADE foreign key to cattle(id) as a backstop.
         const animalRes = await request(app)
             .post('/api/cattle')
             .set('Authorization', `Bearer ${tenant.token}`)
@@ -186,6 +187,10 @@ describe('Cattle CRUD', () => {
             `INSERT INTO breeding_events (tenant_id, animal_id, cycle_id, event_type, event_date, details) VALUES ($1, $2, $3, 'PREG_CHECK', CURRENT_DATE, '{"result":"POSITIVE"}')`,
             [tenant.tenantId, animalId, cycleRes.rows[0].id]
         );
+        await db.query(
+            `INSERT INTO lactations (tenant_id, animal_id, lactation_number, start_date, status) VALUES ($1, $2, 1, CURRENT_DATE, 'ACTIVE')`,
+            [tenant.tenantId, animalId]
+        );
 
         const res = await request(app)
             .delete(`/api/cattle/${animalId}`)
@@ -199,5 +204,7 @@ describe('Cattle CRUD', () => {
         expect(cycles.rows.length).toBe(0);
         const events = await db.query('SELECT id FROM breeding_events WHERE animal_id = $1', [animalId]);
         expect(events.rows.length).toBe(0);
+        const lactationRows = await db.query('SELECT id FROM lactations WHERE animal_id = $1', [animalId]);
+        expect(lactationRows.rows.length).toBe(0);
     });
 });
