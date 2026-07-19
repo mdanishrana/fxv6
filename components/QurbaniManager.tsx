@@ -368,7 +368,7 @@ export const QurbaniManager: React.FC<QurbaniManagerProps> = ({ cattle, setCattl
                                         <Tag size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="font-black tracking-tight text-xl text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">#{animal.tagNumber}</h3>
+                                        <h3 className="font-black tracking-tight text-xl text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{animal.tagNumber}</h3>
                                         <p className="text-sm font-bold text-slate-500 dark:text-slate-400 tracking-wide">{animal.breed} • {animal.teeth} Teeth</p>
                                     </div>
                                 </div>

@@ -2050,7 +2050,14 @@ export const CattleManager: React.FC<CattleManagerProps> = ({ cattle, setCattle,
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2">
-                                                        #{c.tagNumber}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openReportModal(c)}
+                                                            className="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline underline-offset-2 transition-colors cursor-pointer"
+                                                            title="Open full details"
+                                                        >
+                                                            {c.tagNumber}
+                                                        </button>
                                                         {isWeightStale && c.status === 'Active' && (
                                                             <div className="relative group cursor-help" title="Weight not updated in over 14 days">
                                                                 <span className="absolute -top-1 -right-1 flex h-2 w-2">
