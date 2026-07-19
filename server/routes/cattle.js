@@ -667,6 +667,41 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// DELETE bulk cattle.
+// MUST be declared before the '/:id' delete below - Express matches routes in
+// declaration order, so with '/:id' first, DELETE /api/cattle/bulk was captured
+// by it with id="bulk" and failed on the uuid cast, making this route unreachable.
+router.delete('/bulk', async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Cattle IDs are required' });
+    }
+
+    try {
+        // Same dependent-table cleanup as the single-animal delete below (the FK
+        // ON DELETE CASCADE constraints added 2026-07-19 are the backstop).
+        await db.query('DELETE FROM breeding_events WHERE animal_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
+        await db.query('DELETE FROM pregnancy_cycles WHERE animal_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
+        await db.query('DELETE FROM lactations WHERE animal_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
+        await db.query('DELETE FROM cattle_costs WHERE cattle_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
+        await db.query('DELETE FROM milk_logs WHERE animal_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
+
+        const result = await db.query(
+            'DELETE FROM cattle WHERE id = ANY($1::uuid[]) AND tenant_id = $2::uuid RETURNING id',
+            [ids, req.tenantId]
+        );
+
+        await logActivity(req.tenantId, req.user ? req.user.id : null, 'DELETE', 'CATTLE', null, {
+            message: `Bulk delete: ${result.rowCount} animal(s) removed`
+        });
+
+        res.json({ success: true, count: result.rowCount });
+    } catch (err) {
+        console.error('Bulk delete error:', err);
+        res.status(500).json({ error: 'Failed to delete cattle in bulk' });
+    }
+});
+
 // DELETE cattle
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
@@ -800,29 +835,6 @@ router.put('/bulk/package', async (req, res) => {
     } catch (err) {
         console.error('Bulk package update error:', err);
         res.status(500).json({ error: 'Failed to update cattle package in bulk' });
-    }
-});
-
-// DELETE bulk cattle
-router.delete('/bulk', async (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ error: 'Cattle IDs are required' });
-    }
-
-    try {
-        // Delete related dependent data first to prevent constraint violations, assuming 'ON DELETE CASCADE' is missing
-        await db.query('DELETE FROM cattle_costs WHERE cattle_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
-        await db.query('DELETE FROM breeding_events WHERE animal_id = ANY($1::uuid[]) AND tenant_id = $2::uuid', [ids, req.tenantId]);
-
-        const result = await db.query(
-            'DELETE FROM cattle WHERE id = ANY($1::uuid[]) AND tenant_id = $2::uuid RETURNING id',
-            [ids, req.tenantId]
-        );
-        res.json({ success: true, count: result.rowCount });
-    } catch (err) {
-        console.error('Bulk delete error:', err);
-        res.status(500).json({ error: 'Failed to delete cattle in bulk' });
     }
 });
 

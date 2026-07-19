@@ -207,4 +207,40 @@ describe('Cattle CRUD', () => {
         const lactationRows = await db.query('SELECT id FROM lactations WHERE animal_id = $1', [animalId]);
         expect(lactationRows.rows.length).toBe(0);
     });
+
+    it('bulk-deletes selected animals with full dependent-table cleanup (DELETE /bulk)', async () => {
+        // Found live: the '/bulk' delete route was declared AFTER '/:id', so Express
+        // matched DELETE /api/cattle/bulk against '/:id' with id="bulk" - the uuid
+        // cast failed, every bulk delete 500'd, and the real route was unreachable.
+        const makeAnimal = async (tag) => {
+            const res = await request(app)
+                .post('/api/cattle')
+                .set('Authorization', `Bearer ${tenant.token}`)
+                .set('x-tenant-id', tenant.tenantId)
+                .send({ tagNumber: tag, type: 'Cow', breed: 'Sahiwal', gender: 'Female', currentWeight: 300, entryWeight: 300 });
+            expect(res.status).toBe(201);
+            return res.body.id;
+        };
+        const idA = await makeAnimal('CRUD-BULK-001');
+        const idB = await makeAnimal('CRUD-BULK-002');
+
+        await db.query(
+            `INSERT INTO pregnancy_cycles (tenant_id, animal_id, cycle_start_date, status) VALUES ($1, $2, CURRENT_DATE, 'CONFIRMED_PREGNANT')`,
+            [tenant.tenantId, idA]
+        );
+
+        const res = await request(app)
+            .delete('/api/cattle/bulk')
+            .set('Authorization', `Bearer ${tenant.token}`)
+            .set('x-tenant-id', tenant.tenantId)
+            .send({ ids: [idA, idB] });
+
+        expect(res.status).toBe(200);
+        expect(res.body.count).toBe(2);
+
+        const remaining = await db.query('SELECT id FROM cattle WHERE id = ANY($1::uuid[])', [[idA, idB]]);
+        expect(remaining.rows.length).toBe(0);
+        const cycles = await db.query('SELECT id FROM pregnancy_cycles WHERE animal_id = $1', [idA]);
+        expect(cycles.rows.length).toBe(0);
+    });
 });
