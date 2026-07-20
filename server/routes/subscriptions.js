@@ -341,38 +341,6 @@ router.post('/check-overdue', requireSaaSAdmin, async (req, res) => {
     }
 });
 
-router.get('/farm-payments/:tenantId', requireSaaSAdmin, async (req, res) => {
-    const { tenantId } = req.params;
-    try {
-        const result = await db.query(`
-            SELECT p.*, c.tag_number, c.owner_name, c.owner_email, c.owner_mobile
-            FROM payments p
-            JOIN cattle c ON p.cattle_id = c.id
-            WHERE p.tenant_id = $1
-            ORDER BY p.due_date DESC
-        `, [tenantId]);
-        
-        res.json(result.rows.map(row => ({
-            id: row.id,
-            cattleId: row.cattle_id,
-            cattleTag: row.tag_number,
-            ownerName: row.owner_name,
-            ownerEmail: row.owner_email,
-            ownerMobile: row.owner_mobile,
-            amount: parseFloat(row.amount),
-            dueDate: row.due_date,
-            paidDate: row.paid_date,
-            status: row.status,
-            paymentMethod: row.payment_method,
-            notes: row.notes,
-            reminderSent: row.reminder_sent
-        })));
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch farm payments' });
-    }
-});
-
 
 
 module.exports = router;

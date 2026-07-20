@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, PaymentRecord, SystemContent } from '../types';
+import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, SystemContent } from '../types';
 import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell } from 'lucide-react';
 import { api } from '../services/api';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
@@ -53,10 +53,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [loadingSubs, setLoadingSubs] = useState(false);
     const [showSubModal, setShowSubModal] = useState(false);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [subTab, setSubTab] = useState<'overview' | 'subscriptions' | 'invoices' | 'farm-payments'>('overview');
-    const [selectedSubTenant, setSelectedSubTenant] = useState<string>('');
-    const [farmPayments, setFarmPayments] = useState<PaymentRecord[]>([]);
-    const [loadingFarmPayments, setLoadingFarmPayments] = useState(false);
+    const [subTab, setSubTab] = useState<'overview' | 'subscriptions' | 'invoices'>('overview');
     const [newSubForm, setNewSubForm] = useState({
         tenantId: '',
         planId: '',
@@ -178,22 +175,6 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             console.error('Failed to load subscription data:', err);
         } finally {
             setLoadingSubs(false);
-        }
-    };
-
-    const loadFarmPayments = async (tenantId: string) => {
-        setLoadingFarmPayments(true);
-        setSelectedSubTenant(tenantId);
-        try {
-            const token = localStorage.getItem('farmxpert_token');
-            const res = await fetch(`/api/subscriptions/farm-payments/${tenantId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) setFarmPayments(await res.json());
-        } catch (err) {
-            console.error('Failed to load farm payments:', err);
-        } finally {
-            setLoadingFarmPayments(false);
         }
     };
 
@@ -1464,10 +1445,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             </div>
 
                             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-                                {(['overview', 'subscriptions', 'invoices', 'farm-payments'] as const).map(tab => (
+                                {(['overview', 'subscriptions', 'invoices'] as const).map(tab => (
                                     <button key={tab} onClick={() => setSubTab(tab)}
                                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${subTab === tab ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                        {tab === 'farm-payments' ? 'Farm Payments' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
                                     </button>
                                 ))}
                                 <div className="flex-1"></div>
@@ -1565,52 +1546,6 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             ))}
                                         </tbody>
                                     </table>
-                                </div>
-                            )}
-
-                            {subTab === 'farm-payments' && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <select value={selectedSubTenant} onChange={e => loadFarmPayments(e.target.value)}
-                                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm min-w-[200px]">
-                                            <option value="">Select a farm...</option>
-                                            {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                        </select>
-                                        {loadingFarmPayments && <Loader2 className="animate-spin" size={20} />}
-                                    </div>
-                                    {selectedSubTenant && !loadingFarmPayments && (
-                                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                            <table className="w-full text-left text-sm">
-                                                <thead className="bg-white border-b border-slate-200 text-slate-500 uppercase text-xs">
-                                                    <tr>
-                                                        <th className="px-4 py-3">Animal Tag</th>
-                                                        <th className="px-4 py-3">Owner</th>
-                                                        <th className="px-4 py-3">Amount</th>
-                                                        <th className="px-4 py-3">Due Date</th>
-                                                        <th className="px-4 py-3">Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {farmPayments.length === 0 ? (
-                                                        <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No payments for this farm</td></tr>
-                                                    ) : farmPayments.map(p => (
-                                                        <tr key={p.id} className="hover:bg-white">
-                                                            <td className="px-4 py-3 font-medium">{p.cattleTag}</td>
-                                                            <td className="px-4 py-3">{p.ownerName}</td>
-                                                            <td className="px-4 py-3 font-medium">Rs. {p.amount.toLocaleString()}</td>
-                                                            <td className="px-4 py-3">{new Date(p.dueDate).toLocaleDateString()}</td>
-                                                            <td className="px-4 py-3">
-                                                                <span className={`text-xs px-2 py-0.5 rounded font-medium ${(p.status as string) === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                                                                    (p.status as string) === 'Overdue' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-amber-100 text-amber-700'
-                                                                    }`}>{p.status}</span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
