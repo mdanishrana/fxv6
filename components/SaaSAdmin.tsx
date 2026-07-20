@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, SystemContent, TenantCapacity } from '../types';
 import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell, Gauge } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
@@ -53,7 +54,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [loadingSubs, setLoadingSubs] = useState(false);
     const [showSubModal, setShowSubModal] = useState(false);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [subTab, setSubTab] = useState<'overview' | 'subscriptions' | 'invoices'>('overview');
+    const [subTab, setSubTab] = useState<'overview' | 'subscriptions' | 'invoices' | 'analytics'>('overview');
+    const [billingAnalytics, setBillingAnalytics] = useState<any>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
     const [newSubForm, setNewSubForm] = useState({
         tenantId: '',
         planId: '',
@@ -164,6 +167,27 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             loadCapacityReport();
         }
     }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 'subscriptions' && subTab === 'analytics' && !billingAnalytics) {
+            loadBillingAnalytics();
+        }
+    }, [activeTab, subTab]);
+
+    const loadBillingAnalytics = async () => {
+        setLoadingAnalytics(true);
+        try {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch('/api/subscriptions/analytics', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) setBillingAnalytics(await res.json());
+        } catch (err) {
+            console.error('Failed to load billing analytics:', err);
+        } finally {
+            setLoadingAnalytics(false);
+        }
+    };
 
     const loadCapacityReport = async () => {
         setLoadingCapacity(true);
@@ -1607,7 +1631,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             </div>
 
                             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-                                {(['overview', 'subscriptions', 'invoices'] as const).map(tab => (
+                                {(['overview', 'subscriptions', 'invoices', 'analytics'] as const).map(tab => (
                                     <button key={tab} onClick={() => setSubTab(tab)}
                                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${subTab === tab ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                                         {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -1708,6 +1732,82 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                            )}
+
+                            {subTab === 'analytics' && (
+                                <div className="space-y-6">
+                                    {loadingAnalytics || !billingAnalytics ? (
+                                        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400" size={28} /></div>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-slate-800">Rs. {billingAnalytics.arr.toLocaleString()}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">ARR</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-emerald-600">Rs. {billingAnalytics.revenueToday.toLocaleString()}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Revenue Today</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-slate-800">Rs. {billingAnalytics.revenueThisYear.toLocaleString()}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Revenue This Year</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-amber-600">Rs. {billingAnalytics.outstandingAmount.toLocaleString()}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Outstanding Invoices</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-slate-800">{billingAnalytics.newCustomersThisMonth}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">New Customers (Month)</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-slate-800">{billingAnalytics.renewalsThisMonth}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Renewals (Month)</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-red-600">{billingAnalytics.cancellationsThisMonth}</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Cancellations (Month)</p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                                    <p className="text-xl md:text-2xl font-bold text-red-600">{billingAnalytics.churnRatePct}%</p>
+                                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Churn Rate (Month)</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid md:grid-cols-2 gap-6">
+                                                <div className="bg-white p-6 rounded-xl border border-slate-200">
+                                                    <h4 className="font-bold text-slate-800 mb-4">Revenue - Last 12 Months</h4>
+                                                    <div className="h-64">
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <BarChart data={billingAnalytics.revenueByMonth}>
+                                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                                                <YAxis tick={{ fontSize: 11 }} />
+                                                                <Tooltip formatter={(v: number) => `Rs. ${v.toLocaleString()}`} />
+                                                                <Bar dataKey="revenue" fill="#059669" radius={[4, 4, 0, 0]} />
+                                                            </BarChart>
+                                                        </ResponsiveContainer>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white p-6 rounded-xl border border-slate-200">
+                                                    <h4 className="font-bold text-slate-800 mb-4">Subscription Growth - Last 12 Months</h4>
+                                                    <div className="h-64">
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <LineChart data={billingAnalytics.subscriptionGrowth}>
+                                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                                                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                                                                <Tooltip />
+                                                                <Line type="monotone" dataKey="active" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} />
+                                                            </LineChart>
+                                                        </ResponsiveContainer>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

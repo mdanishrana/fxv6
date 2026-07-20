@@ -68,6 +68,133 @@ router.get('/dashboard', requireSaaSAdmin, async (req, res) => {
     }
 });
 
+// Admin billing analytics: ARR, revenue over different windows, customer/churn
+// counts, outstanding balance, and two 12-month trend series for charting.
+// Revenue/subscription history is bucketed in JS after one query each rather
+// than with SQL generate_series - the dataset (a handful of farms) is small
+// enough that this is simpler to read and test than the equivalent SQL.
+router.get('/analytics', requireSaaSAdmin, async (req, res) => {
+    try {
+        const mrrRes = await db.query(`
+            SELECT COALESCE(SUM(
+                CASE billing_cycle
+                    WHEN 'QUARTERLY' THEN amount / 3
+                    WHEN 'YEARLY' THEN amount / 12
+                    ELSE amount
+                END
+            ), 0) as mrr
+            FROM tenant_subscriptions WHERE status = 'ACTIVE'
+        `);
+        const mrr = parseFloat(mrrRes.rows[0].mrr) || 0;
+
+        const revenueWindowsRes = await db.query(`
+            SELECT
+                COALESCE(SUM(total_amount) FILTER (WHERE paid_date = CURRENT_DATE), 0) as revenue_today,
+                COALESCE(SUM(total_amount) FILTER (WHERE paid_date >= date_trunc('month', CURRENT_DATE)), 0) as revenue_this_month,
+                COALESCE(SUM(total_amount) FILTER (WHERE paid_date >= date_trunc('year', CURRENT_DATE)), 0) as revenue_this_year,
+                COALESCE(SUM(total_amount) FILTER (WHERE status IN ('PENDING', 'OVERDUE')), 0) as outstanding_amount
+            FROM subscription_invoices WHERE status != 'CANCELLED'
+        `);
+        const rev = revenueWindowsRes.rows[0];
+
+        const newCustomersRes = await db.query(
+            `SELECT COUNT(*) FROM tenants WHERE created_at >= date_trunc('month', CURRENT_DATE)`
+        );
+        const cancellationsRes = await db.query(
+            `SELECT COUNT(*) FROM tenant_subscriptions WHERE status = 'CANCELLED' AND cancelled_at >= date_trunc('month', CURRENT_DATE)`
+        );
+        const activeNowRes = await db.query(`SELECT COUNT(*) FROM tenant_subscriptions WHERE status = 'ACTIVE'`);
+
+        // A renewal is a PAID invoice for a subscription that already had an
+        // earlier PAID invoice before it - i.e. not that subscription's first
+        // payment. Ties on paid_date (same calendar day) break on created_at,
+        // since paid_date alone can't order two invoices paid the same day.
+        const renewalsRes = await db.query(`
+            SELECT COUNT(*) FROM subscription_invoices si
+            WHERE si.status = 'PAID'
+              AND si.paid_date >= date_trunc('month', CURRENT_DATE)
+              AND EXISTS (
+                  SELECT 1 FROM subscription_invoices earlier
+                  WHERE earlier.subscription_id = si.subscription_id
+                    AND earlier.status = 'PAID'
+                    AND (earlier.paid_date < si.paid_date
+                         OR (earlier.paid_date = si.paid_date AND earlier.created_at < si.created_at))
+              )
+        `);
+
+        const newCustomersThisMonth = parseInt(newCustomersRes.rows[0].count);
+        const cancellationsThisMonth = parseInt(cancellationsRes.rows[0].count);
+        const activeNow = parseInt(activeNowRes.rows[0].count);
+        // Approximation: active-at-start-of-month ~= active-now + cancelled-this-month
+        // (ignores same-month signups that also cancelled, an edge case too rare to
+        // bother modeling exactly for a dashboard metric).
+        const activeAtStartOfMonth = activeNow + cancellationsThisMonth;
+        const churnRatePct = activeAtStartOfMonth > 0 ? Math.round((cancellationsThisMonth / activeAtStartOfMonth) * 1000) / 10 : 0;
+
+        // 12-month revenue trend from paid invoices.
+        const paidInvoicesRes = await db.query(
+            `SELECT paid_date, total_amount FROM subscription_invoices WHERE status = 'PAID' AND paid_date >= CURRENT_DATE - INTERVAL '12 months'`
+        );
+        const revenueByMonth = buildMonthlyBuckets(12, (bucket) => {
+            let total = 0;
+            for (const row of paidInvoicesRes.rows) {
+                if (isInMonth(row.paid_date, bucket.year, bucket.month)) total += parseFloat(row.total_amount);
+            }
+            return Math.round(total * 100) / 100;
+        }, 'revenue');
+
+        // 12-month subscription growth: how many were active at the end of each month.
+        const subsRes = await db.query(`SELECT start_date, cancelled_at, status FROM tenant_subscriptions`);
+        const subscriptionGrowth = buildMonthlyBuckets(12, (bucket) => {
+            const monthEnd = new Date(bucket.year, bucket.month + 1, 0, 23, 59, 59);
+            return subsRes.rows.filter(s => {
+                const started = new Date(s.start_date) <= monthEnd;
+                const notYetCancelled = !s.cancelled_at || new Date(s.cancelled_at) > monthEnd;
+                return started && notYetCancelled;
+            }).length;
+        }, 'active');
+
+        res.json({
+            arr: Math.round(mrr * 12 * 100) / 100,
+            mrr,
+            revenueToday: parseFloat(rev.revenue_today) || 0,
+            revenueThisMonth: parseFloat(rev.revenue_this_month) || 0,
+            revenueThisYear: parseFloat(rev.revenue_this_year) || 0,
+            outstandingAmount: parseFloat(rev.outstanding_amount) || 0,
+            newCustomersThisMonth,
+            renewalsThisMonth: parseInt(renewalsRes.rows[0].count),
+            cancellationsThisMonth,
+            churnRatePct,
+            revenueByMonth,
+            subscriptionGrowth
+        });
+    } catch (err) {
+        console.error('Error fetching billing analytics:', err);
+        res.status(500).json({ error: 'Failed to fetch billing analytics' });
+    }
+});
+
+function isInMonth(dateVal, year, month) {
+    if (!dateVal) return false;
+    const d = new Date(dateVal);
+    return d.getFullYear() === year && d.getMonth() === month;
+}
+
+// Builds an array of the last `count` months (oldest first), each labeled
+// "YYYY-MM", with a `valueKey` computed by `compute(bucket)` for that month.
+function buildMonthlyBuckets(count, compute, valueKey) {
+    const now = new Date();
+    const buckets = [];
+    for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        buckets.push({ year: d.getFullYear(), month: d.getMonth() });
+    }
+    return buckets.map(b => ({
+        month: `${b.year}-${String(b.month + 1).padStart(2, '0')}`,
+        [valueKey]: compute(b)
+    }));
+}
+
 router.get('/', requireSaaSAdmin, async (req, res) => {
     try {
         const result = await db.query(`
