@@ -448,6 +448,7 @@ export interface SubscriptionPlan {
   code: string;
   name: string;
   pricePkr: number | null;
+  annualPricePkr?: number | null;
   billingPeriod: string;
   description?: string;
   isCustom: boolean;
@@ -456,6 +457,7 @@ export interface SubscriptionPlan {
   displayOrder: number;
   userLimit: number | null;
   cattleLimit: string;
+  supportLevel?: string | null;
   features: PlanFeature[];
 }
 

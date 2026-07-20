@@ -620,7 +620,9 @@ CREATE TABLE public.subscription_plans (
     user_limit integer DEFAULT 3,
     cattle_limit character varying(50) DEFAULT 'Unlimited'::character varying,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    annual_price_pkr numeric(10,2),
+    support_level character varying(50)
 );
 
 

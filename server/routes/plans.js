@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
                 code: plan.code,
                 name: plan.name,
                 pricePkr: plan.price_pkr,
+                annualPricePkr: plan.annual_price_pkr,
                 billingPeriod: plan.billing_period,
                 description: plan.description,
                 isCustom: plan.is_custom,
@@ -27,6 +28,7 @@ router.get('/', async (req, res) => {
                 displayOrder: plan.display_order,
                 userLimit: plan.user_limit,
                 cattleLimit: plan.cattle_limit,
+                supportLevel: plan.support_level,
                 features: featuresResult.rows.map(f => ({
                     id: f.id,
                     text: f.feature_text,
@@ -47,20 +49,20 @@ router.post('/', authMiddleware, async (req, res) => {
         return res.status(403).json({ error: 'Only SaaS Admin can create plans' });
     }
     
-    const { code, name, pricePkr, billingPeriod, isCustom, contactEmail, isPopular, userLimit, cattleLimit, features } = req.body;
-    
+    const { code, name, pricePkr, annualPricePkr, billingPeriod, isCustom, contactEmail, isPopular, userLimit, cattleLimit, supportLevel, features } = req.body;
+
     if (!code || !name) {
         return res.status(400).json({ error: 'Code and name are required' });
     }
-    
+
     try {
         const maxOrder = await db.query('SELECT COALESCE(MAX(display_order), 0) + 1 as next_order FROM subscription_plans');
         const nextOrder = maxOrder.rows[0].next_order;
-        
+
         const result = await db.query(
-            `INSERT INTO subscription_plans (code, name, price_pkr, billing_period, is_custom, contact_email, is_popular, display_order, user_limit, cattle_limit)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-            [code.toUpperCase(), name, pricePkr || null, billingPeriod || '/month', isCustom || false, contactEmail || null, isPopular || false, nextOrder, userLimit || 3, cattleLimit || 'Unlimited']
+            `INSERT INTO subscription_plans (code, name, price_pkr, annual_price_pkr, billing_period, is_custom, contact_email, is_popular, display_order, user_limit, cattle_limit, support_level)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+            [code.toUpperCase(), name, pricePkr || null, annualPricePkr || null, billingPeriod || '/month', isCustom || false, contactEmail || null, isPopular || false, nextOrder, userLimit || 3, cattleLimit || 'Unlimited', supportLevel || null]
         );
         
         const plan = result.rows[0];
@@ -90,23 +92,25 @@ router.put('/:planId', authMiddleware, async (req, res) => {
     }
     
     const { planId } = req.params;
-    const { name, pricePkr, billingPeriod, isCustom, contactEmail, isPopular, displayOrder, userLimit, cattleLimit } = req.body;
-    
+    const { name, pricePkr, annualPricePkr, billingPeriod, isCustom, contactEmail, isPopular, displayOrder, userLimit, cattleLimit, supportLevel } = req.body;
+
     try {
         const result = await db.query(
-            `UPDATE subscription_plans SET 
+            `UPDATE subscription_plans SET
                 name = COALESCE($1, name),
                 price_pkr = $2,
-                billing_period = COALESCE($3, billing_period),
-                is_custom = COALESCE($4, is_custom),
-                contact_email = $5,
-                is_popular = COALESCE($6, is_popular),
-                display_order = COALESCE($7, display_order),
-                user_limit = $8,
-                cattle_limit = COALESCE($9, cattle_limit),
+                annual_price_pkr = $3,
+                billing_period = COALESCE($4, billing_period),
+                is_custom = COALESCE($5, is_custom),
+                contact_email = $6,
+                is_popular = COALESCE($7, is_popular),
+                display_order = COALESCE($8, display_order),
+                user_limit = $9,
+                cattle_limit = COALESCE($10, cattle_limit),
+                support_level = $11,
                 updated_at = NOW()
-             WHERE id = $10 RETURNING *`,
-            [name, pricePkr, billingPeriod, isCustom, contactEmail, isPopular, displayOrder, userLimit, cattleLimit, planId]
+             WHERE id = $12 RETURNING *`,
+            [name, pricePkr, annualPricePkr, billingPeriod, isCustom, contactEmail, isPopular, displayOrder, userLimit, cattleLimit, supportLevel, planId]
         );
         
         if (result.rows.length === 0) {

@@ -85,11 +85,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         name: '',
         code: '',
         pricePkr: '' as string | number,
+        annualPricePkr: '' as string | number,
         isCustom: false,
         contactEmail: '',
         isPopular: false,
         userLimit: '' as string | number,
-        cattleLimit: ''
+        cattleLimit: '',
+        supportLevel: ''
     });
     const [newFeature, setNewFeature] = useState('');
 
@@ -648,11 +650,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             name: plan.name,
             code: plan.code,
             pricePkr: plan.pricePkr ?? '',
+            annualPricePkr: plan.annualPricePkr ?? '',
             isCustom: plan.isCustom,
             contactEmail: plan.contactEmail || '',
             isPopular: plan.isPopular,
             userLimit: plan.userLimit ?? '',
-            cattleLimit: plan.cattleLimit || ''
+            cattleLimit: plan.cattleLimit || '',
+            supportLevel: plan.supportLevel || ''
         });
         setShowPlanModal(true);
     };
@@ -663,11 +667,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             name: '',
             code: '',
             pricePkr: '',
+            annualPricePkr: '',
             isCustom: false,
             contactEmail: '',
             isPopular: false,
             userLimit: '',
-            cattleLimit: ''
+            cattleLimit: '',
+            supportLevel: ''
         });
         setShowPlanModal(true);
     };
@@ -684,11 +690,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                 name: planForm.name,
                 code: planForm.code.toUpperCase(),
                 pricePkr: planForm.pricePkr === '' ? null : Number(planForm.pricePkr),
+                annualPricePkr: planForm.annualPricePkr === '' ? null : Number(planForm.annualPricePkr),
                 isCustom: planForm.isCustom,
                 contactEmail: planForm.contactEmail || null,
                 isPopular: planForm.isPopular,
                 userLimit: planForm.userLimit === '' ? null : Number(planForm.userLimit),
-                cattleLimit: planForm.cattleLimit || 'Unlimited'
+                cattleLimit: planForm.cattleLimit || 'Unlimited',
+                supportLevel: planForm.supportLevel || null
             };
 
             if (editingPlan) {
@@ -1257,16 +1265,22 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 </a>
                                             </div>
                                         ) : (
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-2xl font-bold text-slate-800">Rs. {plan.pricePkr?.toLocaleString()}</span>
-                                                <span className="text-slate-500 text-sm">{plan.billingPeriod}</span>
+                                            <div>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-2xl font-bold text-slate-800">Rs. {plan.pricePkr?.toLocaleString()}</span>
+                                                    <span className="text-slate-500 text-sm">{plan.billingPeriod}</span>
+                                                </div>
+                                                {plan.annualPricePkr != null && (
+                                                    <p className="text-xs text-slate-500 mt-0.5">Rs. {plan.annualPricePkr.toLocaleString()} / year</p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="text-xs text-slate-500 mb-3 flex gap-3">
+                                    <div className="text-xs text-slate-500 mb-3 flex flex-wrap gap-3">
                                         <span>Users: {plan.userLimit || 'Custom'}</span>
                                         <span>Cattle: {plan.cattleLimit}</span>
+                                        {plan.supportLevel && <span>Support: {plan.supportLevel}</span>}
                                     </div>
 
                                     <div className="border-t border-slate-100 pt-3">
@@ -1608,17 +1622,32 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     />
                                 </div>
                             ) : (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (PKR/month)</label>
-                                    <div className="relative">
-                                        <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="number"
-                                            value={planForm.pricePkr}
-                                            onChange={e => setPlanForm({ ...planForm, pricePkr: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm"
-                                            placeholder="5000"
-                                        />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Price (PKR/month)</label>
+                                        <div className="relative">
+                                            <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <input
+                                                type="number"
+                                                value={planForm.pricePkr}
+                                                onChange={e => setPlanForm({ ...planForm, pricePkr: e.target.value })}
+                                                className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm"
+                                                placeholder="5000"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Price (PKR/year)</label>
+                                        <div className="relative">
+                                            <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <input
+                                                type="number"
+                                                value={planForm.annualPricePkr}
+                                                onChange={e => setPlanForm({ ...planForm, annualPricePkr: e.target.value })}
+                                                className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm"
+                                                placeholder="50000"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -1644,6 +1673,21 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         placeholder="Unlimited"
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Support Level</label>
+                                <select
+                                    value={planForm.supportLevel}
+                                    onChange={e => setPlanForm({ ...planForm, supportLevel: e.target.value })}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                >
+                                    <option value="">Not set</option>
+                                    <option value="Email">Email</option>
+                                    <option value="Priority Email">Priority Email</option>
+                                    <option value="Phone & Email">Phone & Email</option>
+                                    <option value="Dedicated Support">Dedicated Support</option>
+                                </select>
                             </div>
                         </div>
                         <div className="p-4 bg-white border-t border-slate-100 flex justify-end gap-3">
@@ -1984,7 +2028,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Plan</label>
                                 <select value={newSubForm.planId} onChange={e => {
                                     const plan = plans.find(p => p.id === parseInt(e.target.value));
-                                    setNewSubForm({ ...newSubForm, planId: e.target.value, amount: plan?.pricePkr?.toString() || '' });
+                                    const amount = newSubForm.billingCycle === 'YEARLY' && plan?.annualPricePkr != null
+                                        ? plan.annualPricePkr.toString()
+                                        : plan?.pricePkr?.toString() || '';
+                                    setNewSubForm({ ...newSubForm, planId: e.target.value, amount });
                                 }} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
                                     <option value="">Select plan...</option>
                                     {plans.filter(p => !p.isCustom).map(p => <option key={p.id} value={p.id}>{p.name} - Rs. {p.pricePkr?.toLocaleString()}</option>)}
@@ -1998,8 +2045,20 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Billing Cycle</label>
-                                    <select value={newSubForm.billingCycle} onChange={e => setNewSubForm({ ...newSubForm, billingCycle: e.target.value as any })}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                                    <select value={newSubForm.billingCycle} onChange={e => {
+                                        const cycle = e.target.value;
+                                        const plan = plans.find(p => p.id === parseInt(newSubForm.planId));
+                                        // Switching to Yearly defaults the amount to the plan's real annual
+                                        // price (when set) instead of leaving whatever monthly amount was
+                                        // there - an admin who forgets to update it would otherwise bill a
+                                        // "yearly" subscription at the monthly rate.
+                                        const amount = cycle === 'YEARLY' && plan?.annualPricePkr != null
+                                            ? plan.annualPricePkr.toString()
+                                            : cycle === 'MONTHLY' && plan?.pricePkr != null
+                                                ? plan.pricePkr.toString()
+                                                : newSubForm.amount;
+                                        setNewSubForm({ ...newSubForm, billingCycle: cycle as any, amount });
+                                    }} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
                                         <option value="MONTHLY">Monthly</option>
                                         <option value="QUARTERLY">Quarterly</option>
                                         <option value="YEARLY">Yearly</option>
