@@ -1732,7 +1732,18 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             <input
                                                 type="number"
                                                 value={planForm.pricePkr}
-                                                onChange={e => setPlanForm({ ...planForm, pricePkr: e.target.value })}
+                                                onChange={e => {
+                                                    const newMonthly = e.target.value;
+                                                    // Auto-suggests the standard 20%-off annual rate whenever the
+                                                    // annual field is still blank, so a new plan stays consistent
+                                                    // with the site-wide "20% off if paid annually" policy without
+                                                    // the admin doing the math - but never overwrites a value the
+                                                    // admin already typed in deliberately.
+                                                    const suggestedAnnual = planForm.annualPricePkr === '' && newMonthly !== ''
+                                                        ? String(Math.round(Number(newMonthly) * 12 * 0.8))
+                                                        : planForm.annualPricePkr;
+                                                    setPlanForm({ ...planForm, pricePkr: newMonthly, annualPricePkr: suggestedAnnual });
+                                                }}
                                                 className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm"
                                                 placeholder="5000"
                                             />
@@ -1747,7 +1758,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 value={planForm.annualPricePkr}
                                                 onChange={e => setPlanForm({ ...planForm, annualPricePkr: e.target.value })}
                                                 className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm"
-                                                placeholder="50000"
+                                                placeholder="Auto: 20% off monthly x 12"
                                             />
                                         </div>
                                     </div>

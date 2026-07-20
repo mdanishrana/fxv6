@@ -449,9 +449,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
 
                     <div className={`grid grid-cols-1 sm:grid-cols-2 ${getGridCols()} gap-6 max-w-6xl mx-auto`}>
                         {plans.map((plan) => {
-                            // Compute discounted annual pricing
-                            const computedPrice = plan.pricePkr 
-                                ? (isAnnual ? Math.round(plan.pricePkr * 0.8) : plan.pricePkr) 
+                            // Annual pricing prefers the plan's real annualPricePkr (admin-set in
+                            // the Plans tab) shown as its per-month equivalent, so a promotional
+                            // or non-standard rate actually reaches the public page. Only falls
+                            // back to a flat 20%-off estimate for a plan with no annual price set.
+                            const computedPrice = plan.pricePkr
+                                ? (isAnnual
+                                    ? Math.round(plan.annualPricePkr != null ? plan.annualPricePkr / 12 : plan.pricePkr * 0.8)
+                                    : plan.pricePkr)
                                 : null;
                             const computedBillingPeriod = isAnnual ? '/month, billed annually' : plan.billingPeriod;
 
