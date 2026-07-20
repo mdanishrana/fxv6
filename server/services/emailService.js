@@ -640,6 +640,44 @@ const sendBillingNoticeEmail = async (ownerEmail, ownerName, farmName, stage, { 
     return sendEmail(ownerEmail, `${copy.subjectPrefix} - FarmXpert`, html);
 };
 
+// Automated upgrade reminder sent by server/jobs/capacityScheduler.js when a farm
+// is nearing its plan's animal or user limit - distinct from sendBillingNoticeEmail
+// (which is about a payment being late), this is about outgrowing the plan itself.
+const sendCapacityWarningEmail = async (ownerEmail, ownerName, farmName, { resource, count, limit, utilizationPct }) => {
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #d97706; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;">🐄 FarmXpert</h1>
+                <p style="margin:10px 0 0;">You're approaching your plan limit</p>
+            </div>
+            <div class="content">
+                <h2>Hello, ${ownerName}!</h2>
+                <p>Your farm "<strong>${farmName}</strong>" is using <strong>${count} of ${limit}</strong> ${resource} on your current plan (${utilizationPct}%).</p>
+                <p>Consider upgrading your plan or adding capacity to avoid interruption when you reach the limit.</p>
+            </div>
+            <div class="footer">
+                <p>© ${new Date().getFullYear()} FarmXpert - Pakistan's Premier Farm Management Solution</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return sendEmail(ownerEmail, `Approaching your ${resource} limit - FarmXpert`, html);
+};
+
 module.exports = {
     sendEmail,
     sendVerificationEmail,
@@ -650,5 +688,6 @@ module.exports = {
     sendLowStockAlertEmail,
     sendMonthlyBillingReportEmail,
     sendPaymentStatusUpdateEmail,
-    sendBillingNoticeEmail
+    sendBillingNoticeEmail,
+    sendCapacityWarningEmail
 };

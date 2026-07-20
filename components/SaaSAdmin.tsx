@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, SystemContent } from '../types';
-import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell } from 'lucide-react';
+import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, SystemContent, TenantCapacity } from '../types';
+import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell, Gauge } from 'lucide-react';
 import { api } from '../services/api';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
@@ -11,7 +11,7 @@ interface SaaSAdminProps {
     onLoginAsTenant: (tenant: Tenant) => void;
 }
 
-type AdminTab = 'farms' | 'registrations' | 'plans' | 'subscriptions' | 'content' | 'notifications';
+type AdminTab = 'farms' | 'registrations' | 'capacity' | 'plans' | 'subscriptions' | 'content' | 'notifications';
 
 // Crude but readable browser/OS summary from a raw user-agent string - the full
 // UA is shown on hover, this just keeps the table scannable.
@@ -98,6 +98,12 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [loadingContent, setLoadingContent] = useState(false);
     const [savingContent, setSavingContent] = useState(false);
 
+    const [capacityReport, setCapacityReport] = useState<TenantCapacity[]>([]);
+    const [loadingCapacity, setLoadingCapacity] = useState(false);
+    const [overrideTarget, setOverrideTarget] = useState<TenantCapacity | null>(null);
+    const [overrideForm, setOverrideForm] = useState({ cattleLimitOverride: '', userLimitOverride: '' });
+    const [savingOverride, setSavingOverride] = useState(false);
+
     const [broadcastTitle, setBroadcastTitle] = useState('');
     const [broadcastBody, setBroadcastBody] = useState('');
     const [sendingBroadcast, setSendingBroadcast] = useState(false);
@@ -154,7 +160,67 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         if (activeTab === 'content') {
             loadContent();
         }
+        if (activeTab === 'capacity') {
+            loadCapacityReport();
+        }
     }, [activeTab]);
+
+    const loadCapacityReport = async () => {
+        setLoadingCapacity(true);
+        try {
+            setCapacityReport(await api.tenants.getCapacity());
+        } catch (err) {
+            console.error('Failed to load capacity report:', err);
+        } finally {
+            setLoadingCapacity(false);
+        }
+    };
+
+    const openOverrideModal = (row: TenantCapacity) => {
+        setOverrideTarget(row);
+        setOverrideForm({
+            cattleLimitOverride: '',
+            userLimitOverride: ''
+        });
+    };
+
+    const handleSaveOverride = async () => {
+        if (!overrideTarget) return;
+        setSavingOverride(true);
+        try {
+            const payload: { cattleLimitOverride?: string | null; userLimitOverride?: number | null } = {};
+            if (overrideForm.cattleLimitOverride.trim() !== '') payload.cattleLimitOverride = overrideForm.cattleLimitOverride.trim();
+            if (overrideForm.userLimitOverride.trim() !== '') payload.userLimitOverride = parseInt(overrideForm.userLimitOverride, 10);
+            if (Object.keys(payload).length === 0) {
+                showToast('Enter a new animal or user capacity, or Clear an override below');
+                return;
+            }
+            await api.tenants.setCapacityOverride(overrideTarget.tenantId, payload);
+            showToast(`Capacity updated for ${overrideTarget.name}`);
+            setOverrideTarget(null);
+            await loadCapacityReport();
+        } catch (err: any) {
+            showToast(err.message || 'Failed to update capacity');
+        } finally {
+            setSavingOverride(false);
+        }
+    };
+
+    const handleClearOverride = async (resource: 'cattle' | 'user') => {
+        if (!overrideTarget) return;
+        setSavingOverride(true);
+        try {
+            const payload = resource === 'cattle' ? { cattleLimitOverride: null } : { userLimitOverride: null };
+            await api.tenants.setCapacityOverride(overrideTarget.tenantId, payload);
+            showToast(`${resource === 'cattle' ? 'Animal' : 'User'} capacity override cleared for ${overrideTarget.name}`);
+            setOverrideTarget(null);
+            await loadCapacityReport();
+        } catch (err: any) {
+            showToast(err.message || 'Failed to clear override');
+        } finally {
+            setSavingOverride(false);
+        }
+    };
 
     const loadSubscriptionData = async () => {
         setLoadingSubs(true);
@@ -677,6 +743,16 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                     Registrations
                 </button>
                 <button
+                    onClick={() => setActiveTab('capacity')}
+                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'capacity'
+                        ? 'border-emerald-600 text-emerald-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                        }`}
+                >
+                    <Gauge size={16} className="inline mr-2" />
+                    Capacity
+                </button>
+                <button
                     onClick={() => setActiveTab('plans')}
                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'plans'
                         ? 'border-emerald-600 text-emerald-600'
@@ -978,6 +1054,92 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             IP and device are captured at signup. Farms registered before this feature show "-".
                         </p>
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'capacity' && (
+                <div className="space-y-4">
+                    {loadingCapacity ? (
+                        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400" size={28} /></div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <p className="text-xl md:text-2xl font-bold text-slate-800">{capacityReport.reduce((sum, r) => sum + r.cattleCount, 0)}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Total Animals (All Farms)</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <p className="text-xl md:text-2xl font-bold text-amber-600">{capacityReport.filter(r => (r.cattleUtilizationPct ?? 0) >= 80 || (r.userUtilizationPct ?? 0) >= 80).length}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Farms Near Capacity (80%+)</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <p className="text-xl md:text-2xl font-bold text-red-600">{capacityReport.filter(r => r.daysToCattleLimit !== null && r.daysToCattleLimit <= 30).length}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Forecast to Hit Limit in 30 Days</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <p className="text-xl md:text-2xl font-bold text-slate-800">{capacityReport.length}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Total Farms</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                            <th className="px-4 py-3">Farm</th>
+                                            <th className="px-4 py-3">Tier</th>
+                                            <th className="px-4 py-3">Animals</th>
+                                            <th className="px-4 py-3">Users</th>
+                                            <th className="px-4 py-3">Forecast</th>
+                                            <th className="px-4 py-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[...capacityReport]
+                                            .sort((a, b) => (b.cattleUtilizationPct ?? -1) - (a.cattleUtilizationPct ?? -1))
+                                            .map(row => (
+                                                <tr key={row.tenantId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                                    <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">{row.name}</td>
+                                                    <td className="px-4 py-3 text-slate-600">{row.tier}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                        {row.cattleLimit === null ? (
+                                                            <span className="text-slate-500">{row.cattleCount} / Unlimited</span>
+                                                        ) : (
+                                                            <span className={row.cattleUtilizationPct! >= 90 ? 'text-red-600 font-medium' : row.cattleUtilizationPct! >= 80 ? 'text-amber-600 font-medium' : 'text-slate-700'}>
+                                                                {row.cattleCount} / {row.cattleLimit} ({row.cattleUtilizationPct}%)
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                        {row.userLimit === null ? (
+                                                            <span className="text-slate-500">{row.userCount} / Unlimited</span>
+                                                        ) : (
+                                                            <span className={row.userUtilizationPct! >= 90 ? 'text-red-600 font-medium' : row.userUtilizationPct! >= 80 ? 'text-amber-600 font-medium' : 'text-slate-700'}>
+                                                                {row.userCount} / {row.userLimit} ({row.userUtilizationPct}%)
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                                                        {row.daysToCattleLimit !== null ? `~${row.daysToCattleLimit}d to animal limit` : '-'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <button
+                                                            onClick={() => openOverrideModal(row)}
+                                                            className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium"
+                                                        >
+                                                            Manage Capacity
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                                <p className="px-4 py-3 text-xs text-slate-400 border-t border-slate-100">
+                                    Forecast is a rough linear projection from animals added in the last 30 days - not shown when a farm has no limit, is already over it, or has had no recent growth.
+                                </p>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -1572,6 +1734,55 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             )}
                         </>
                     )}
+                </div>
+            )}
+
+            {overrideTarget && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-4 md:p-6 border-b border-slate-100 bg-white flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-slate-800">Manage Capacity - {overrideTarget.name}</h3>
+                            <button onClick={() => setOverrideTarget(null)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                        </div>
+                        <div className="p-4 md:p-6 space-y-4">
+                            <p className="text-sm text-slate-500">
+                                Current plan ({overrideTarget.tier}): {overrideTarget.cattleLimit === null ? 'Unlimited' : overrideTarget.cattleLimit} animals, {overrideTarget.userLimit === null ? 'unlimited' : overrideTarget.userLimit} users.
+                                Setting a value below grants this farm extra capacity without changing its plan.
+                            </p>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">New animal capacity</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder='e.g. 200 or "Unlimited"'
+                                        value={overrideForm.cattleLimitOverride}
+                                        onChange={e => setOverrideForm({ ...overrideForm, cattleLimitOverride: e.target.value })}
+                                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                    />
+                                    <button onClick={() => handleClearOverride('cattle')} disabled={savingOverride} className="text-xs px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 whitespace-nowrap">Clear Override</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">New user capacity</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="e.g. 10"
+                                        value={overrideForm.userLimitOverride}
+                                        onChange={e => setOverrideForm({ ...overrideForm, userLimitOverride: e.target.value })}
+                                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                    />
+                                    <button onClick={() => handleClearOverride('user')} disabled={savingOverride} className="text-xs px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 whitespace-nowrap">Clear Override</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 md:p-6 border-t border-slate-100 flex justify-end gap-3">
+                            <button onClick={() => setOverrideTarget(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                            <button onClick={handleSaveOverride} disabled={savingOverride} className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2">
+                                {savingOverride && <Loader2 className="animate-spin" size={14} />} Save
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

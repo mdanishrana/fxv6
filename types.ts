@@ -355,6 +355,19 @@ export interface PaymentRecord {
   reminderSent: boolean;
 }
 
+export interface TenantCapacity {
+  tenantId: string;
+  name: string;
+  tier: string;
+  cattleCount: number;
+  userCount: number;
+  cattleLimit: number | null; // null = unlimited
+  userLimit: number | null;
+  cattleUtilizationPct: number | null;
+  userUtilizationPct: number | null;
+  daysToCattleLimit: number | null;
+}
+
 export type ViewState = 'dashboard' | 'cattle' | 'medical' | 'vaccinations' | 'protocols' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';
 
 export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';

@@ -4,6 +4,7 @@ const db = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
 const jwt = require('jsonwebtoken');
+const { getTenantUsage, forecastDaysToLimit, parseLimit } = require('../utils/planLimits');
 
 router.get('/', authMiddleware, async (req, res) => {
     try {
@@ -45,6 +46,35 @@ router.get('/', authMiddleware, async (req, res) => {
         res.json(tenants);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin-only capacity report across every farm: current cattle/user counts against
+// each farm's resolved plan limit (with any per-tenant override applied), plus a
+// rough forecast of when a farm will hit its cattle cap. Powers the admin panel's
+// "Tenants Near Capacity" / utilization widgets and the "find tenants close to
+// their limit" action - all really the same query viewed from different angles.
+router.get('/capacity', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can view capacity data' });
+    }
+    try {
+        const tenantsRes = await db.query('SELECT id, name, tier FROM tenants ORDER BY name');
+        const report = await Promise.all(tenantsRes.rows.map(async (t) => {
+            const usage = await getTenantUsage(t.id);
+            const daysToLimit = await forecastDaysToLimit(t.id, usage.cattleCount, usage.cattleLimit);
+            return {
+                tenantId: t.id,
+                name: t.name,
+                tier: t.tier,
+                ...usage,
+                daysToCattleLimit: daysToLimit
+            };
+        }));
+        res.json(report);
+    } catch (err) {
+        console.error('Error fetching capacity report:', err);
+        res.status(500).json({ error: 'Failed to fetch capacity report' });
     }
 });
 
@@ -279,6 +309,69 @@ router.put('/:tenantId/status', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Error updating status:', err);
         res.status(500).json({ error: 'Failed to update status' });
+    }
+});
+
+// Admin-only per-tenant capacity grant, independent of plan/subscription - the
+// "increase animal capacity" / "add animal pack" / "increase capacity without
+// changing the plan" admin actions are all this same override. Pass null to
+// clear an override and fall back to the plan's own limit; pass 'Unlimited' (for
+// cattle) to lift the cap entirely regardless of plan.
+router.put('/:tenantId/capacity-override', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can change capacity overrides' });
+    }
+    const { tenantId } = req.params;
+    const { cattleLimitOverride, userLimitOverride } = req.body;
+
+    if (cattleLimitOverride !== undefined && cattleLimitOverride !== null) {
+        const isUnlimited = /^unlimited$/i.test(String(cattleLimitOverride).trim());
+        if (!isUnlimited && parseLimit(cattleLimitOverride) === null) {
+            return res.status(400).json({ error: `cattleLimitOverride must be a number or "Unlimited"` });
+        }
+    }
+    if (userLimitOverride !== undefined && userLimitOverride !== null && !Number.isFinite(Number(userLimitOverride))) {
+        return res.status(400).json({ error: 'userLimitOverride must be a number' });
+    }
+
+    // Built dynamically because COALESCE can't tell "clear this field (send
+    // null)" apart from "field omitted (leave unchanged)" - both arrive as a SQL
+    // NULL parameter, so only fields actually present in the request are touched.
+    const sets = [];
+    const values = [];
+    if (cattleLimitOverride !== undefined) {
+        values.push(cattleLimitOverride);
+        sets.push(`cattle_limit_override = $${values.length}`);
+    }
+    if (userLimitOverride !== undefined) {
+        values.push(userLimitOverride);
+        sets.push(`user_limit_override = $${values.length}`);
+    }
+    if (sets.length === 0) {
+        return res.status(400).json({ error: 'Provide cattleLimitOverride and/or userLimitOverride' });
+    }
+    values.push(tenantId);
+
+    try {
+        const result = await db.query(
+            `UPDATE tenants SET ${sets.join(', ')}, updated_at = NOW()
+             WHERE id = $${values.length} RETURNING id, name, cattle_limit_override, user_limit_override`,
+            values
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Farm not found' });
+        }
+
+        await logActivity(tenantId, req.user.id, 'UPDATE', 'TENANT', tenantId, {
+            message: 'Capacity override changed by SaaS Admin',
+            cattleLimitOverride: result.rows[0].cattle_limit_override,
+            userLimitOverride: result.rows[0].user_limit_override
+        });
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating capacity override:', err);
+        res.status(500).json({ error: 'Failed to update capacity override' });
     }
 });
 

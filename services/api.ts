@@ -1,4 +1,4 @@
-import { Cattle, FeedItem, FeedPackage, Tenant, UserRole, CattleStatus, Breed, Gender, ArrivalType, AnimalType, SubscriptionPlan, PaymentRecord, Supplier, SupplierPurchase, Worker, Attendance, WagePayment, CostItem } from '../types';
+import { Cattle, FeedItem, FeedPackage, Tenant, UserRole, CattleStatus, Breed, Gender, ArrivalType, AnimalType, SubscriptionPlan, PaymentRecord, Supplier, SupplierPurchase, Worker, Attendance, WagePayment, CostItem, TenantCapacity } from '../types';
 
 const API_URL = '/api';
 
@@ -201,6 +201,29 @@ export const api = {
                 if (!res.ok) throw new Error(json.error || 'Failed to save settings');
                 return json;
             });
+        },
+        getCapacity: async (): Promise<TenantCapacity[]> => {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`${API_URL}/tenants/capacity`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to fetch capacity report');
+            return json;
+        },
+        setCapacityOverride: async (tenantId: string, data: { cattleLimitOverride?: string | null; userLimitOverride?: number | null }) => {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`${API_URL}/tenants/${tenantId}/capacity-override`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to update capacity override');
+            return json;
         }
     },
     cattle: {
