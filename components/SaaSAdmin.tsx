@@ -326,6 +326,44 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         }
     };
 
+    const handleSubscriptionAction = async (subscriptionId: string, patch: Record<string, any>) => {
+        try {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`/api/subscriptions/${subscriptionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(patch)
+            });
+            if (res.ok) {
+                showToast('Subscription updated');
+                await loadSubscriptionData();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Failed to update subscription');
+            }
+        } catch (err) {
+            showToast('Failed to update subscription');
+        }
+    };
+
+    const handleCancelSubscription = (subscriptionId: string) => {
+        if (!confirm('Cancel this subscription? This does not delete the farm or its data.')) return;
+        handleSubscriptionAction(subscriptionId, { status: 'CANCELLED' });
+    };
+
+    const handleExtendTrial = (sub: TenantSubscription) => {
+        const daysStr = prompt('Extend trial by how many days?', '14');
+        if (!daysStr) return;
+        const days = parseInt(daysStr, 10);
+        if (!Number.isFinite(days) || days <= 0) {
+            showToast('Enter a positive number of days');
+            return;
+        }
+        const base = sub.trialEndsAt ? new Date(sub.trialEndsAt) : new Date();
+        base.setDate(base.getDate() + days);
+        handleSubscriptionAction(sub.id, { trialEndsAt: base.toISOString().split('T')[0] });
+    };
+
     const handleGenerateInvoices = async () => {
         if (!confirm('Generate invoices for all subscriptions due today?')) return;
         try {
@@ -1807,11 +1845,12 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 <th className="px-4 py-3">Cycle</th>
                                                 <th className="px-4 py-3">Status</th>
                                                 <th className="px-4 py-3">Next Billing</th>
+                                                <th className="px-4 py-3 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {subscriptions.length === 0 ? (
-                                                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No subscriptions yet</td></tr>
+                                                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No subscriptions yet</td></tr>
                                             ) : subscriptions.map(sub => (
                                                 <tr key={sub.id} className="hover:bg-white">
                                                     <td className="px-4 py-3">
@@ -1825,10 +1864,27 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                         <span className={`text-xs px-2 py-0.5 rounded font-medium ${sub.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
                                                             sub.status === 'TRIAL' ? 'bg-blue-100 text-blue-700' :
                                                                 sub.status === 'PAST_DUE' ? 'bg-red-100 text-red-700' :
-                                                                    'bg-slate-100 text-slate-600'
+                                                                    sub.status === 'PAUSED' ? 'bg-amber-100 text-amber-700' :
+                                                                        'bg-slate-100 text-slate-600'
                                                             }`}>{sub.status}</span>
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-600">{sub.nextBillingDate ? new Date(sub.nextBillingDate).toLocaleDateString() : '-'}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center justify-end gap-1 flex-wrap">
+                                                            {sub.status === 'ACTIVE' && (
+                                                                <button onClick={() => handleSubscriptionAction(sub.id, { status: 'PAUSED' })} className="text-xs px-2 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium">Pause</button>
+                                                            )}
+                                                            {sub.status === 'PAUSED' && (
+                                                                <button onClick={() => handleSubscriptionAction(sub.id, { status: 'ACTIVE' })} className="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium">Resume</button>
+                                                            )}
+                                                            {sub.status === 'TRIAL' && (
+                                                                <button onClick={() => handleExtendTrial(sub)} className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium">Extend Trial</button>
+                                                            )}
+                                                            {sub.status !== 'CANCELLED' && (
+                                                                <button onClick={() => handleCancelSubscription(sub.id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 font-medium">Cancel</button>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>

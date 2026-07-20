@@ -374,7 +374,7 @@ export interface TenantCapacity {
 
 export type ViewState = 'dashboard' | 'cattle' | 'medical' | 'vaccinations' | 'protocols' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';
 
-export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED';
+export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED' | 'PAUSED' | 'SUSPENDED';
 export type InvoiceStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED';
 export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
 

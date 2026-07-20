@@ -745,7 +745,7 @@ CREATE TABLE public.tenant_subscriptions (
     updated_at timestamp without time zone DEFAULT now(),
     cattle_limit_override character varying(50),
     CONSTRAINT tenant_subscriptions_billing_cycle_check CHECK (((billing_cycle)::text = ANY (ARRAY[('MONTHLY'::character varying)::text, ('QUARTERLY'::character varying)::text, ('YEARLY'::character varying)::text]))),
-    CONSTRAINT tenant_subscriptions_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('TRIAL'::character varying)::text, ('PAST_DUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('SUSPENDED'::character varying)::text])))
+    CONSTRAINT tenant_subscriptions_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('TRIAL'::character varying)::text, ('PAST_DUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('SUSPENDED'::character varying)::text, ('PAUSED'::character varying)::text])))
 );
 
 

@@ -276,26 +276,39 @@ router.post('/', requireSaaSAdmin, async (req, res) => {
     }
 });
 
+// Pause/Resume/Cancel are all just status transitions through this same route
+// (PAUSED added to tenant_subscriptions_status_check alongside the existing
+// values) - a paused subscription is naturally excluded from invoice generation
+// since that query only matches status = 'ACTIVE'. Extend Trial goes through
+// trialEndsAt, which - unlike the other fields here - wasn't previously exposed.
 router.put('/:id', requireSaaSAdmin, async (req, res) => {
     const { id } = req.params;
-    const { status, planId, amount, billingCycle, nextBillingDate } = req.body;
+    const { status, planId, amount, billingCycle, nextBillingDate, trialEndsAt } = req.body;
     try {
         const result = await db.query(`
-            UPDATE tenant_subscriptions 
+            UPDATE tenant_subscriptions
             SET status = COALESCE($1, status),
                 plan_id = COALESCE($2, plan_id),
                 amount = COALESCE($3, amount),
                 billing_cycle = COALESCE($4, billing_cycle),
                 next_billing_date = COALESCE($5, next_billing_date),
+                trial_end_date = COALESCE($6, trial_end_date),
                 cancelled_at = CASE WHEN $1 = 'CANCELLED' THEN NOW() ELSE cancelled_at END,
                 updated_at = NOW()
-            WHERE id = $6
+            WHERE id = $7
             RETURNING *
-        `, [status, planId, amount, billingCycle, nextBillingDate, id]);
-        
+        `, [status, planId, amount, billingCycle, nextBillingDate, trialEndsAt, id]);
+
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
+
+        await logActivity(result.rows[0].tenant_id, req.userId || null, 'UPDATE', 'SUBSCRIPTION', id, {
+            message: 'Subscription updated by SaaS Admin',
+            status: result.rows[0].status,
+            trialEndDate: result.rows[0].trial_end_date
+        });
+
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
