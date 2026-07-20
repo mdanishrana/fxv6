@@ -389,16 +389,25 @@ export default function App() {
 
   if (isSaasAdmin) {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
         <ReloadPrompt />
-        <header className="bg-slate-900 text-white p-4 shadow-md flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-500 p-1.5 rounded text-slate-900"><ShieldCheck size={20} /></div>
-            <h1 className="font-bold text-lg tracking-wide">FarmXpert <span className="text-emerald-400 font-normal">Admin</span></h1>
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white p-4 shadow-sm flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-28 flex items-center">
+              <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider border-l border-slate-300 dark:border-slate-700 pl-3">Admin</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">{currentUser?.email}</span>
-            <button onClick={handleLogout} className="text-sm bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition-colors">Sign Out</button>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <span className="hidden sm:inline text-sm text-slate-500 dark:text-slate-400">{currentUser?.email}</span>
+            <button onClick={handleLogout} className="text-sm bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">Sign Out</button>
           </div>
         </header>
         <div className="p-8 max-w-7xl mx-auto">
