@@ -167,9 +167,9 @@ router.post('/login', loginLimiter, async (req, res) => {
         const token = generateToken(user.id);
 
         await db.query(
-            `INSERT INTO sessions (user_id, token, expires_at)
-             VALUES ($1, $2, $3)`,
-            [user.id, token, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)]
+            `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [user.id, token, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), req.ip || null, (req.headers['user-agent'] || '').slice(0, 500) || null]
         );
 
         await db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);

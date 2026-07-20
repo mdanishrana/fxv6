@@ -560,7 +560,9 @@ CREATE TABLE public.sessions (
     user_id uuid,
     token text NOT NULL,
     expires_at timestamp without time zone NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    ip_address character varying(64),
+    user_agent text
 );
 
 

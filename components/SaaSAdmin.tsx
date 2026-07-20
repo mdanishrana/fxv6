@@ -45,6 +45,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
     const [tenantUsers, setTenantUsers] = useState<User[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [userModalView, setUserModalView] = useState<'users' | 'history'>('users');
+    const [tenantSessions, setTenantSessions] = useState<any[]>([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
 
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'LABOR' as 'OWNER' | 'MANAGER' | 'LABOR' });
 
@@ -495,6 +498,8 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         setSelectedTenant(tenant);
         setLoadingUsers(true);
         setShowUserModal(true);
+        setUserModalView('users');
+        setTenantSessions([]);
         try {
             const res = await fetch(`/api/tenants/${tenant.id}/users`, {
                 headers: getAuthHeaders()
@@ -548,6 +553,35 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             }
         } catch (err) {
             showToast('Failed to remove user');
+        }
+    };
+
+    const handleResetPassword = async (userId: string, userName: string) => {
+        if (!selectedTenant || !confirm(`Send a password reset email to ${userName}?`)) return;
+        try {
+            const res = await fetch(`/api/tenants/${selectedTenant.id}/users/${userId}/reset-password`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            const data = await res.json();
+            showToast(res.ok ? data.message : (data.error || 'Failed to trigger password reset'));
+        } catch (err) {
+            showToast('Failed to trigger password reset');
+        }
+    };
+
+    const loadTenantSessions = async () => {
+        if (!selectedTenant) return;
+        setLoadingSessions(true);
+        try {
+            const res = await fetch(`/api/tenants/${selectedTenant.id}/sessions`, {
+                headers: getAuthHeaders()
+            });
+            if (res.ok) setTenantSessions(await res.json());
+        } catch (err) {
+            console.error('Failed to load login history:', err);
+        } finally {
+            setLoadingSessions(false);
         }
     };
 
@@ -1380,16 +1414,51 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <div className="p-4 md:p-6 border-b border-slate-100 bg-white flex justify-between items-center">
                             <div>
-                                <h3 className="text-lg md:text-xl font-bold text-slate-800">Manage Users</h3>
+                                <h3 className="text-lg md:text-xl font-bold text-slate-800">{userModalView === 'users' ? 'Manage Users' : 'Login History'}</h3>
                                 <p className="text-xs md:text-sm text-slate-500">{selectedTenant.name}</p>
                             </div>
-                            <button onClick={() => setShowUserModal(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={20} />
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        const next = userModalView === 'users' ? 'history' : 'users';
+                                        setUserModalView(next);
+                                        if (next === 'history' && tenantSessions.length === 0) loadTenantSessions();
+                                    }}
+                                    className="text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+                                >
+                                    {userModalView === 'users' ? 'Login History' : 'Back to Users'}
+                                </button>
+                                <button onClick={() => setShowUserModal(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-4 md:p-6 space-y-4 max-h-[50vh] overflow-y-auto">
-                            {loadingUsers ? (
+                            {userModalView === 'history' ? (
+                                loadingSessions ? (
+                                    <div className="text-center py-8"><Loader2 className="animate-spin mx-auto" size={24} /></div>
+                                ) : tenantSessions.length === 0 ? (
+                                    <p className="text-center text-slate-500 py-4 text-sm">No login history found</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {tenantSessions.map((s) => (
+                                            <div key={s.id} className="p-3 bg-white rounded-lg border border-slate-100">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="font-medium text-slate-800 text-sm">{s.userName} <span className="text-slate-400 font-normal">({s.userEmail})</span></p>
+                                                        <p className="text-xs text-slate-500 mt-0.5">{new Date(s.createdAt).toLocaleString()}</p>
+                                                    </div>
+                                                    {s.isImpersonation && (
+                                                        <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-amber-100 text-amber-700">Admin Login</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-1 font-mono">{s.ipAddress || '-'}{s.userAgent && !s.isImpersonation ? ` · ${s.userAgent.slice(0, 60)}` : ''}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
+                            ) : loadingUsers ? (
                                 <div className="text-center py-8"><Loader2 className="animate-spin mx-auto" size={24} /></div>
                             ) : tenantUsers.length === 0 ? (
                                 <p className="text-center text-slate-500 py-4 text-sm">No users found</p>
@@ -1409,6 +1478,13 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                     {user.role}
                                                 </span>
                                                 <button
+                                                    onClick={() => handleResetPassword(user.id, user.name)}
+                                                    title="Send password reset email"
+                                                    className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded"
+                                                >
+                                                    <Mail size={14} />
+                                                </button>
+                                                <button
                                                     onClick={() => handleRemoveUser(user.id)}
                                                     className="p-1 text-red-500 hover:bg-red-50 rounded"
                                                 >
@@ -1421,6 +1497,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             )}
                         </div>
 
+                        {userModalView === 'users' && (
                         <div className="p-4 md:p-6 border-t border-slate-100 bg-white">
                             <p className="font-medium text-slate-700 mb-3 text-sm">Add New User</p>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
@@ -1457,6 +1534,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <UserPlus size={16} /> Add User
                             </button>
                         </div>
+                        )}
                     </div>
                 </div>
             )}

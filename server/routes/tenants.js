@@ -4,7 +4,11 @@ const db = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { getTenantUsage, forecastDaysToLimit, parseLimit } = require('../utils/planLimits');
+const { sendPasswordResetEmail } = require('../services/emailService');
+
+const generateRandomToken = () => crypto.randomBytes(32).toString('hex');
 
 router.get('/', authMiddleware, async (req, res) => {
     try {
@@ -133,8 +137,8 @@ router.post('/:tenantId/impersonate', authMiddleware, async (req, res) => {
         const expiresInMs = 4 * 60 * 60 * 1000;
         const token = jwt.sign({ userId: owner.id }, process.env.JWT_SECRET, { expiresIn: '4h' });
         await db.query(
-            `INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-            [owner.id, token, new Date(Date.now() + expiresInMs)]
+            `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent) VALUES ($1, $2, $3, $4, $5)`,
+            [owner.id, token, new Date(Date.now() + expiresInMs), req.ip || null, `Admin impersonation by ${req.user.email}`]
         );
 
         await logActivity(tenantId, req.user.id, 'UPDATE', 'TENANT', tenantId, {
@@ -453,6 +457,81 @@ router.delete('/:tenantId/users/:userId', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Error removing user:', err);
         res.status(500).json({ error: 'Failed to remove user' });
+    }
+});
+
+// Admin-only login history for a farm: every session issued to any of its users,
+// newest first, with IP/device (captured since the trust-proxy fix) and whether
+// it was a real login vs an admin impersonation session (see the impersonate
+// route above, which tags user_agent with "Admin impersonation by <email>").
+router.get('/:tenantId/sessions', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can view login history' });
+    }
+    const { tenantId } = req.params;
+    try {
+        const result = await db.query(
+            `SELECT s.id, s.created_at, s.expires_at, s.ip_address, s.user_agent, u.name as user_name, u.email as user_email, u.role as user_role
+             FROM sessions s
+             JOIN users u ON s.user_id = u.id
+             WHERE u.tenant_id = $1
+             ORDER BY s.created_at DESC
+             LIMIT 200`,
+            [tenantId]
+        );
+        res.json(result.rows.map(row => ({
+            id: row.id,
+            createdAt: row.created_at,
+            expiresAt: row.expires_at,
+            ipAddress: row.ip_address,
+            userAgent: row.user_agent,
+            userName: row.user_name,
+            userEmail: row.user_email,
+            userRole: row.user_role,
+            isImpersonation: (row.user_agent || '').startsWith('Admin impersonation by')
+        })));
+    } catch (err) {
+        console.error('Error fetching login history:', err);
+        res.status(500).json({ error: 'Failed to fetch login history' });
+    }
+});
+
+// Admin-triggered password reset: generates the same reset token the user's own
+// "forgot password" flow uses and emails it to them, so an admin can help a
+// locked-out user without ever seeing or setting their password directly.
+router.post('/:tenantId/users/:userId/reset-password', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can trigger a password reset' });
+    }
+    const { tenantId, userId } = req.params;
+    try {
+        const userRes = await db.query('SELECT id, name, email FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenantId]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const user = userRes.rows[0];
+        if (!user.email) {
+            return res.status(400).json({ error: 'This user has no email address to send a reset link to' });
+        }
+
+        const resetToken = generateRandomToken();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+        await db.query('UPDATE password_reset_tokens SET used = true WHERE user_id = $1', [user.id]);
+        await db.query(
+            `INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+            [user.id, resetToken, expiresAt]
+        );
+        await sendPasswordResetEmail(user.email, user.name, resetToken);
+
+        await logActivity(tenantId, req.user.id, 'UPDATE', 'USER', userId, {
+            message: `SaaS Admin ${req.user.email} triggered a password reset for ${user.email}`
+        });
+
+        res.json({ message: `Password reset email sent to ${user.email}` });
+    } catch (err) {
+        console.error('Error triggering password reset:', err);
+        res.status(500).json({ error: 'Failed to trigger password reset' });
     }
 });
 
