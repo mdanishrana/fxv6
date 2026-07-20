@@ -452,14 +452,20 @@ router.put('/invoices/:id', requireSaaSAdmin, async (req, res) => {
 
 router.post('/generate-invoices', requireSaaSAdmin, async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        // Compares against Postgres's own CURRENT_DATE rather than a JS-computed
+        // UTC date string - the two can disagree by a day right around midnight in
+        // any timezone east of UTC (e.g. PKT, UTC+5), since new Date().toISOString()
+        // is always UTC-anchored while a session's CURRENT_DATE follows the DB's
+        // configured timezone. That mismatch intermittently caused subscriptions
+        // due "today" to be silently skipped - caught via a flaky-looking test
+        // failure that turned out to be a real, reproducible date-boundary bug.
         const subscriptions = await db.query(`
             SELECT ts.*, t.name as tenant_name
             FROM tenant_subscriptions ts
             JOIN tenants t ON ts.tenant_id = t.id
-            WHERE ts.status = 'ACTIVE' 
-            AND ts.next_billing_date <= $1
-        `, [today]);
+            WHERE ts.status = 'ACTIVE'
+            AND ts.next_billing_date <= CURRENT_DATE
+        `);
 
         let generated = 0;
         for (const sub of subscriptions.rows) {
@@ -505,13 +511,13 @@ router.post('/generate-invoices', requireSaaSAdmin, async (req, res) => {
 
 router.post('/check-overdue', requireSaaSAdmin, async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        // Same CURRENT_DATE-vs-JS-date timezone reasoning as generate-invoices above.
         const result = await db.query(`
-            UPDATE subscription_invoices 
+            UPDATE subscription_invoices
             SET status = 'OVERDUE'
-            WHERE status = 'PENDING' AND due_date < $1
+            WHERE status = 'PENDING' AND due_date < CURRENT_DATE
             RETURNING id
-        `, [today]);
+        `);
 
         const overdueSubsResult = await db.query(`
             UPDATE tenant_subscriptions ts

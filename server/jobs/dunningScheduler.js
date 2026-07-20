@@ -40,7 +40,14 @@ function stageForInvoice(status, daysOverdue) {
 // grace period. Exported standalone (not just the cron wrapper) so it can be
 // invoked directly from tests and, if ever needed, an admin "run now" button.
 async function runDunningCheck() {
-    const today = new Date().toISOString().split('T')[0];
+    // Anchored to the database's own CURRENT_DATE rather than JS's UTC-based
+    // new Date() - the two can disagree by a day right around midnight in any
+    // timezone east of UTC, which would make the SQL overdue-marking below use a
+    // different "today" than the daysBetween() stage math further down. Using one
+    // DB-sourced value for both keeps them consistent with each other and with the
+    // due_date/next_billing_date columns, which are themselves DB-native dates.
+    const todayRes = await db.query('SELECT CURRENT_DATE as today');
+    const today = todayRes.rows[0].today.toISOString().split('T')[0];
     let emailsSent = 0, suspended = 0, failed = 0;
 
     try {
