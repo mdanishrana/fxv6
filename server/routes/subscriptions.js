@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { sendBillingNoticeEmail } = require('../services/emailService');
+const { logActivity } = require('../services/auditService');
 
 const requireSaaSAdmin = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -229,7 +231,39 @@ router.put('/invoices/:id', requireSaaSAdmin, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Invoice not found' });
         }
-        res.json(result.rows[0]);
+        const invoice = result.rows[0];
+
+        // Auto-reactivate a farm that dunning suspended for nonpayment, once this
+        // invoice (or any other) is marked PAID. Farms an admin suspended manually
+        // (suspended_by_dunning=false) are never touched here - see the note on
+        // PUT /:tenantId/status where that flag is explicitly cleared on manual action.
+        if (status === 'PAID' && invoice.tenant_id) {
+            if (invoice.subscription_id) {
+                await db.query(
+                    `UPDATE tenant_subscriptions SET status = 'ACTIVE', updated_at = NOW() WHERE id = $1 AND status = 'PAST_DUE'`,
+                    [invoice.subscription_id]
+                );
+            }
+
+            const tenantRes = await db.query('SELECT id, name, owner_name, owner_email, suspended_by_dunning FROM tenants WHERE id = $1', [invoice.tenant_id]);
+            const tenant = tenantRes.rows[0];
+            if (tenant && tenant.suspended_by_dunning) {
+                await db.query(
+                    `UPDATE tenants SET status = 'ACTIVE', suspended_by_dunning = false, updated_at = NOW() WHERE id = $1`,
+                    [tenant.id]
+                );
+                await logActivity(tenant.id, req.userId || null, 'UPDATE', 'TENANT', tenant.id, {
+                    message: 'Farm auto-reactivated after payment (was suspended for nonpayment)'
+                });
+                if (tenant.owner_email) {
+                    sendBillingNoticeEmail(tenant.owner_email, tenant.owner_name, tenant.name, 'REACTIVATED', {}).catch(err =>
+                        console.error('[Dunning] Failed to send reactivation email:', err.message)
+                    );
+                }
+            }
+        }
+
+        res.json(invoice);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to update invoice' });

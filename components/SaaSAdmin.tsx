@@ -803,6 +803,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 <div className={`w-2 h-2 rounded-full ${tenant.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                                                 {tenant.status}
                                             </div>
+                                            {tenant.suspendedByDunning && (
+                                                <div className="text-[10px] text-red-400 mt-0.5">Nonpayment</div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
@@ -861,9 +864,14 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             <p className="text-xs text-slate-500">{tenant.ownerName}</p>
                                         </div>
                                     </div>
-                                    <div className={`flex items-center gap-1 text-xs font-medium ${tenant.status === 'ACTIVE' ? 'text-emerald-600' : 'text-red-500'}`}>
-                                        <div className={`w-2 h-2 rounded-full ${tenant.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                        {tenant.status}
+                                    <div>
+                                        <div className={`flex items-center gap-1 text-xs font-medium ${tenant.status === 'ACTIVE' ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${tenant.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                            {tenant.status}
+                                        </div>
+                                        {tenant.suspendedByDunning && (
+                                            <div className="text-[9px] text-red-400 mt-0.5">Nonpayment</div>
+                                        )}
                                     </div>
                                 </div>
 

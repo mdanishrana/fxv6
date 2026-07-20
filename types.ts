@@ -130,6 +130,7 @@ export interface Tenant {
   createdAt?: string; // tenant registration timestamp (SaaS admin monitoring)
   registrationIp?: string | null; // client IP at signup (SaaS admin monitoring)
   registrationUserAgent?: string | null; // browser/device at signup (SaaS admin monitoring)
+  suspendedByDunning?: boolean; // true if the dunning scheduler suspended this farm for nonpayment (vs a manual admin suspension)
 }
 
 // --- Domain Types ---

@@ -587,6 +587,8 @@ CREATE TABLE public.subscription_invoices (
     billing_period_end date,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
+    last_reminder_stage character varying(20),
+    last_reminder_sent_at timestamp without time zone,
     CONSTRAINT subscription_invoices_status_check CHECK (((status)::text = ANY (ARRAY[('PENDING'::character varying)::text, ('PAID'::character varying)::text, ('OVERDUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('REFUNDED'::character varying)::text])))
 );
 
@@ -781,6 +783,7 @@ CREATE TABLE public.tenants (
     next_animal_seq integer DEFAULT 1 NOT NULL,
     registration_ip character varying(64),
     registration_user_agent text,
+    suspended_by_dunning boolean DEFAULT false NOT NULL,
     CONSTRAINT tenants_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('SUSPENDED'::character varying)::text, ('TRIAL'::character varying)::text]))),
     CONSTRAINT tenants_tier_check CHECK (((tier)::text = ANY (ARRAY[('BASIC'::character varying)::text, ('STANDARD'::character varying)::text, ('PREMIUM'::character varying)::text])))
 );

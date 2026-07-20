@@ -37,6 +37,7 @@ router.get('/', authMiddleware, async (req, res) => {
                 createdAt: t.created_at,
                 registrationIp: t.registration_ip || null,
                 registrationUserAgent: t.registration_user_agent || null,
+                suspendedByDunning: t.suspended_by_dunning || false,
                 users: userRes.rows
             };
         }));
@@ -262,8 +263,11 @@ router.put('/:tenantId/status', authMiddleware, async (req, res) => {
     }
 
     try {
+        // Any manual admin status change clears suspended_by_dunning, so the dunning
+        // scheduler's auto-reactivate-on-payment never overrides a status the admin
+        // set intentionally (e.g. suspending for a ToS issue unrelated to billing).
         const result = await db.query(
-            `UPDATE tenants SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+            `UPDATE tenants SET status = $1, suspended_by_dunning = false, updated_at = NOW() WHERE id = $2 RETURNING *`,
             [status, tenantId]
         );
 

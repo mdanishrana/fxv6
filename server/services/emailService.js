@@ -557,6 +557,89 @@ const sendAnimalReportEmail = async (email, name, reportData) => {
     return sendEmail(email, `📈 Animal Report: ${reportData.tagNumber}`, html);
 };
 
+// Dunning notices sent by server/jobs/dunningScheduler.js to a farm's own owner
+// (SaaS platform -> farm), distinct from sendMonthlyBillingReportEmail which is the
+// farm's own billing report to ITS animal-owner customers. One function covers all
+// stages since they share layout and only differ in color/copy/CTA.
+const DUNNING_COPY = {
+    UPCOMING: {
+        color: '#2563eb',
+        subjectPrefix: 'Upcoming payment',
+        heading: 'Your subscription payment is coming up',
+        body: (amount, currency, dueDate) => `Your next FarmXpert subscription payment of <strong>${currency} ${amount}</strong> is due on <strong>${dueDate}</strong>.`
+    },
+    DUE_TODAY: {
+        color: '#d97706',
+        subjectPrefix: 'Payment due today',
+        heading: 'Your subscription payment is due today',
+        body: (amount, currency, dueDate) => `Your FarmXpert subscription payment of <strong>${currency} ${amount}</strong> is due today (${dueDate}). Please arrange payment to keep your account in good standing.`
+    },
+    OVERDUE: {
+        color: '#dc2626',
+        subjectPrefix: 'Payment overdue',
+        heading: 'Your subscription payment is overdue',
+        body: (amount, currency, dueDate) => `Your FarmXpert subscription payment of <strong>${currency} ${amount}</strong> was due on ${dueDate} and is now overdue. Please arrange payment as soon as possible to avoid service interruption.`
+    },
+    FINAL_NOTICE: {
+        color: '#dc2626',
+        subjectPrefix: 'Final notice - account will be suspended',
+        heading: 'Final notice: your account will be suspended soon',
+        body: (amount, currency, dueDate) => `Your FarmXpert subscription payment of <strong>${currency} ${amount}</strong> (due ${dueDate}) is significantly overdue. Your account will be suspended shortly if payment is not received.`
+    },
+    SUSPENDED: {
+        color: '#dc2626',
+        subjectPrefix: 'Account suspended - payment overdue',
+        heading: 'Your FarmXpert account has been suspended',
+        body: (amount, currency, dueDate) => `Your FarmXpert account has been suspended due to a payment of <strong>${currency} ${amount}</strong> (due ${dueDate}) remaining unpaid. Please contact us to arrange payment and restore access.`
+    },
+    REACTIVATED: {
+        color: '#16a34a',
+        subjectPrefix: 'Account reactivated',
+        heading: 'Your FarmXpert account is active again',
+        body: () => `We've received your payment and your account has been reactivated. Thank you!`
+    }
+};
+
+const sendBillingNoticeEmail = async (ownerEmail, ownerName, farmName, stage, { amount, currency, dueDate } = {}) => {
+    const copy = DUNNING_COPY[stage];
+    if (!copy) throw new Error(`Unknown dunning stage: ${stage}`);
+
+    const formattedAmount = amount != null ? Number(amount).toLocaleString() : '';
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: ${copy.color}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+            .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;">🐄 FarmXpert</h1>
+                <p style="margin:10px 0 0;">${copy.heading}</p>
+            </div>
+            <div class="content">
+                <h2>Hello, ${ownerName}!</h2>
+                <p>${copy.body(formattedAmount, currency || 'PKR', dueDate || '')}</p>
+                <p style="color: #64748b; font-size: 14px;">Farm: ${farmName}</p>
+                <p>If you've already paid, please disregard this message - it may take a day to reflect.</p>
+            </div>
+            <div class="footer">
+                <p>© ${new Date().getFullYear()} FarmXpert - Pakistan's Premier Farm Management Solution</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return sendEmail(ownerEmail, `${copy.subjectPrefix} - FarmXpert`, html);
+};
+
 module.exports = {
     sendEmail,
     sendVerificationEmail,
@@ -566,5 +649,6 @@ module.exports = {
     sendAnimalReportEmail,
     sendLowStockAlertEmail,
     sendMonthlyBillingReportEmail,
-    sendPaymentStatusUpdateEmail
+    sendPaymentStatusUpdateEmail,
+    sendBillingNoticeEmail
 };
