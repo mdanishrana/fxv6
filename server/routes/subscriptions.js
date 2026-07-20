@@ -238,7 +238,9 @@ router.get('/', requireSaaSAdmin, async (req, res) => {
             nextBillingDate: row.next_billing_date,
             trialEndsAt: row.trial_end_date,
             cancelledAt: row.cancelled_at,
-            createdAt: row.created_at
+            createdAt: row.created_at,
+            discountType: row.discount_type,
+            discountValue: row.discount_value !== null ? parseFloat(row.discount_value) : null
         })));
     } catch (err) {
         console.error(err);
@@ -283,8 +285,25 @@ router.post('/', requireSaaSAdmin, async (req, res) => {
 // trialEndsAt, which - unlike the other fields here - wasn't previously exposed.
 router.put('/:id', requireSaaSAdmin, async (req, res) => {
     const { id } = req.params;
-    const { status, planId, amount, billingCycle, nextBillingDate, trialEndsAt } = req.body;
+    const { status, planId, amount, billingCycle, nextBillingDate, trialEndsAt, discountType, discountValue, clearDiscount } = req.body;
+
+    if (!clearDiscount && discountType !== undefined && discountType !== null) {
+        if (!['PERCENT', 'FIXED'].includes(discountType)) {
+            return res.status(400).json({ error: 'discountType must be PERCENT or FIXED' });
+        }
+        if (discountValue === undefined || discountValue === null || !(Number(discountValue) > 0)) {
+            return res.status(400).json({ error: 'discountValue must be a positive number' });
+        }
+        if (discountType === 'PERCENT' && Number(discountValue) > 100) {
+            return res.status(400).json({ error: 'A percentage discount cannot exceed 100' });
+        }
+    }
+
     try {
+        // clearDiscount is a separate flag (not just omitting discountType/Value)
+        // because COALESCE can't tell "clear this field" from "field omitted" -
+        // both arrive as a SQL NULL parameter. Same fix as the capacity-override
+        // route needed after the same bug was caught there earlier this session.
         const result = await db.query(`
             UPDATE tenant_subscriptions
             SET status = COALESCE($1, status),
@@ -293,11 +312,13 @@ router.put('/:id', requireSaaSAdmin, async (req, res) => {
                 billing_cycle = COALESCE($4, billing_cycle),
                 next_billing_date = COALESCE($5, next_billing_date),
                 trial_end_date = COALESCE($6, trial_end_date),
+                discount_type = CASE WHEN $8 THEN NULL ELSE COALESCE($9, discount_type) END,
+                discount_value = CASE WHEN $8 THEN NULL ELSE COALESCE($10, discount_value) END,
                 cancelled_at = CASE WHEN $1 = 'CANCELLED' THEN NOW() ELSE cancelled_at END,
                 updated_at = NOW()
             WHERE id = $7
             RETURNING *
-        `, [status, planId, amount, billingCycle, nextBillingDate, trialEndsAt, id]);
+        `, [status, planId, amount, billingCycle, nextBillingDate, trialEndsAt, id, !!clearDiscount, discountType, discountValue]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Subscription not found' });
@@ -306,7 +327,9 @@ router.put('/:id', requireSaaSAdmin, async (req, res) => {
         await logActivity(result.rows[0].tenant_id, req.userId || null, 'UPDATE', 'SUBSCRIPTION', id, {
             message: 'Subscription updated by SaaS Admin',
             status: result.rows[0].status,
-            trialEndDate: result.rows[0].trial_end_date
+            trialEndDate: result.rows[0].trial_end_date,
+            discountType: result.rows[0].discount_type,
+            discountValue: result.rows[0].discount_value
         });
 
         res.json(result.rows[0]);
@@ -334,6 +357,7 @@ router.get('/invoices', requireSaaSAdmin, async (req, res) => {
             invoiceNumber: row.invoice_number,
             amount: parseFloat(row.amount),
             taxAmount: parseFloat(row.tax_amount || 0),
+            discountAmount: parseFloat(row.discount_amount || 0),
             totalAmount: parseFloat(row.total_amount),
             status: row.status,
             dueDate: row.due_date,
@@ -447,11 +471,23 @@ router.post('/generate-invoices', requireSaaSAdmin, async (req, res) => {
             else if (sub.billing_cycle === 'QUARTERLY') periodEnd.setMonth(periodEnd.getMonth() + 3);
             else if (sub.billing_cycle === 'YEARLY') periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
+            const subAmount = parseFloat(sub.amount);
+            let discountAmount = 0;
+            if (sub.discount_type === 'PERCENT') {
+                discountAmount = subAmount * (parseFloat(sub.discount_value) / 100);
+            } else if (sub.discount_type === 'FIXED') {
+                discountAmount = parseFloat(sub.discount_value);
+            }
+            // A fixed discount larger than the subscription amount would make the
+            // invoice negative - clamp so a farm is never billed less than zero.
+            discountAmount = Math.min(discountAmount, subAmount);
+            const totalAmount = Math.round((subAmount - discountAmount) * 100) / 100;
+
             await db.query(`
-                INSERT INTO subscription_invoices 
-                (tenant_id, subscription_id, invoice_number, amount, tax_amount, total_amount, due_date, billing_period_start, billing_period_end)
-                VALUES ($1, $2, $3, $4, 0, $4, $5, $6, $7)
-            `, [sub.tenant_id, sub.id, invoiceNumber, sub.amount, periodStart, periodStart, periodEnd]);
+                INSERT INTO subscription_invoices
+                (tenant_id, subscription_id, invoice_number, amount, tax_amount, discount_amount, total_amount, due_date, billing_period_start, billing_period_end)
+                VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8, $9)
+            `, [sub.tenant_id, sub.id, invoiceNumber, subAmount, discountAmount, totalAmount, periodStart, periodStart, periodEnd]);
 
             await db.query(`
                 UPDATE tenant_subscriptions SET next_billing_date = $1, updated_at = NOW() WHERE id = $2

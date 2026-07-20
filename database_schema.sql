@@ -591,6 +591,7 @@ CREATE TABLE public.subscription_invoices (
     updated_at timestamp without time zone DEFAULT now(),
     last_reminder_stage character varying(20),
     last_reminder_sent_at timestamp without time zone,
+    discount_amount numeric(12,2) DEFAULT 0,
     CONSTRAINT subscription_invoices_status_check CHECK (((status)::text = ANY (ARRAY[('PENDING'::character varying)::text, ('PAID'::character varying)::text, ('OVERDUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('REFUNDED'::character varying)::text])))
 );
 
@@ -744,8 +745,11 @@ CREATE TABLE public.tenant_subscriptions (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     cattle_limit_override character varying(50),
+    discount_type character varying(10),
+    discount_value numeric(10,2),
     CONSTRAINT tenant_subscriptions_billing_cycle_check CHECK (((billing_cycle)::text = ANY (ARRAY[('MONTHLY'::character varying)::text, ('QUARTERLY'::character varying)::text, ('YEARLY'::character varying)::text]))),
-    CONSTRAINT tenant_subscriptions_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('TRIAL'::character varying)::text, ('PAST_DUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('SUSPENDED'::character varying)::text, ('PAUSED'::character varying)::text])))
+    CONSTRAINT tenant_subscriptions_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('TRIAL'::character varying)::text, ('PAST_DUE'::character varying)::text, ('CANCELLED'::character varying)::text, ('SUSPENDED'::character varying)::text, ('PAUSED'::character varying)::text]))),
+    CONSTRAINT tenant_subscriptions_discount_type_check CHECK ((discount_type IS NULL) OR ((discount_type)::text = ANY (ARRAY[('PERCENT'::character varying)::text, ('FIXED'::character varying)::text])))
 );
 
 

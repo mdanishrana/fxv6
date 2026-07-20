@@ -396,6 +396,8 @@ export interface TenantSubscription {
   trialEndsAt?: string;
   cancelledAt?: string;
   createdAt: string;
+  discountType?: 'PERCENT' | 'FIXED' | null;
+  discountValue?: number | null;
 }
 
 export interface SubscriptionInvoice {
@@ -407,6 +409,7 @@ export interface SubscriptionInvoice {
   invoiceNumber: string;
   amount: number;
   taxAmount: number;
+  discountAmount: number;
   totalAmount: number;
   status: InvoiceStatus;
   dueDate?: string;

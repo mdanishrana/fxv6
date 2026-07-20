@@ -113,6 +113,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [overrideForm, setOverrideForm] = useState({ cattleLimitOverride: '', userLimitOverride: '' });
     const [savingOverride, setSavingOverride] = useState(false);
 
+    const [discountTarget, setDiscountTarget] = useState<TenantSubscription | null>(null);
+    const [discountForm, setDiscountForm] = useState({ discountType: 'PERCENT' as 'PERCENT' | 'FIXED', discountValue: '' });
+    const [savingDiscount, setSavingDiscount] = useState(false);
+
     const [broadcastTitle, setBroadcastTitle] = useState('');
     const [broadcastBody, setBroadcastBody] = useState('');
     const [sendingBroadcast, setSendingBroadcast] = useState(false);
@@ -362,6 +366,41 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         const base = sub.trialEndsAt ? new Date(sub.trialEndsAt) : new Date();
         base.setDate(base.getDate() + days);
         handleSubscriptionAction(sub.id, { trialEndsAt: base.toISOString().split('T')[0] });
+    };
+
+    const openDiscountModal = (sub: TenantSubscription) => {
+        setDiscountTarget(sub);
+        setDiscountForm({
+            discountType: sub.discountType || 'PERCENT',
+            discountValue: sub.discountValue != null ? String(sub.discountValue) : ''
+        });
+    };
+
+    const handleSaveDiscount = async () => {
+        if (!discountTarget) return;
+        const value = parseFloat(discountForm.discountValue);
+        if (!Number.isFinite(value) || value <= 0) {
+            showToast('Enter a positive discount value');
+            return;
+        }
+        setSavingDiscount(true);
+        try {
+            await handleSubscriptionAction(discountTarget.id, { discountType: discountForm.discountType, discountValue: value });
+            setDiscountTarget(null);
+        } finally {
+            setSavingDiscount(false);
+        }
+    };
+
+    const handleClearDiscount = async () => {
+        if (!discountTarget) return;
+        setSavingDiscount(true);
+        try {
+            await handleSubscriptionAction(discountTarget.id, { clearDiscount: true });
+            setDiscountTarget(null);
+        } finally {
+            setSavingDiscount(false);
+        }
     };
 
     const handleGenerateInvoices = async () => {
@@ -1858,7 +1897,14 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                         <p className="text-xs text-slate-500">{sub.ownerName}</p>
                                                     </td>
                                                     <td className="px-4 py-3">{sub.planName || '-'}</td>
-                                                    <td className="px-4 py-3 font-medium">Rs. {sub.amount.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 font-medium">
+                                                        Rs. {sub.amount.toLocaleString()}
+                                                        {sub.discountType && (
+                                                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase bg-purple-100 text-purple-700">
+                                                                -{sub.discountType === 'PERCENT' ? `${sub.discountValue}%` : `Rs. ${sub.discountValue}`}
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-4 py-3"><span className="text-xs bg-slate-100 px-2 py-0.5 rounded">{sub.billingCycle}</span></td>
                                                     <td className="px-4 py-3">
                                                         <span className={`text-xs px-2 py-0.5 rounded font-medium ${sub.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
@@ -1881,7 +1927,12 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                                 <button onClick={() => handleExtendTrial(sub)} className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium">Extend Trial</button>
                                                             )}
                                                             {sub.status !== 'CANCELLED' && (
-                                                                <button onClick={() => handleCancelSubscription(sub.id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 font-medium">Cancel</button>
+                                                                <>
+                                                                    <button onClick={() => openDiscountModal(sub)} className="text-xs px-2 py-1 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium">
+                                                                        {sub.discountType ? 'Edit Discount' : 'Apply Discount'}
+                                                                    </button>
+                                                                    <button onClick={() => handleCancelSubscription(sub.id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 font-medium">Cancel</button>
+                                                                </>
                                                             )}
                                                         </div>
                                                     </td>
@@ -1914,7 +1965,12 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                     <td className="px-4 py-3">
                                                         <p className="font-medium text-slate-800">{inv.tenantName}</p>
                                                     </td>
-                                                    <td className="px-4 py-3 font-medium">Rs. {inv.totalAmount.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 font-medium">
+                                                        Rs. {inv.totalAmount.toLocaleString()}
+                                                        {inv.discountAmount > 0 && (
+                                                            <span className="ml-1.5 text-[10px] text-purple-600">(-Rs. {inv.discountAmount.toLocaleString()} discount)</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-4 py-3 text-slate-600">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                                                     <td className="px-4 py-3">
                                                         <span className={`text-xs px-2 py-0.5 rounded font-medium ${inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
@@ -2109,6 +2165,57 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             <button onClick={() => setOverrideTarget(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
                             <button onClick={handleSaveOverride} disabled={savingOverride} className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2">
                                 {savingOverride && <Loader2 className="animate-spin" size={14} />} Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {discountTarget && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-4 md:p-6 border-b border-slate-100 bg-white flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-slate-800">Apply Discount - {discountTarget.tenantName}</h3>
+                            <button onClick={() => setDiscountTarget(null)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                        </div>
+                        <div className="p-4 md:p-6 space-y-4">
+                            <p className="text-sm text-slate-500">
+                                Current amount: Rs. {discountTarget.amount.toLocaleString()} / {discountTarget.billingCycle.toLowerCase()}.
+                                The discount applies to every future invoice generated for this subscription until cleared.
+                            </p>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Discount Type</label>
+                                <select
+                                    value={discountForm.discountType}
+                                    onChange={e => setDiscountForm({ ...discountForm, discountType: e.target.value as 'PERCENT' | 'FIXED' })}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                >
+                                    <option value="PERCENT">Percentage off</option>
+                                    <option value="FIXED">Fixed amount off (PKR)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {discountForm.discountType === 'PERCENT' ? 'Percentage (0-100)' : 'Amount (PKR)'}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={discountForm.discountValue}
+                                    onChange={e => setDiscountForm({ ...discountForm, discountValue: e.target.value })}
+                                    placeholder={discountForm.discountType === 'PERCENT' ? 'e.g. 20' : 'e.g. 500'}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                />
+                            </div>
+                            {discountTarget.discountType && (
+                                <button onClick={handleClearDiscount} disabled={savingDiscount} className="text-xs px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600">
+                                    Clear existing discount
+                                </button>
+                            )}
+                        </div>
+                        <div className="p-4 md:p-6 border-t border-slate-100 flex justify-end gap-3">
+                            <button onClick={() => setDiscountTarget(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                            <button onClick={handleSaveDiscount} disabled={savingDiscount} className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2">
+                                {savingDiscount && <Loader2 className="animate-spin" size={14} />} Save
                             </button>
                         </div>
                     </div>
