@@ -67,12 +67,17 @@ router.get('/capacity', authMiddleware, async (req, res) => {
         const report = await Promise.all(tenantsRes.rows.map(async (t) => {
             const usage = await getTenantUsage(t.id);
             const daysToLimit = await forecastDaysToLimit(t.id, usage.cattleCount, usage.cattleLimit);
+            const addedRes = await db.query(
+                `SELECT COUNT(*) FROM cattle WHERE tenant_id = $1 AND created_at >= date_trunc('month', CURRENT_DATE)`,
+                [t.id]
+            );
             return {
                 tenantId: t.id,
                 name: t.name,
                 tier: t.tier,
                 ...usage,
-                daysToCattleLimit: daysToLimit
+                daysToCattleLimit: daysToLimit,
+                animalsAddedThisMonth: parseInt(addedRes.rows[0].count)
             };
         }));
         res.json(report);
@@ -171,7 +176,7 @@ router.post('/:tenantId/impersonate', authMiddleware, async (req, res) => {
 
 router.put('/:tenantId', authMiddleware, async (req, res) => {
     const { tenantId } = req.params;
-    const { name, ownerEmail, managerEmail, whatsappNumber, whatsappApiKey, smtpSettings, herdValueRate, logoUrl, currency, weightUnit, branches } = req.body;
+    const { name, ownerEmail, managerEmail, whatsappNumber, whatsappApiKey, smtpSettings, herdValueRate, logoUrl, currency, weightUnit, branches, country, timezone } = req.body;
 
     console.log('Tenant update request:', {
         tenantId,
@@ -210,9 +215,11 @@ router.put('/:tenantId', authMiddleware, async (req, res) => {
                 branches = COALESCE($9::jsonb, branches),
                 whatsapp_number = COALESCE($10, whatsapp_number),
                 whatsapp_apikey = COALESCE($11, whatsapp_apikey),
+                country = COALESCE($12, country),
+                timezone = COALESCE($13, timezone),
                 updated_at = NOW()
-             WHERE id = $12 RETURNING *`,
-            [name, ownerEmail, managerEmail, smtpSettings ? JSON.stringify(smtpSettings) : null, herdValueRate, logoUrl, currency, weightUnit, branches ? JSON.stringify(branches) : null, whatsappNumber, whatsappApiKey, tenantId]
+             WHERE id = $14 RETURNING *`,
+            [name, ownerEmail, managerEmail, smtpSettings ? JSON.stringify(smtpSettings) : null, herdValueRate, logoUrl, currency, weightUnit, branches ? JSON.stringify(branches) : null, whatsappNumber, whatsappApiKey, country, timezone, tenantId]
         );
 
         if (result.rows.length === 0) {
@@ -389,10 +396,10 @@ router.get('/:tenantId/users', authMiddleware, async (req, res) => {
 
     try {
         const result = await db.query(
-            'SELECT id, name, email, role, is_verified, created_at FROM users WHERE tenant_id = $1 ORDER BY created_at',
+            'SELECT id, name, email, role, is_verified, created_at, last_login FROM users WHERE tenant_id = $1 ORDER BY created_at',
             [tenantId]
         );
-        res.json(result.rows);
+        res.json(result.rows.map(u => ({ ...u, lastLogin: u.last_login })));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

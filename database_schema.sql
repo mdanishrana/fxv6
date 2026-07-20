@@ -791,6 +791,8 @@ CREATE TABLE public.tenants (
     cattle_limit_override character varying(50),
     user_limit_override integer,
     capacity_notice_sent_at timestamp without time zone,
+    country character varying(100),
+    timezone character varying(100),
     CONSTRAINT tenants_status_check CHECK (((status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('SUSPENDED'::character varying)::text, ('TRIAL'::character varying)::text]))),
     CONSTRAINT tenants_tier_check CHECK (((tier)::text = ANY (ARRAY[('BASIC'::character varying)::text, ('STANDARD'::character varying)::text, ('PREMIUM'::character varying)::text])))
 );

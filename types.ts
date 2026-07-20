@@ -103,6 +103,7 @@ export interface User {
   email: string;
   tenantId: string;
   role: UserRole;
+  lastLogin?: string | null;
 }
 
 export interface Tenant {
@@ -131,6 +132,8 @@ export interface Tenant {
   registrationIp?: string | null; // client IP at signup (SaaS admin monitoring)
   registrationUserAgent?: string | null; // browser/device at signup (SaaS admin monitoring)
   suspendedByDunning?: boolean; // true if the dunning scheduler suspended this farm for nonpayment (vs a manual admin suspension)
+  country?: string | null;
+  timezone?: string | null;
 }
 
 // --- Domain Types ---
@@ -366,6 +369,7 @@ export interface TenantCapacity {
   cattleUtilizationPct: number | null;
   userUtilizationPct: number | null;
   daysToCattleLimit: number | null;
+  animalsAddedThisMonth: number;
 }
 
 export type ViewState = 'dashboard' | 'cattle' | 'medical' | 'vaccinations' | 'protocols' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';

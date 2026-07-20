@@ -93,4 +93,13 @@ describe('GET /api/subscriptions/analytics', () => {
         const growthBucket = res.body.subscriptionGrowth.find(b => b.month === thisMonthKey);
         expect(growthBucket.active).toBeGreaterThanOrEqual(1);
     });
+
+    it('breaks revenue down per farm', async () => {
+        const res = await request(app).get('/api/subscriptions/analytics').set('Authorization', `Bearer ${tenant.token}`);
+        const row = res.body.revenueByFarm.find(f => f.tenantId === tenant.tenantId);
+        expect(row).toBeTruthy();
+        expect(row.revenue).toBeGreaterThanOrEqual(6000);
+        // Farms with no paid invoices shouldn't clutter the breakdown.
+        expect(res.body.revenueByFarm.every(f => f.revenue > 0)).toBe(true);
+    });
 });

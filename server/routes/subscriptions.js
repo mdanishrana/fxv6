@@ -154,6 +154,21 @@ router.get('/analytics', requireSaaSAdmin, async (req, res) => {
             }).length;
         }, 'active');
 
+        // All-time revenue per farm, for the "Subscription Revenue by Farm" breakdown.
+        const revenueByFarmRes = await db.query(`
+            SELECT t.id as tenant_id, t.name as tenant_name, COALESCE(SUM(si.total_amount), 0) as revenue
+            FROM tenants t
+            LEFT JOIN subscription_invoices si ON si.tenant_id = t.id AND si.status = 'PAID'
+            GROUP BY t.id, t.name
+            HAVING COALESCE(SUM(si.total_amount), 0) > 0
+            ORDER BY revenue DESC
+        `);
+        const revenueByFarm = revenueByFarmRes.rows.map(r => ({
+            tenantId: r.tenant_id,
+            tenantName: r.tenant_name,
+            revenue: parseFloat(r.revenue)
+        }));
+
         res.json({
             arr: Math.round(mrr * 12 * 100) / 100,
             mrr,
@@ -166,7 +181,8 @@ router.get('/analytics', requireSaaSAdmin, async (req, res) => {
             cancellationsThisMonth,
             churnRatePct,
             revenueByMonth,
-            subscriptionGrowth
+            subscriptionGrowth,
+            revenueByFarm
         });
     } catch (err) {
         console.error('Error fetching billing analytics:', err);

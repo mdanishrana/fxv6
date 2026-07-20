@@ -76,6 +76,8 @@ describe('GET /api/tenants/capacity', () => {
         expect(row.cattleCount).toBe(3);
         expect(row.cattleLimit).toBe(5);
         expect(row.cattleUtilizationPct).toBe(60);
+        // All 3 test cattle were just created, so they count toward this month's growth.
+        expect(row.animalsAddedThisMonth).toBe(3);
     });
 });
 

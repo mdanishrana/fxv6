@@ -187,7 +187,7 @@ export const api = {
             if (!res.ok) throw new Error(json.error || 'Failed to open farm session');
             return json;
         },
-        update: (tenantId: string, data: { name?: string; ownerEmail?: string; managerEmail?: string; whatsappNumber?: string; whatsappApiKey?: string; smtpSettings?: any; herdValueRate?: number; logoUrl?: string; currency?: string; weightUnit?: string; branches?: string[]; }) => {
+        update: (tenantId: string, data: { name?: string; ownerEmail?: string; managerEmail?: string; whatsappNumber?: string; whatsappApiKey?: string; smtpSettings?: any; herdValueRate?: number; logoUrl?: string; currency?: string; weightUnit?: string; branches?: string[]; country?: string; timezone?: string; }) => {
             const token = localStorage.getItem('farmxpert_token');
             return fetch(`${API_URL}/tenants/${tenantId}`, {
                 method: 'PUT',

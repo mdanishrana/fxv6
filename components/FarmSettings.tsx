@@ -31,6 +31,8 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
     const [logoUrl, setLogoUrl] = useState(tenant.logoUrl || '');
     const [currency, setCurrency] = useState(tenant.currency || 'PKR');
     const [weightUnit, setWeightUnit] = useState(tenant.weightUnit || 'kg');
+    const [country, setCountry] = useState(tenant.country || '');
+    const [timezone, setTimezone] = useState(tenant.timezone || '');
     const [branches, setBranches] = useState<string[]>(tenant.branches || []);
     const [newBranch, setNewBranch] = useState('');
     const [newUserForm, setNewUserForm] = useState({ name: '', email: '', role: 'LABOR' as UserRole });
@@ -96,7 +98,9 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
                 logoUrl,
                 currency,
                 weightUnit,
-                branches
+                branches,
+                country,
+                timezone
             });
 
             setTenant(prev => prev ? ({
@@ -111,7 +115,9 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
                 logoUrl,
                 currency,
                 weightUnit,
-                branches
+                branches,
+                country,
+                timezone
             }) : null);
 
             setSaved(true);
@@ -387,6 +393,28 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
                             <option value="kg">Kilograms (kg)</option>
                             <option value="lbs">Pounds (lbs)</option>
                         </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Country</label>
+                        <input
+                            type="text"
+                            value={country}
+                            onChange={(e) => setCountry(e.target.value)}
+                            placeholder="Pakistan"
+                            className="w-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/50 dark:text-slate-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none backdrop-blur-sm"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Timezone</label>
+                        <input
+                            type="text"
+                            value={timezone}
+                            onChange={(e) => setTimezone(e.target.value)}
+                            placeholder="Asia/Karachi"
+                            className="w-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/50 dark:text-slate-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none backdrop-blur-sm"
+                        />
                     </div>
                 </div>
 

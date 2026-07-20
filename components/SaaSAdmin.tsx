@@ -108,6 +108,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
 
     const [capacityReport, setCapacityReport] = useState<TenantCapacity[]>([]);
     const [loadingCapacity, setLoadingCapacity] = useState(false);
+    const [capacitySortMode, setCapacitySortMode] = useState<'utilization' | 'largest'>('utilization');
     const [overrideTarget, setOverrideTarget] = useState<TenantCapacity | null>(null);
     const [overrideForm, setOverrideForm] = useState({ cattleLimitOverride: '', userLimitOverride: '' });
     const [savingOverride, setSavingOverride] = useState(false);
@@ -1129,10 +1130,14 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400" size={28} /></div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
                                 <div className="bg-white p-4 rounded-xl border border-slate-200">
                                     <p className="text-xl md:text-2xl font-bold text-slate-800">{capacityReport.reduce((sum, r) => sum + r.cattleCount, 0)}</p>
                                     <p className="text-[10px] md:text-xs text-slate-500 uppercase">Total Animals (All Farms)</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                                    <p className="text-xl md:text-2xl font-bold text-emerald-600">+{capacityReport.reduce((sum, r) => sum + r.animalsAddedThisMonth, 0)}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 uppercase">Animal Growth This Month</p>
                                 </div>
                                 <div className="bg-white p-4 rounded-xl border border-slate-200">
                                     <p className="text-xl md:text-2xl font-bold text-amber-600">{capacityReport.filter(r => (r.cattleUtilizationPct ?? 0) >= 80 || (r.userUtilizationPct ?? 0) >= 80).length}</p>
@@ -1148,6 +1153,22 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 </div>
                             </div>
 
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-slate-500">Sort by:</span>
+                                <button
+                                    onClick={() => setCapacitySortMode('utilization')}
+                                    className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${capacitySortMode === 'utilization' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                    Closest to Limit
+                                </button>
+                                <button
+                                    onClick={() => setCapacitySortMode('largest')}
+                                    className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${capacitySortMode === 'largest' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                    Top 10 Largest Farms
+                                </button>
+                            </div>
+
                             <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
@@ -1161,9 +1182,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {[...capacityReport]
-                                            .sort((a, b) => (b.cattleUtilizationPct ?? -1) - (a.cattleUtilizationPct ?? -1))
-                                            .map(row => (
+                                        {(capacitySortMode === 'largest'
+                                            ? [...capacityReport].sort((a, b) => b.cattleCount - a.cattleCount).slice(0, 10)
+                                            : [...capacityReport].sort((a, b) => (b.cattleUtilizationPct ?? -1) - (a.cattleUtilizationPct ?? -1))
+                                        ).map(row => (
                                                 <tr key={row.tenantId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                                     <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">{row.name}</td>
                                                     <td className="px-4 py-3 text-slate-600">{row.tier}</td>
@@ -1483,6 +1505,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             <div>
                                                 <p className="font-medium text-slate-800 text-sm">{user.name}</p>
                                                 <p className="text-xs text-slate-500">{user.email}</p>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                                    Last login: {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                                                </p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase
@@ -1926,6 +1951,32 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                             </LineChart>
                                                         </ResponsiveContainer>
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                <div className="p-6 pb-0">
+                                                    <h4 className="font-bold text-slate-800">Revenue by Farm</h4>
+                                                </div>
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-sm mt-4">
+                                                        <thead>
+                                                            <tr className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                                                <th className="px-6 py-3">Farm</th>
+                                                                <th className="px-6 py-3 text-right">Total Revenue</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {billingAnalytics.revenueByFarm.length === 0 ? (
+                                                                <tr><td colSpan={2} className="px-6 py-8 text-center text-slate-500">No paid invoices yet</td></tr>
+                                                            ) : billingAnalytics.revenueByFarm.map((f: any) => (
+                                                                <tr key={f.tenantId} className="border-b border-slate-100">
+                                                                    <td className="px-6 py-3 font-medium text-slate-800">{f.tenantName}</td>
+                                                                    <td className="px-6 py-3 text-right font-medium text-emerald-600">Rs. {f.revenue.toLocaleString()}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </>
