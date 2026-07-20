@@ -13,6 +13,7 @@ const generateRandomToken = () => {
 const { syncAnimalFeedCosts } = require('../utils/feedCostSync');
 const { formatNewSchemeTag, NEW_SCHEME_TYPE_META } = require('../utils/animalTagging');
 const { pgDateToStr } = require('../utils/dateUtils');
+const { getTenantLimits } = require('../utils/planLimits');
 
 const mapCattleRow = (row) => {
     if (!row) return null;
@@ -221,13 +222,16 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     const c = req.body;
     try {
-        // Enforce FREE tier animal limit of 5
         const tenantResult = await db.query('SELECT tier, legacy_tag_scheme FROM tenants WHERE id = $1', [req.tenantId]);
-        if (tenantResult.rows.length > 0 && tenantResult.rows[0].tier === 'FREE') {
+
+        // Enforce the farm's plan animal limit (was FREE-tier-only; BASIC/STANDARD
+        // farms could add unlimited cattle for the price of the cheapest plan).
+        const { cattleLimit } = await getTenantLimits(req.tenantId);
+        if (cattleLimit !== null) {
             const countResult = await db.query('SELECT COUNT(*) FROM cattle WHERE tenant_id = $1', [req.tenantId]);
-            if (parseInt(countResult.rows[0].count) >= 5) {
+            if (parseInt(countResult.rows[0].count) >= cattleLimit) {
                 return res.status(403).json({
-                    error: 'Free plan is limited to 5 animals. Please upgrade to add more.',
+                    error: `Your plan is limited to ${cattleLimit} animals. Please upgrade to add more.`,
                     limitReached: true
                 });
             }

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { sendVerificationEmail } = require('../services/emailService');
 const { authMiddleware } = require('../middleware/auth');
+const { getTenantLimits } = require('../utils/planLimits');
 
 router.use(authMiddleware);
 
@@ -73,20 +74,22 @@ router.post('/:tenantId', async (req, res) => {
             return res.status(404).json({ error: 'Farm not found' });
         }
 
-        const tier = tenantResult.rows[0].tier;
-        const userLimits = { 'BASIC': 2, 'STANDARD': 5, 'PREMIUM': 20 };
-        const limit = userLimits[tier] || 2;
+        // Reads the real, admin-editable subscription_plans.user_limit (was a
+        // hardcoded {BASIC:2, STANDARD:5, PREMIUM:20} map that ignored whatever the
+        // admin panel's Plans tab actually said, and had no FREE entry).
+        const { userLimit } = await getTenantLimits(tenantId);
+        if (userLimit !== null) {
+            const countResult = await db.query(
+                "SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role != 'ANIMAL_OWNER'",
+                [tenantId]
+            );
+            const currentCount = parseInt(countResult.rows[0].count);
 
-        const countResult = await db.query(
-            "SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND role != 'ANIMAL_OWNER'",
-            [tenantId]
-        );
-        const currentCount = parseInt(countResult.rows[0].count);
-
-        if (currentCount >= limit) {
-            return res.status(400).json({
-                error: `User limit reached (${limit}). Please upgrade your plan.`
-            });
+            if (currentCount >= userLimit) {
+                return res.status(400).json({
+                    error: `User limit reached (${userLimit}). Please upgrade your plan.`
+                });
+            }
         }
 
         const tempPassword = crypto.randomBytes(8).toString('hex');
