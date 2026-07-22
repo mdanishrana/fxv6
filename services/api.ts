@@ -224,6 +224,27 @@ export const api = {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Failed to update capacity override');
             return json;
+        },
+        getBackupStatus: async (): Promise<{
+            configured: boolean;
+            backupDir?: string;
+            retentionDays?: number;
+            scheduleDescription?: string;
+            backups?: { filename: string; sizeBytes: number; createdAt: string }[];
+            count?: number;
+            totalSizeBytes?: number;
+            lastBackupAt?: string | null;
+            lastBackupSizeBytes?: number | null;
+            lastBackupAgeHours?: number | null;
+            isStale?: boolean;
+        }> => {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`${API_URL}/tenants/backup-status`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to fetch backup status');
+            return json;
         }
     },
     cattle: {

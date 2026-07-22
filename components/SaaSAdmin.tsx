@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tenant, FeatureModule, User, SubscriptionPlan, PlanFeature, TenantSubscription, SubscriptionInvoice, SubscriptionDashboard, SystemContent, TenantCapacity } from '../types';
-import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell, Gauge } from 'lucide-react';
+import { ShieldCheck, Search, Plus, Building2, Users, Power, Loader2, X, Settings, UserPlus, Trash2, Check, CreditCard, Edit2, DollarSign, Mail, FileText, TrendingUp, AlertTriangle, Calendar, Receipt, Eye, Bell, Gauge, Database, HardDrive, Clock } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
-export type AdminTab = 'farms' | 'registrations' | 'capacity' | 'plans' | 'subscriptions' | 'content' | 'notifications';
+export type AdminTab = 'farms' | 'registrations' | 'capacity' | 'plans' | 'subscriptions' | 'content' | 'notifications' | 'backups';
 
 interface SaaSAdminProps {
     tenants: Tenant[];
@@ -114,6 +114,10 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [overrideForm, setOverrideForm] = useState({ cattleLimitOverride: '', userLimitOverride: '' });
     const [savingOverride, setSavingOverride] = useState(false);
 
+    const [backupStatus, setBackupStatus] = useState<Awaited<ReturnType<typeof api.tenants.getBackupStatus>> | null>(null);
+    const [loadingBackupStatus, setLoadingBackupStatus] = useState(false);
+    const [backupStatusError, setBackupStatusError] = useState<string | null>(null);
+
     const [discountTarget, setDiscountTarget] = useState<TenantSubscription | null>(null);
     const [discountForm, setDiscountForm] = useState({ discountType: 'PERCENT' as 'PERCENT' | 'FIXED', discountValue: '' });
     const [savingDiscount, setSavingDiscount] = useState(false);
@@ -177,7 +181,23 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
         if (activeTab === 'capacity') {
             loadCapacityReport();
         }
+        if (activeTab === 'backups') {
+            loadBackupStatus();
+        }
     }, [activeTab]);
+
+    const loadBackupStatus = async () => {
+        setLoadingBackupStatus(true);
+        setBackupStatusError(null);
+        try {
+            const data = await api.tenants.getBackupStatus();
+            setBackupStatus(data);
+        } catch (err: any) {
+            setBackupStatusError(err.message || 'Failed to load backup status');
+        } finally {
+            setLoadingBackupStatus(false);
+        }
+    };
 
     useEffect(() => {
         if (activeTab === 'subscriptions' && subTab === 'analytics' && !billingAnalytics) {
@@ -2501,6 +2521,86 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 </div>
                             </div>
                         </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'backups' && (
+                <div className="space-y-4">
+                    {loadingBackupStatus ? (
+                        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400 dark:text-slate-500" size={28} /></div>
+                    ) : backupStatusError ? (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
+                            {backupStatusError}
+                        </div>
+                    ) : !backupStatus?.configured ? (
+                        <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
+                            <Database size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+                            <p className="text-slate-500 dark:text-slate-400 font-medium">Backup status isn't available in this environment.</p>
+                            <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">This shows the daily database backup job configured on the production server.</p>
+                        </div>
+                    ) : (
+                        <>
+                            {backupStatus.isStale && (
+                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 px-4 py-3 rounded-xl text-sm flex items-center gap-3">
+                                    <AlertTriangle size={18} className="shrink-0" />
+                                    No backup has run in over {Math.floor((backupStatus.lastBackupAgeHours ?? 0))} hours - the daily cron may have failed or stopped running.
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                    <div className={`p-2 rounded-lg w-fit mb-2 ${backupStatus.isStale ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'}`}><Clock size={18} /></div>
+                                    <p className="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100">
+                                        {backupStatus.lastBackupAt ? new Date(backupStatus.lastBackupAt).toLocaleString() : 'Never'}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">Last Backup</p>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 w-fit mb-2"><HardDrive size={18} /></div>
+                                    <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">
+                                        {backupStatus.lastBackupSizeBytes ? `${(backupStatus.lastBackupSizeBytes / 1024 / 1024).toFixed(1)} MB` : '-'}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">Last Backup Size</p>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400 w-fit mb-2"><Database size={18} /></div>
+                                    <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{backupStatus.count} / {backupStatus.retentionDays}d</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">Backups Retained</p>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-600 dark:text-amber-400 w-fit mb-2"><HardDrive size={18} /></div>
+                                    <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">
+                                        {backupStatus.totalSizeBytes ? `${(backupStatus.totalSizeBytes / 1024 / 1024).toFixed(0)} MB` : '-'}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">Total Disk Used</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
+                                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                                    {backupStatus.scheduleDescription} &middot; stored at <span className="font-mono">{backupStatus.backupDir}</span>
+                                </div>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-slate-50 dark:bg-slate-900/50 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                            <th className="px-4 py-3">File</th>
+                                            <th className="px-4 py-3">Created</th>
+                                            <th className="px-4 py-3">Size</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(backupStatus.backups || []).map(b => (
+                                            <tr key={b.filename} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                                <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap">{b.filename}</td>
+                                                <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">{new Date(b.createdAt).toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">{(b.sizeBytes / 1024 / 1024).toFixed(1)} MB</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
                     )}
                 </div>
             )}

@@ -1,12 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const fs = require('fs');
+const path = require('path');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { getTenantUsage, forecastDaysToLimit, parseLimit } = require('../utils/planLimits');
 const { sendPasswordResetEmail } = require('../services/emailService');
+
+// Matches /usr/local/bin/backup-farmxpert-db.sh on the VPS - a system cron (not
+// app code) that pg_dumps daily at 3am and prunes anything older than 14 days.
+// This just reads that same directory to surface status; it doesn't create backups.
+// Read lazily (not cached at module load) so tests can point it at a temp dir.
+const getBackupDir = () => process.env.BACKUP_DIR || '/var/backups/farmxpert';
+const BACKUP_RETENTION_DAYS = 14;
+// If a whole day passes with no new backup, the cron likely failed or stopped running.
+const STALE_AFTER_HOURS = 30;
 
 const generateRandomToken = () => crypto.randomBytes(32).toString('hex');
 
@@ -84,6 +95,44 @@ router.get('/capacity', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Error fetching capacity report:', err);
         res.status(500).json({ error: 'Failed to fetch capacity report' });
+    }
+});
+
+router.get('/backup-status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can view backup status' });
+    }
+    try {
+        const backupDir = getBackupDir();
+        if (!fs.existsSync(backupDir)) {
+            return res.json({ configured: false });
+        }
+
+        const files = fs.readdirSync(backupDir).filter(f => f.endsWith('.backup'));
+        const backups = files.map(filename => {
+            const stat = fs.statSync(path.join(backupDir, filename));
+            return { filename, sizeBytes: stat.size, createdAt: stat.mtime.toISOString() };
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const last = backups[0] || null;
+        const lastBackupAgeHours = last ? (Date.now() - new Date(last.createdAt).getTime()) / (1000 * 60 * 60) : null;
+
+        res.json({
+            configured: true,
+            backupDir,
+            retentionDays: BACKUP_RETENTION_DAYS,
+            scheduleDescription: 'Daily at 3:00 AM server time',
+            backups,
+            count: backups.length,
+            totalSizeBytes: backups.reduce((sum, b) => sum + b.sizeBytes, 0),
+            lastBackupAt: last ? last.createdAt : null,
+            lastBackupSizeBytes: last ? last.sizeBytes : null,
+            lastBackupAgeHours,
+            isStale: lastBackupAgeHours === null ? true : lastBackupAgeHours > STALE_AFTER_HOURS
+        });
+    } catch (err) {
+        console.error('Error reading backup status:', err);
+        res.status(500).json({ error: 'Failed to read backup status' });
     }
 });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReloadPrompt } from './components/ReloadPrompt';
-import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe, Building2, Eye, Gauge, Receipt, FileText } from 'lucide-react';
+import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe, Building2, Eye, Gauge, Receipt, FileText, Database } from 'lucide-react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from './services/ThemeContext';
 import { LandingPage } from './components/LandingPage';
@@ -411,6 +411,7 @@ export default function App() {
         label: 'Platform', items: [
           { id: 'content', label: 'Content', icon: FileText },
           { id: 'notifications', label: 'Notifications', icon: Bell },
+          { id: 'backups', label: 'Backups', icon: Database },
         ]
       },
     ];
