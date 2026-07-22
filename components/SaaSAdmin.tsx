@@ -948,7 +948,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 placeholder="Search farms..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none text-sm"
+                                className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none text-sm"
                             />
                         </div>
                         <button
@@ -1138,7 +1138,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 placeholder="Search by farm, owner, email, IP..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none text-sm"
+                                className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 pl-10 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none text-sm"
                             />
                         </div>
                         <p className="text-sm text-slate-500 dark:text-slate-400">{tenants.length} farm(s) registered</p>
@@ -1412,7 +1412,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 value={newFeature}
                                                 onChange={e => setNewFeature(e.target.value)}
                                                 onKeyDown={e => e.key === 'Enter' && handleAddFeature(plan.id)}
-                                                className="flex-1 text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1"
+                                                className="flex-1 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded px-2 py-1"
                                             />
                                             <button
                                                 onClick={() => handleAddFeature(plan.id)}
@@ -1627,19 +1627,19 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     placeholder="Name"
                                     value={newUser.name}
                                     onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                                    className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 />
                                 <input
                                     type="email"
                                     placeholder="Email"
                                     value={newUser.email}
                                     onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                    className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 />
                                 <select
                                     value={newUser.role}
                                     onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}
-                                    className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 >
                                     <option value="OWNER">Owner</option>
                                     <option value="MANAGER">Manager</option>
@@ -2166,7 +2166,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         placeholder='e.g. 200 or "Unlimited"'
                                         value={overrideForm.cattleLimitOverride}
                                         onChange={e => setOverrideForm({ ...overrideForm, cattleLimitOverride: e.target.value })}
-                                        className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                     />
                                     <button onClick={() => handleClearOverride('cattle')} disabled={savingOverride} className="text-xs px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">Clear Override</button>
                                 </div>
@@ -2179,7 +2179,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         placeholder="e.g. 10"
                                         value={overrideForm.userLimitOverride}
                                         onChange={e => setOverrideForm({ ...overrideForm, userLimitOverride: e.target.value })}
-                                        className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                     />
                                     <button onClick={() => handleClearOverride('user')} disabled={savingOverride} className="text-xs px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">Clear Override</button>
                                 </div>
@@ -2566,7 +2566,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                     newPoints[idx] = e.target.value;
                                                     setContent({ ...content, footerPoints: newPoints });
                                                 }}
-                                                className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                                className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                             />
                                         </div>
                                     ))}
