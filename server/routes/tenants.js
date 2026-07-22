@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/auditService');
 const jwt = require('jsonwebtoken');
@@ -15,7 +16,18 @@ const { sendPasswordResetEmail } = require('../services/emailService');
 // This just reads that same directory to surface status; it doesn't create backups.
 // Read lazily (not cached at module load) so tests can point it at a temp dir.
 const getBackupDir = () => process.env.BACKUP_DIR || '/var/backups/farmxpert';
+// "Run Backup Now" executes the same script the cron runs, so a manual backup is
+// identical to a scheduled one (including retention pruning). Overridable for tests.
+const getBackupCmd = () => process.env.BACKUP_CMD || '/usr/local/bin/backup-farmxpert-db.sh';
 const BACKUP_RETENTION_DAYS = 14;
+
+function listBackups(backupDir) {
+    const files = fs.readdirSync(backupDir).filter(f => f.endsWith('.backup'));
+    return files.map(filename => {
+        const stat = fs.statSync(path.join(backupDir, filename));
+        return { filename, sizeBytes: stat.size, createdAt: stat.mtime.toISOString() };
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
 // If a whole day passes with no new backup, the cron likely failed or stopped running.
 const STALE_AFTER_HOURS = 30;
 
@@ -108,12 +120,7 @@ router.get('/backup-status', authMiddleware, async (req, res) => {
             return res.json({ configured: false });
         }
 
-        const files = fs.readdirSync(backupDir).filter(f => f.endsWith('.backup'));
-        const backups = files.map(filename => {
-            const stat = fs.statSync(path.join(backupDir, filename));
-            return { filename, sizeBytes: stat.size, createdAt: stat.mtime.toISOString() };
-        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+        const backups = listBackups(backupDir);
         const last = backups[0] || null;
         const lastBackupAgeHours = last ? (Date.now() - new Date(last.createdAt).getTime()) / (1000 * 60 * 60) : null;
 
@@ -133,6 +140,46 @@ router.get('/backup-status', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Error reading backup status:', err);
         res.status(500).json({ error: 'Failed to read backup status' });
+    }
+});
+
+// A second click while pg_dump is still writing would produce two dumps racing on
+// disk I/O for no benefit - reject instead. Module-level is fine: single process.
+let backupRunInFlight = false;
+
+router.post('/backup-run', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'SAAS_ADMIN') {
+        return res.status(403).json({ error: 'Only SaaS Admin can run backups' });
+    }
+    if (backupRunInFlight) {
+        return res.status(409).json({ error: 'A backup is already running. Please wait for it to finish.' });
+    }
+
+    const cmd = getBackupCmd();
+    // Without an override, cmd is the script's absolute path - if it isn't there
+    // (local dev, CI), say so plainly instead of surfacing a shell error.
+    if (!process.env.BACKUP_CMD && !fs.existsSync(cmd)) {
+        return res.status(400).json({ error: 'Backup script is not available in this environment' });
+    }
+
+    backupRunInFlight = true;
+    try {
+        await new Promise((resolve, reject) => {
+            exec(cmd, { timeout: 5 * 60 * 1000 }, (err, stdout, stderr) => {
+                if (err) reject(new Error(stderr || err.message));
+                else resolve();
+            });
+        });
+
+        const backupDir = getBackupDir();
+        const backups = fs.existsSync(backupDir) ? listBackups(backupDir) : [];
+        await logActivity(req.user.tenantId, req.user.id, 'CREATE', 'BACKUP', null, { note: 'Manual database backup triggered from admin panel' });
+        res.json({ message: 'Backup completed', lastBackup: backups[0] || null });
+    } catch (err) {
+        console.error('Manual backup failed:', err.message);
+        res.status(500).json({ error: 'Backup failed - check server logs' });
+    } finally {
+        backupRunInFlight = false;
     }
 });
 

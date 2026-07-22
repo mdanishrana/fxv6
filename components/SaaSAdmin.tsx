@@ -117,6 +117,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
     const [backupStatus, setBackupStatus] = useState<Awaited<ReturnType<typeof api.tenants.getBackupStatus>> | null>(null);
     const [loadingBackupStatus, setLoadingBackupStatus] = useState(false);
     const [backupStatusError, setBackupStatusError] = useState<string | null>(null);
+    const [runningBackup, setRunningBackup] = useState(false);
 
     const [discountTarget, setDiscountTarget] = useState<TenantSubscription | null>(null);
     const [discountForm, setDiscountForm] = useState({ discountType: 'PERCENT' as 'PERCENT' | 'FIXED', discountValue: '' });
@@ -196,6 +197,19 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
             setBackupStatusError(err.message || 'Failed to load backup status');
         } finally {
             setLoadingBackupStatus(false);
+        }
+    };
+
+    const handleRunBackup = async () => {
+        setRunningBackup(true);
+        try {
+            await api.tenants.runBackup();
+            showToast('Backup completed successfully');
+            await loadBackupStatus();
+        } catch (err: any) {
+            showToast(err.message || 'Backup failed');
+        } finally {
+            setRunningBackup(false);
         }
     };
 
@@ -2541,6 +2555,17 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         </div>
                     ) : (
                         <>
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleRunBackup}
+                                    disabled={runningBackup}
+                                    className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all disabled:opacity-70 flex items-center gap-2"
+                                >
+                                    {runningBackup ? <Loader2 size={18} className="animate-spin" /> : <Database size={18} />}
+                                    {runningBackup ? 'Backing up...' : 'Run Backup Now'}
+                                </button>
+                            </div>
+
                             {backupStatus.isStale && (
                                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 px-4 py-3 rounded-xl text-sm flex items-center gap-3">
                                     <AlertTriangle size={18} className="shrink-0" />

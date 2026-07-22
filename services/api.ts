@@ -245,6 +245,16 @@ export const api = {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Failed to fetch backup status');
             return json;
+        },
+        runBackup: async (): Promise<{ message: string; lastBackup: { filename: string; sizeBytes: number; createdAt: string } | null }> => {
+            const token = localStorage.getItem('farmxpert_token');
+            const res = await fetch(`${API_URL}/tenants/backup-run`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to run backup');
+            return json;
         }
     },
     cattle: {

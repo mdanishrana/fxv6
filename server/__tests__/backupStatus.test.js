@@ -86,6 +86,60 @@ describe('GET /api/tenants/backup-status', () => {
         expect(res.body.isStale).toBe(false);
     });
 
+    it('rejects backup-run for non-admin callers', async () => {
+        const res = await request(app)
+            .post('/api/tenants/backup-run')
+            .set('Authorization', `Bearer ${owner.token}`);
+        expect(res.status).toBe(403);
+    });
+
+    it('reports backup-run unavailable when the script does not exist', async () => {
+        // No BACKUP_CMD override and the VPS script path doesn't exist here.
+        delete process.env.BACKUP_CMD;
+        const res = await request(app)
+            .post('/api/tenants/backup-run')
+            .set('Authorization', `Bearer ${admin.token}`);
+        expect(res.status).toBe(400);
+    });
+
+    it('runs the backup command and reports the newest backup file', async () => {
+        const prevDir = process.env.BACKUP_DIR;
+        const prevCmd = process.env.BACKUP_CMD;
+        process.env.BACKUP_DIR = tmpDir;
+
+        // Stand-in for the real pg_dump script: drops a .backup file into BACKUP_DIR.
+        const scriptPath = path.join(tmpDir, 'fake-backup.cjs');
+        fs.writeFileSync(scriptPath, `
+            const fs = require('fs');
+            const path = require('path');
+            fs.writeFileSync(path.join(process.env.BACKUP_DIR, 'farmxpert_db_manual-run.backup'), 'dump');
+        `);
+        process.env.BACKUP_CMD = `node "${scriptPath}"`;
+
+        const res = await request(app)
+            .post('/api/tenants/backup-run')
+            .set('Authorization', `Bearer ${admin.token}`);
+
+        process.env.BACKUP_DIR = prevDir;
+        if (prevCmd === undefined) delete process.env.BACKUP_CMD; else process.env.BACKUP_CMD = prevCmd;
+
+        expect(res.status).toBe(200);
+        expect(res.body.lastBackup.filename).toBe('farmxpert_db_manual-run.backup');
+        expect(fs.existsSync(path.join(tmpDir, 'farmxpert_db_manual-run.backup'))).toBe(true);
+    });
+
+    it('fails cleanly when the backup command errors', async () => {
+        const prevCmd = process.env.BACKUP_CMD;
+        process.env.BACKUP_CMD = 'node -e "process.exit(1)"';
+
+        const res = await request(app)
+            .post('/api/tenants/backup-run')
+            .set('Authorization', `Bearer ${admin.token}`);
+
+        if (prevCmd === undefined) delete process.env.BACKUP_CMD; else process.env.BACKUP_CMD = prevCmd;
+        expect(res.status).toBe(500);
+    });
+
     it('flags as stale when the newest backup is more than 30 hours old', async () => {
         const prev = process.env.BACKUP_DIR;
         const staleDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fxv6-backup-stale-'));
