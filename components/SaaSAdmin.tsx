@@ -6,13 +6,15 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { api } from '../services/api';
 import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
+export type AdminTab = 'farms' | 'registrations' | 'capacity' | 'plans' | 'subscriptions' | 'content' | 'notifications';
+
 interface SaaSAdminProps {
     tenants: Tenant[];
     setTenants: React.Dispatch<React.SetStateAction<Tenant[]>>;
     onLoginAsTenant: (tenant: Tenant) => void;
+    activeTab: AdminTab;
+    setActiveTab: React.Dispatch<React.SetStateAction<AdminTab>>;
 }
-
-type AdminTab = 'farms' | 'registrations' | 'capacity' | 'plans' | 'subscriptions' | 'content' | 'notifications';
 
 // Crude but readable browser/OS summary from a raw user-agent string - the full
 // UA is shown on hover, this just keeps the table scannable.
@@ -33,8 +35,7 @@ function summarizeUserAgent(ua?: string | null): string {
     return `${browser} / ${os}`;
 }
 
-export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLoginAsTenant }) => {
-    const [activeTab, setActiveTab] = useState<AdminTab>('farms');
+export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLoginAsTenant, activeTab, setActiveTab }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -863,79 +864,6 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
-                <button
-                    onClick={() => setActiveTab('farms')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'farms'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <Building2 size={16} className="inline mr-2" />
-                    Farms
-                </button>
-                <button
-                    onClick={() => setActiveTab('registrations')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'registrations'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <Eye size={16} className="inline mr-2" />
-                    Registrations
-                </button>
-                <button
-                    onClick={() => setActiveTab('capacity')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'capacity'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <Gauge size={16} className="inline mr-2" />
-                    Capacity
-                </button>
-                <button
-                    onClick={() => setActiveTab('plans')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'plans'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <CreditCard size={16} className="inline mr-2" />
-                    Plans
-                </button>
-                <button
-                    onClick={() => setActiveTab('subscriptions')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'subscriptions'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <Receipt size={16} className="inline mr-2" />
-                    Billing & Payments
-                </button>
-                <button
-                    onClick={() => setActiveTab('content')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'content'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <FileText size={16} className="inline mr-2" />
-                    Content
-                </button>
-                <button
-                    onClick={() => setActiveTab('notifications')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'notifications'
-                        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                        }`}
-                >
-                    <Bell size={16} className="inline mr-2" />
-                    Notifications
-                </button>
             </div>
 
             {activeTab === 'farms' && (

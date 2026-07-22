@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReloadPrompt } from './components/ReloadPrompt';
-import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe } from 'lucide-react';
+import { LayoutDashboard, Beef, Wheat, MessageSquareText, Menu, Tag, LogOut, Bell, Check, X, Settings, ShieldCheck, ShieldAlert, CreditCard, Truck, Users, Moon, Sun, Globe, Lock, Sparkles, Baby, Dna, DollarSign, Layers, ChevronRight, ChevronLeft, ChevronDown, BarChart3, Package, CalendarDays, Pill, Syringe, Building2, Eye, Gauge, Receipt, FileText } from 'lucide-react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from './services/ThemeContext';
 import { LandingPage } from './components/LandingPage';
@@ -10,6 +10,7 @@ import { api } from './services/api';
 import { Loading } from './components/Loading';
 import { PaymentActionResult, PaymentActionState as PaymentActionStateType } from './components/PaymentActionResult';
 import { PaymentReviewPage } from './components/PaymentReviewPage';
+import type { AdminTab } from './components/SaaSAdmin';
 
 // Lazy-loaded: these pull in heavy deps (recharts, jspdf, html2canvas, xlsx) and are
 // only needed after login, so keeping them out of the initial bundle matters most
@@ -83,6 +84,7 @@ export default function App() {
 
   const [allTenants, setAllTenants] = useState<Tenant[]>([]);
   const [isSaasAdmin, setIsSaasAdmin] = useState(false);
+  const [adminActiveTab, setAdminActiveTab] = useState<AdminTab>('farms');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('OWNER');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ show: boolean; moduleName: string }>({ show: false, moduleName: '' });
@@ -388,54 +390,165 @@ export default function App() {
   }
 
   if (isSaasAdmin) {
-    return (
-      <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
-        <ReloadPrompt />
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white p-4 shadow-sm flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-28 flex items-center">
-              <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider border-l border-slate-300 dark:border-slate-700 pl-3">Admin</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-              title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
-            >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <span className="hidden sm:inline text-sm text-slate-500 dark:text-slate-400">{currentUser?.email}</span>
-            <button onClick={handleLogout} className="text-sm bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">Sign Out</button>
-          </div>
-        </header>
-        <div className="p-8 max-w-7xl mx-auto">
-          <React.Suspense fallback={<Loading />}>
-            <SaaSAdmin
-              tenants={allTenants}
-              setTenants={setAllTenants}
-              onLoginAsTenant={async (t) => {
-                // Real impersonation: the backend issues a short-lived session as the
-                // farm's OWNER (routes derive the tenant from the JWT, so swapping
-                // frontend state alone showed empty data). The admin token is stashed
-                // and restored on Sign Out.
-                try {
-                  const session = await api.tenants.impersonate(t.id);
-                  const currentToken = localStorage.getItem('farmxpert_token');
-                  if (currentToken) localStorage.setItem('farmxpert_admin_return_token', currentToken);
-                  localStorage.setItem('farmxpert_token', session.token);
-                  setAuthToken(session.token);
-                  setIsSaasAdmin(false);
-                  handleAuthLogin(session.token, session.user, session.tenant);
-                  navigate('/');
-                } catch (err: any) {
-                  alert(err.message || 'Failed to open farm session');
-                }
-              }}
-            />
-          </React.Suspense>
+    // Mirrors the farm dashboard's own sidebar (fixed w-72, dark gradient, mobile
+    // overlay, collapsible via isSidebarOpen) for visual consistency - reuses that
+    // same state since the two sidebars are never rendered at the same time.
+    const adminNavGroups: { label?: string; items: { id: AdminTab; label: string; icon: any }[] }[] = [
+      { items: [{ id: 'farms', label: 'Farms', icon: Building2 }] },
+      {
+        label: 'Customers', items: [
+          { id: 'registrations', label: 'Registrations', icon: Eye },
+          { id: 'capacity', label: 'Capacity', icon: Gauge },
+        ]
+      },
+      {
+        label: 'Billing', items: [
+          { id: 'plans', label: 'Plans', icon: CreditCard },
+          { id: 'subscriptions', label: 'Billing & Payments', icon: Receipt },
+        ]
+      },
+      {
+        label: 'Platform', items: [
+          { id: 'content', label: 'Content', icon: FileText },
+          { id: 'notifications', label: 'Notifications', icon: Bell },
+        ]
+      },
+    ];
+
+    const AdminNavItem = ({ id, label, icon: Icon }: { id: AdminTab; label: string; icon: any }) => (
+      <button
+        onClick={() => {
+          setAdminActiveTab(id);
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 font-medium text-[15px] group relative
+          ${adminActiveTab === id
+            ? 'bg-emerald-500/10 text-emerald-400'
+            : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'}`}
+      >
+        {adminActiveTab === id && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald-500 rounded-r-full"></div>
+        )}
+        <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors duration-200
+          ${adminActiveTab === id
+            ? 'bg-emerald-500/15 text-emerald-400'
+            : 'bg-slate-800/60 text-slate-400 group-hover:bg-slate-700/60 group-hover:text-slate-200'}`}
+        >
+          <Icon size={18} />
         </div>
+        <span>{label}</span>
+      </button>
+    );
+
+    return (
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex">
+        <ReloadPrompt />
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <aside className={`fixed inset-y-0 left-0 z-30 w-72 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 transform transition-transform duration-300 ease-out shadow-2xl ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="h-full flex flex-col">
+            <div className="p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-24 flex items-center">
+                    <img src="/logo.png" alt="FarmXpert Logo" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-widest border-l border-slate-700 pl-3">Admin</span>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                  title="Hide Sidebar"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              </div>
+            </div>
+
+            <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+              {adminNavGroups.map((group, gi) => (
+                <div key={gi}>
+                  {group.label && (
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 mt-6 mb-2">{group.label}</p>
+                  )}
+                  <div className="space-y-1.5">
+                    {group.items.map(item => <AdminNavItem key={item.id} {...item} />)}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            <div className="p-4 border-t border-slate-700/50">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-sm font-medium transition-all duration-200"
+              >
+                <LogOut size={16} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-72' : ''}`}>
+          <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white p-4 shadow-sm flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+              {!isSidebarOpen && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="p-2 text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 border border-slate-200/65 dark:border-slate-700/60 shadow-sm"
+                  title="Show Sidebar"
+                >
+                  <Menu size={20} />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              >
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <span className="hidden sm:inline text-sm text-slate-500 dark:text-slate-400">{currentUser?.email}</span>
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-8 max-w-7xl mx-auto">
+              <React.Suspense fallback={<Loading />}>
+                <SaaSAdmin
+                  tenants={allTenants}
+                  setTenants={setAllTenants}
+                  activeTab={adminActiveTab}
+                  setActiveTab={setAdminActiveTab}
+                  onLoginAsTenant={async (t) => {
+                    // Real impersonation: the backend issues a short-lived session as the
+                    // farm's OWNER (routes derive the tenant from the JWT, so swapping
+                    // frontend state alone showed empty data). The admin token is stashed
+                    // and restored on Sign Out.
+                    try {
+                      const session = await api.tenants.impersonate(t.id);
+                      const currentToken = localStorage.getItem('farmxpert_token');
+                      if (currentToken) localStorage.setItem('farmxpert_admin_return_token', currentToken);
+                      localStorage.setItem('farmxpert_token', session.token);
+                      setAuthToken(session.token);
+                      setIsSaasAdmin(false);
+                      handleAuthLogin(session.token, session.user, session.tenant);
+                      navigate('/');
+                    } catch (err: any) {
+                      alert(err.message || 'Failed to open farm session');
+                    }
+                  }}
+                />
+              </React.Suspense>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
