@@ -1454,7 +1454,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     type="text"
                                     value={deleteConfirmName}
                                     onChange={e => { setDeleteConfirmName(e.target.value); setDeleteError(null); }}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
                                     placeholder={tenantToDelete.name}
                                     autoFocus
                                 />
@@ -1502,7 +1502,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <select 
                                     value={newTenant.tier} 
                                     onChange={e => setNewTenant({ ...newTenant, tier: e.target.value as any })} 
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                                 >
                                     <option value="FREE">Free (All 8 Features · Max 5 Animals)</option>
                                     <option value="BASIC">Basic (Core & Qurbani Only)</option>
@@ -1679,7 +1679,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="text"
                                         value={planForm.name}
                                         onChange={e => setPlanForm({ ...planForm, name: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                         placeholder="e.g. Premium"
                                     />
                                 </div>
@@ -1689,7 +1689,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="text"
                                         value={planForm.code}
                                         onChange={e => setPlanForm({ ...planForm, code: e.target.value.toUpperCase() })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm uppercase"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm uppercase"
                                         placeholder="e.g. PREMIUM"
                                         disabled={!!editingPlan}
                                     />
@@ -1724,7 +1724,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="email"
                                         value={planForm.contactEmail}
                                         onChange={e => setPlanForm({ ...planForm, contactEmail: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                         placeholder="Sales@farmxpert.pk"
                                     />
                                 </div>
@@ -1749,7 +1749,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                         : planForm.annualPricePkr;
                                                     setPlanForm({ ...planForm, pricePkr: newMonthly, annualPricePkr: suggestedAnnual });
                                                 }}
-                                                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-9 pr-3 py-2 text-sm"
+                                                className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg pl-9 pr-3 py-2 text-sm"
                                                 placeholder="5000"
                                             />
                                         </div>
@@ -1762,7 +1762,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 type="number"
                                                 value={planForm.annualPricePkr}
                                                 onChange={e => setPlanForm({ ...planForm, annualPricePkr: e.target.value })}
-                                                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-9 pr-3 py-2 text-sm"
+                                                className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg pl-9 pr-3 py-2 text-sm"
                                                 placeholder="Auto: 20% off monthly x 12"
                                             />
                                         </div>
@@ -1777,7 +1777,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="number"
                                         value={planForm.userLimit}
                                         onChange={e => setPlanForm({ ...planForm, userLimit: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                         placeholder="20"
                                     />
                                 </div>
@@ -1787,7 +1787,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="text"
                                         value={planForm.cattleLimit}
                                         onChange={e => setPlanForm({ ...planForm, cattleLimit: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                         placeholder="Unlimited"
                                     />
                                 </div>
@@ -1798,7 +1798,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <select
                                     value={planForm.supportLevel}
                                     onChange={e => setPlanForm({ ...planForm, supportLevel: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 >
                                     <option value="">Not set</option>
                                     <option value="Email">Email</option>
@@ -2212,7 +2212,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <select
                                     value={discountForm.discountType}
                                     onChange={e => setDiscountForm({ ...discountForm, discountType: e.target.value as 'PERCENT' | 'FIXED' })}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 >
                                     <option value="PERCENT">Percentage off</option>
                                     <option value="FIXED">Fixed amount off (PKR)</option>
@@ -2227,7 +2227,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     value={discountForm.discountValue}
                                     onChange={e => setDiscountForm({ ...discountForm, discountValue: e.target.value })}
                                     placeholder={discountForm.discountType === 'PERCENT' ? 'e.g. 20' : 'e.g. 500'}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm"
                                 />
                             </div>
                             {discountTarget.discountType && (
@@ -2257,7 +2257,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Farm</label>
                                 <select value={newSubForm.tenantId} onChange={e => setNewSubForm({ ...newSubForm, tenantId: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
                                     <option value="">Select farm...</option>
                                     {tenants.map(t => <option key={t.id} value={t.id}>{t.name} ({t.ownerName})</option>)}
                                 </select>
@@ -2270,7 +2270,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         ? plan.annualPricePkr.toString()
                                         : plan?.pricePkr?.toString() || '';
                                     setNewSubForm({ ...newSubForm, planId: e.target.value, amount });
-                                }} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                }} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
                                     <option value="">Select plan...</option>
                                     {plans.filter(p => !p.isCustom).map(p => <option key={p.id} value={p.id}>{p.name} - Rs. {p.pricePkr?.toLocaleString()}</option>)}
                                 </select>
@@ -2279,7 +2279,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (PKR)</label>
                                     <input type="number" value={newSubForm.amount} onChange={e => setNewSubForm({ ...newSubForm, amount: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="5000" />
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="5000" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Billing Cycle</label>
@@ -2296,7 +2296,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 ? plan.pricePkr.toString()
                                                 : newSubForm.amount;
                                         setNewSubForm({ ...newSubForm, billingCycle: cycle as any, amount });
-                                    }} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                    }} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
                                         <option value="MONTHLY">Monthly</option>
                                         <option value="QUARTERLY">Quarterly</option>
                                         <option value="YEARLY">Yearly</option>
@@ -2306,7 +2306,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Trial Days (optional)</label>
                                 <input type="number" value={newSubForm.trialDays} onChange={e => setNewSubForm({ ...newSubForm, trialDays: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="0" />
+                                    className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="0" />
                             </div>
                         </div>
                         <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
@@ -2417,19 +2417,19 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         <div className="p-4 md:p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Farm Name</label>
-                                <input type="text" value={newTenant.name} onChange={e => setNewTenant({ ...newTenant, name: e.target.value })} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
+                                <input type="text" value={newTenant.name} onChange={e => setNewTenant({ ...newTenant, name: e.target.value })} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Name</label>
-                                <input type="text" value={newTenant.ownerName} onChange={e => setNewTenant({ ...newTenant, ownerName: e.target.value })} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
+                                <input type="text" value={newTenant.ownerName} onChange={e => setNewTenant({ ...newTenant, ownerName: e.target.value })} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>
-                                <input type="email" value={newTenant.ownerEmail} onChange={e => setNewTenant({ ...newTenant, ownerEmail: e.target.value })} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
+                                <input type="email" value={newTenant.ownerEmail} onChange={e => setNewTenant({ ...newTenant, ownerEmail: e.target.value })} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subscription Tier</label>
-                                <select value={newTenant.tier} onChange={e => setNewTenant({ ...newTenant, tier: e.target.value as any })} className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
+                                <select value={newTenant.tier} onChange={e => setNewTenant({ ...newTenant, tier: e.target.value as any })} className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm">
                                     <option value="FREE">Free (All 8 Features · Max 5 Animals)</option>
                                     <option value="BASIC">Basic (Core only)</option>
                                     <option value="STANDARD">Standard (+Feed)</option>
@@ -2487,7 +2487,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         type="text"
                                         value={content.heroTitle}
                                         onChange={e => setContent({ ...content, heroTitle: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                                     />
                                 </div>
                                 <div>
@@ -2495,7 +2495,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     <textarea
                                         value={content.heroSubtitle}
                                         onChange={e => setContent({ ...content, heroSubtitle: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm h-24 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm h-24 focus:ring-2 focus:ring-emerald-500 outline-none"
                                     />
                                 </div>
                             </div>
@@ -2517,7 +2517,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                             newFeatures[idx].icon = e.target.value;
                                                             setContent({ ...content, features: newFeatures });
                                                         }}
-                                                        className="w-full border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs"
+                                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs"
                                                     />
                                                 </div>
                                                 <div>
@@ -2530,7 +2530,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                             newFeatures[idx].title = e.target.value;
                                                             setContent({ ...content, features: newFeatures });
                                                         }}
-                                                        className="w-full border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm font-medium"
+                                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm font-medium"
                                                     />
                                                 </div>
                                                 <div>
@@ -2542,7 +2542,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                             newFeatures[idx].description = e.target.value;
                                                             setContent({ ...content, features: newFeatures });
                                                         }}
-                                                        className="w-full border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs"
+                                                        className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs"
                                                         rows={2}
                                                     />
                                                 </div>
