@@ -1149,6 +1149,8 @@ export default function App() {
                   <FarmSettings
                     tenant={tenant}
                     setTenant={setTenant}
+                    currentUser={currentUser}
+                    onCurrentUserUpdate={(patch) => setCurrentUser((prev: any) => prev ? { ...prev, ...patch } : prev)}
                   />
                 ) : <Navigate to="/" replace />
               } />

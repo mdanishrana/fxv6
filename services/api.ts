@@ -393,6 +393,49 @@ export const api = {
             async () => ({ text: "AI Analysis (Mock Mode): Growth trajectory looks positive based on the simulated feed plan." })
         ).then(res => res.text || res)
     },
+    auth: {
+        mfaSetup: () => {
+            const token = localStorage.getItem('farmxpert_token');
+            return fetch(`${API_URL}/auth/mfa/setup`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            }).then(async res => {
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || 'Failed to start two-factor setup');
+                return json as { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
+            });
+        },
+        mfaEnable: (secret: string, code: string) => {
+            const token = localStorage.getItem('farmxpert_token');
+            return fetch(`${API_URL}/auth/mfa/enable`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ secret, code })
+            }).then(async res => {
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || 'Failed to enable two-factor authentication');
+                return json as { message: string; backupCodes: string[] };
+            });
+        },
+        mfaDisable: (password: string) => {
+            const token = localStorage.getItem('farmxpert_token');
+            return fetch(`${API_URL}/auth/mfa/disable`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ password })
+            }).then(async res => {
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || 'Failed to disable two-factor authentication');
+                return json;
+            });
+        }
+    },
     users: {
         list: (tenantId: string) => {
             const token = localStorage.getItem('farmxpert_token');

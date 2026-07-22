@@ -52,6 +52,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
     const [content, setContent] = useState<SystemContent>(DEFAULT_CONTENT);
     const [planPrices, setPlanPrices] = useState<Record<string, string>>({ BASIC: '...', STANDARD: '...', PREMIUM: '...' });
 
+    const [mfaToken, setMfaToken] = useState<string | null>(null);
+    const [mfaCode, setMfaCode] = useState('');
+    const [useBackupCode, setUseBackupCode] = useState(false);
+
     React.useEffect(() => {
         const fetchContent = async () => {
             try {
@@ -135,7 +139,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
 
-                onLogin(data.token, data.user, data.tenant);
+                if (data.mfaRequired) {
+                    setMfaToken(data.mfaToken);
+                } else {
+                    onLogin(data.token, data.user, data.tenant);
+                }
 
             } else if (mode === 'forgot') {
                 const res = await fetch('/api/auth/forgot-password', {
@@ -170,6 +178,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                 setTimeout(() => onSwitchMode('login'), 2000);
             }
 
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleMfaSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            const res = await fetch('/api/auth/mfa/challenge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mfaToken,
+                    ...(useBackupCode ? { backupCode: mfaCode } : { code: mfaCode })
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            onLogin(data.token, data.user, data.tenant);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -429,6 +463,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
     };
 
     const getTitle = () => {
+        if (mode === 'login' && mfaToken) return 'Two-Factor Verification';
         switch (mode) {
             case 'login': return 'Welcome Back';
             case 'register': return 'Create Your Farm Account';
@@ -438,6 +473,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
     };
 
     const getSubtitle = () => {
+        if (mode === 'login' && mfaToken) return useBackupCode ? 'Enter one of your backup codes' : 'Enter the 6-digit code from your authenticator app';
         switch (mode) {
             case 'login': return 'Sign in to manage your farm';
             case 'register': return 'Start your 14-day free trial';
@@ -447,6 +483,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
     };
 
     const getButtonText = () => {
+        if (mode === 'login' && mfaToken) return 'Verify';
         switch (mode) {
             case 'login': return 'Sign In';
             case 'register': return 'Create Account';
@@ -545,20 +582,68 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onBack, onLogin, onSwi
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {renderForm()}
+                    {mode === 'login' && mfaToken ? (
+                        <form onSubmit={handleMfaSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    {useBackupCode ? 'Backup Code' : 'Verification Code'}
+                                </label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                                    <input
+                                        type="text"
+                                        value={mfaCode}
+                                        onChange={e => setMfaCode(e.target.value)}
+                                        className="w-full bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 outline-none transition-all hover:bg-slate-800/80 tracking-widest"
+                                        placeholder={useBackupCode ? 'XXXX-XXXX' : '123456'}
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+                            </div>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-4 rounded-xl font-semibold text-lg transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isLoading && <Loader2 className="animate-spin" size={20} />}
-                            {getButtonText()}
-                        </button>
-                    </form>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-4 rounded-xl font-semibold text-lg transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isLoading && <Loader2 className="animate-spin" size={20} />}
+                                {getButtonText()}
+                            </button>
 
-                    {mode === 'login' && (
+                            <div className="flex justify-between text-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode(''); setError(null); }}
+                                    className="text-emerald-400 hover:text-emerald-300"
+                                >
+                                    {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code instead'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setMfaToken(null); setMfaCode(''); setUseBackupCode(false); setError(null); }}
+                                    className="text-slate-400 hover:text-slate-300"
+                                >
+                                    Back to login
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {renderForm()}
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-4 rounded-xl font-semibold text-lg transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isLoading && <Loader2 className="animate-spin" size={20} />}
+                                {getButtonText()}
+                            </button>
+                        </form>
+                    )}
+
+                    {mode === 'login' && !mfaToken && (
                         <p className="text-center text-slate-400 mt-6">
                             Don't have an account?{' '}
                             <button

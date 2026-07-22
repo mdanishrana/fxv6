@@ -4,7 +4,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
+const { authenticator } = require('otplib');
+const QRCode = require('qrcode');
 const db = require('../db');
+const { authMiddleware } = require('../middleware/auth');
 const { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -40,6 +43,64 @@ const passwordResetLimiter = rateLimit({
     legacyHeaders: false,
     message: { error: 'Too many password reset attempts. Please try again later.' }
 });
+// A 6-digit TOTP code is only 1 in a million - without a tight limit here it's
+// brute-forceable within the 5-minute pending-login window.
+const mfaChallengeLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 8,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many verification attempts. Please try logging in again.' }
+});
+
+const MFA_PENDING_EXPIRY_MS = 5 * 60 * 1000;
+const BACKUP_CODE_COUNT = 8;
+
+function generateBackupCodes() {
+    // e.g. "K3F9-QX7M" - short enough to write down, long enough that 8 of them
+    // aren't meaningfully guessable.
+    const codes = [];
+    for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
+        const raw = crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
+        codes.push(`${raw.slice(0, 4)}-${raw.slice(4, 8)}`);
+    }
+    return codes;
+}
+
+async function issueSession(res, user, req) {
+    const token = generateToken(user.id);
+    await db.query(
+        `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [user.id, token, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), req.ip || null, (req.headers['user-agent'] || '').slice(0, 500) || null]
+    );
+    await db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+
+    res.json({
+        message: 'Login successful',
+        token,
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isVerified: user.is_verified,
+            mfaEnabled: user.mfa_enabled
+        },
+        tenant: user.tenant_id ? {
+            id: user.tenant_id,
+            name: user.tenant_name,
+            tier: user.tier,
+            modules: user.modules,
+            herdValueRate: Number(user.tenant_herd_value_rate) || 1100,
+            logoUrl: user.tenant_logo_url,
+            currency: user.tenant_currency || 'PKR',
+            weightUnit: user.tenant_weight_unit || 'kg',
+            branches: user.tenant_branches || [],
+            legacyTagScheme: user.tenant_legacy_tag_scheme !== false
+        } : null
+    });
+}
 
 router.post('/register', registerLimiter, async (req, res) => {
     const { name, email, password, farmName, mobile, tier = 'BASIC' } = req.body;
@@ -164,43 +225,158 @@ router.post('/login', loginLimiter, async (req, res) => {
             return res.status(403).json({ error: 'Your farm account has been suspended. Please contact support.' });
         }
 
-        const token = generateToken(user.id);
+        if (user.mfa_enabled) {
+            const mfaToken = generateRandomToken();
+            await db.query(
+                `INSERT INTO mfa_pending_logins (user_id, token, expires_at)
+                 VALUES ($1, $2, $3)`,
+                [user.id, mfaToken, new Date(Date.now() + MFA_PENDING_EXPIRY_MS)]
+            );
+            return res.json({ mfaRequired: true, mfaToken });
+        }
 
-        await db.query(
-            `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [user.id, token, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), req.ip || null, (req.headers['user-agent'] || '').slice(0, 500) || null]
-        );
-
-        await db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-
-        res.json({
-            message: 'Login successful',
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                isVerified: user.is_verified
-            },
-            tenant: user.tenant_id ? {
-                id: user.tenant_id,
-                name: user.tenant_name,
-                tier: user.tier,
-                modules: user.modules,
-                herdValueRate: Number(user.tenant_herd_value_rate) || 1100,
-                logoUrl: user.tenant_logo_url,
-                currency: user.tenant_currency || 'PKR',
-                weightUnit: user.tenant_weight_unit || 'kg',
-                branches: user.tenant_branches || [],
-                legacyTagScheme: user.tenant_legacy_tag_scheme !== false
-            } : null
-        });
+        await issueSession(res, user, req);
 
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Login failed. Please try again.' });
+    }
+});
+
+router.post('/mfa/challenge', mfaChallengeLimiter, async (req, res) => {
+    const { mfaToken, code, backupCode } = req.body;
+
+    if (!mfaToken || (!code && !backupCode)) {
+        return res.status(400).json({ error: 'A verification code is required' });
+    }
+
+    try {
+        const pendingResult = await db.query(
+            `SELECT * FROM mfa_pending_logins WHERE token = $1 AND expires_at > NOW()`,
+            [mfaToken]
+        );
+        if (pendingResult.rows.length === 0) {
+            return res.status(401).json({ error: 'Your login session has expired. Please log in again.' });
+        }
+        const pending = pendingResult.rows[0];
+
+        const userResult = await db.query(
+            `SELECT u.*, t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches, t.legacy_tag_scheme as tenant_legacy_tag_scheme
+             FROM users u
+             LEFT JOIN tenants t ON u.tenant_id = t.id
+             WHERE u.id = $1`,
+            [pending.user_id]
+        );
+        if (userResult.rows.length === 0 || !userResult.rows[0].mfa_enabled) {
+            return res.status(401).json({ error: 'Invalid login session. Please log in again.' });
+        }
+        const user = userResult.rows[0];
+
+        let verified = false;
+        if (code) {
+            verified = authenticator.check(String(code).trim(), user.mfa_secret);
+        } else if (backupCode) {
+            const submitted = String(backupCode).trim().toUpperCase();
+            const backupCodes = user.mfa_backup_codes || [];
+            for (let i = 0; i < backupCodes.length; i++) {
+                if (await bcrypt.compare(submitted, backupCodes[i])) {
+                    verified = true;
+                    const remaining = backupCodes.slice(0, i).concat(backupCodes.slice(i + 1));
+                    await db.query('UPDATE users SET mfa_backup_codes = $1 WHERE id = $2', [remaining, user.id]);
+                    break;
+                }
+            }
+        }
+
+        if (!verified) {
+            return res.status(401).json({ error: 'Invalid verification code' });
+        }
+
+        await db.query('DELETE FROM mfa_pending_logins WHERE token = $1', [mfaToken]);
+        await issueSession(res, user, req);
+
+    } catch (err) {
+        console.error('MFA challenge error:', err);
+        res.status(500).json({ error: 'Verification failed. Please try again.' });
+    }
+});
+
+router.post('/mfa/setup', authMiddleware, async (req, res) => {
+    try {
+        const userResult = await db.query('SELECT email, mfa_enabled FROM users WHERE id = $1', [req.user.id]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const user = userResult.rows[0];
+        if (user.mfa_enabled) {
+            return res.status(400).json({ error: 'Two-factor authentication is already enabled' });
+        }
+
+        const secret = authenticator.generateSecret();
+        const otpauthUrl = authenticator.keyuri(user.email, 'FarmXpert', secret);
+        const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+        res.json({ secret, otpauthUrl, qrCodeDataUrl });
+    } catch (err) {
+        console.error('MFA setup error:', err);
+        res.status(500).json({ error: 'Could not start two-factor setup. Please try again.' });
+    }
+});
+
+router.post('/mfa/enable', authMiddleware, async (req, res) => {
+    const { secret, code } = req.body;
+
+    if (!secret || !code) {
+        return res.status(400).json({ error: 'Secret and verification code are required' });
+    }
+
+    try {
+        if (!authenticator.check(String(code).trim(), secret)) {
+            return res.status(400).json({ error: 'Invalid verification code' });
+        }
+
+        const backupCodes = generateBackupCodes();
+        const hashedBackupCodes = await Promise.all(backupCodes.map(c => bcrypt.hash(c, 10)));
+
+        await db.query(
+            `UPDATE users SET mfa_enabled = true, mfa_secret = $1, mfa_backup_codes = $2 WHERE id = $3`,
+            [secret, hashedBackupCodes, req.user.id]
+        );
+
+        res.json({ message: 'Two-factor authentication enabled', backupCodes });
+    } catch (err) {
+        console.error('MFA enable error:', err);
+        res.status(500).json({ error: 'Could not enable two-factor authentication. Please try again.' });
+    }
+});
+
+router.post('/mfa/disable', authMiddleware, async (req, res) => {
+    const { password } = req.body;
+
+    if (!password) {
+        return res.status(400).json({ error: 'Password is required' });
+    }
+
+    try {
+        const userResult = await db.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const validPassword = await bcrypt.compare(password, userResult.rows[0].password_hash);
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Incorrect password' });
+        }
+
+        await db.query(
+            `UPDATE users SET mfa_enabled = false, mfa_secret = NULL, mfa_backup_codes = NULL WHERE id = $1`,
+            [req.user.id]
+        );
+
+        res.json({ message: 'Two-factor authentication disabled' });
+    } catch (err) {
+        console.error('MFA disable error:', err);
+        res.status(500).json({ error: 'Could not disable two-factor authentication. Please try again.' });
     }
 });
 
@@ -361,7 +537,7 @@ router.get('/me', async (req, res) => {
         }
 
         const userResult = await db.query(
-            `SELECT u.id, u.name, u.email, u.role, u.is_verified,
+            `SELECT u.id, u.name, u.email, u.role, u.is_verified, u.mfa_enabled,
                     t.id as tenant_id, t.name as tenant_name, t.tier, t.modules, t.status as tenant_status, t.herd_value_rate as tenant_herd_value_rate, t.logo_url as tenant_logo_url, t.currency as tenant_currency, t.weight_unit as tenant_weight_unit, t.branches as tenant_branches, t.legacy_tag_scheme as tenant_legacy_tag_scheme
              FROM users u
              LEFT JOIN tenants t ON u.tenant_id = t.id
@@ -381,7 +557,8 @@ router.get('/me', async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                isVerified: user.is_verified
+                isVerified: user.is_verified,
+                mfaEnabled: user.mfa_enabled
             },
             tenant: user.tenant_id ? {
                 id: user.tenant_id,

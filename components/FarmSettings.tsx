@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tenant, UserRole, User } from '../types';
-import { Save, Mail, Building2, CheckCircle, BellRing, Users, Plus, Trash2, Shield, Loader2, Info } from 'lucide-react';
+import { Save, Mail, Building2, CheckCircle, BellRing, Users, Plus, Trash2, Shield, Loader2, Info, Smartphone, KeyRound, XCircle, Copy } from 'lucide-react';
 import { api } from '../services/api';
 import { useTheme } from '../services/ThemeContext';
 
 interface FarmSettingsProps {
     tenant: Tenant;
     setTenant: React.Dispatch<React.SetStateAction<Tenant | null>>;
+    currentUser?: { mfaEnabled?: boolean } | null;
+    onCurrentUserUpdate?: (patch: { mfaEnabled?: boolean }) => void;
 }
 
 // Limits based on Tier
@@ -18,7 +20,7 @@ const TIER_USER_LIMITS = {
     'PREMIUM': 20
 };
 
-export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant }) => {
+export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant, currentUser, onCurrentUserUpdate }) => {
     const navigate = useNavigate();
     const { isDarkMode } = useTheme();
     const [farmName, setFarmName] = useState(tenant.name);
@@ -44,6 +46,68 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
     const [isDeletingUser, setIsDeletingUser] = useState<string | null>(null);
     const [userError, setUserError] = useState<string | null>(null);
     const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
+    const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'backup-codes' | 'disable'>('idle');
+    const [mfaSetupData, setMfaSetupData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
+    const [mfaCode, setMfaCode] = useState('');
+    const [mfaBackupCodes, setMfaBackupCodes] = useState<string[]>([]);
+    const [mfaDisablePassword, setMfaDisablePassword] = useState('');
+    const [mfaError, setMfaError] = useState<string | null>(null);
+    const [mfaLoading, setMfaLoading] = useState(false);
+
+    const handleMfaStartSetup = async () => {
+        setMfaError(null);
+        setMfaLoading(true);
+        try {
+            const data = await api.auth.mfaSetup();
+            setMfaSetupData({ secret: data.secret, qrCodeDataUrl: data.qrCodeDataUrl });
+            setMfaStep('setup');
+        } catch (err: any) {
+            setMfaError(err.message || 'Failed to start setup');
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const handleMfaConfirmEnable = async () => {
+        if (!mfaSetupData) return;
+        setMfaError(null);
+        setMfaLoading(true);
+        try {
+            const data = await api.auth.mfaEnable(mfaSetupData.secret, mfaCode);
+            setMfaBackupCodes(data.backupCodes);
+            setMfaStep('backup-codes');
+            setMfaCode('');
+            onCurrentUserUpdate?.({ mfaEnabled: true });
+        } catch (err: any) {
+            setMfaError(err.message || 'Invalid code');
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const handleMfaDisable = async () => {
+        setMfaError(null);
+        setMfaLoading(true);
+        try {
+            await api.auth.mfaDisable(mfaDisablePassword);
+            onCurrentUserUpdate?.({ mfaEnabled: false });
+            setMfaStep('idle');
+            setMfaDisablePassword('');
+        } catch (err: any) {
+            setMfaError(err.message || 'Failed to disable');
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const handleMfaCancel = () => {
+        setMfaStep('idle');
+        setMfaSetupData(null);
+        setMfaCode('');
+        setMfaError(null);
+        setMfaDisablePassword('');
+    };
 
     // Fetch users from database on component mount
     useEffect(() => {
@@ -329,6 +393,166 @@ export const FarmSettings: React.FC<FarmSettingsProps> = ({ tenant, setTenant })
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* Security & Two-Factor Authentication */}
+            <div className="bg-white dark:bg-slate-800/80 backdrop-blur-xl p-8 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 transition-all duration-300 hover:shadow-md">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                        <Shield size={24} />
+                    </div>
+                    Two-Factor Authentication
+                </h3>
+
+                {mfaError && (
+                    <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-3">
+                        <Info size={18} className="shrink-0" /> {mfaError}
+                    </div>
+                )}
+
+                {mfaStep === 'idle' && (
+                    currentUser?.mfaEnabled ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full text-emerald-600 dark:text-emerald-400">
+                                    <CheckCircle size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-100">Two-factor authentication is enabled</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Your account requires a code from your authenticator app at login.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setMfaStep('disable')}
+                                className="px-5 py-2.5 rounded-xl font-semibold border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 shrink-0"
+                            >
+                                <XCircle size={18} /> Disable
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400">
+                                    <Smartphone size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-100">Two-factor authentication is off</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Add an extra layer of security using an authenticator app like Google Authenticator or Authy.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleMfaStartSetup}
+                                disabled={mfaLoading}
+                                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all disabled:opacity-70 flex items-center gap-2 shrink-0"
+                            >
+                                {mfaLoading ? <Loader2 size={18} className="animate-spin" /> : <Shield size={18} />} Enable 2FA
+                            </button>
+                        </div>
+                    )
+                )}
+
+                {mfaStep === 'setup' && mfaSetupData && (
+                    <div className="space-y-5 animate-fade-in">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Scan this QR code with your authenticator app, then enter the 6-digit code it generates.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                            <div className="p-3 bg-white rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                                <img src={mfaSetupData.qrCodeDataUrl} alt="MFA QR Code" className="w-40 h-40" />
+                            </div>
+                            <div className="flex-1 space-y-3 min-w-0">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Can't scan? Enter manually</label>
+                                    <p className="font-mono text-sm bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg mt-1 break-all">{mfaSetupData.secret}</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Verification Code</label>
+                                    <input
+                                        type="text"
+                                        value={mfaCode}
+                                        onChange={(e) => setMfaCode(e.target.value)}
+                                        placeholder="123456"
+                                        maxLength={6}
+                                        className="w-full max-w-[200px] border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/50 dark:text-slate-100 rounded-xl px-4 py-3 tracking-widest focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleMfaConfirmEnable}
+                                        disabled={mfaLoading || mfaCode.length < 6}
+                                        className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {mfaLoading && <Loader2 size={18} className="animate-spin" />} Verify & Enable
+                                    </button>
+                                    <button
+                                        onClick={handleMfaCancel}
+                                        className="px-5 py-2.5 rounded-xl font-semibold border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {mfaStep === 'backup-codes' && (
+                    <div className="space-y-5 animate-fade-in">
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300 px-4 py-3 rounded-xl text-sm flex items-start gap-3">
+                            <KeyRound size={18} className="shrink-0 mt-0.5" />
+                            <span>Save these backup codes somewhere safe. Each one can be used once to sign in if you lose access to your authenticator app. They won't be shown again.</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {mfaBackupCodes.map(code => (
+                                <div key={code} className="font-mono text-sm text-center bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg">
+                                    {code}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => navigator.clipboard.writeText(mfaBackupCodes.join('\n'))}
+                                className="px-5 py-2.5 rounded-xl font-semibold border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center gap-2"
+                            >
+                                <Copy size={18} /> Copy Codes
+                            </button>
+                            <button
+                                onClick={() => { setMfaStep('idle'); setMfaSetupData(null); setMfaBackupCodes([]); }}
+                                className="px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {mfaStep === 'disable' && (
+                    <div className="space-y-4 animate-fade-in max-w-md">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Enter your password to confirm disabling two-factor authentication.</p>
+                        <input
+                            type="password"
+                            value={mfaDisablePassword}
+                            onChange={(e) => setMfaDisablePassword(e.target.value)}
+                            placeholder="Current password"
+                            className="w-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/50 dark:text-slate-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleMfaDisable}
+                                disabled={mfaLoading || !mfaDisablePassword}
+                                className="px-5 py-2.5 rounded-xl font-semibold bg-red-600 hover:bg-red-700 text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {mfaLoading && <Loader2 size={18} className="animate-spin" />} Confirm Disable
+                            </button>
+                            <button
+                                onClick={handleMfaCancel}
+                                className="px-5 py-2.5 rounded-xl font-semibold border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Premium Branding & Localization */}

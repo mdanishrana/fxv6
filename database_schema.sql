@@ -817,7 +817,22 @@ CREATE TABLE public.users (
     is_verified boolean DEFAULT false,
     last_login timestamp without time zone,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    mfa_enabled boolean DEFAULT false NOT NULL,
+    mfa_secret text,
+    mfa_backup_codes text[],
     CONSTRAINT users_role_check CHECK (((role)::text = ANY (ARRAY[('OWNER'::character varying)::text, ('MANAGER'::character varying)::text, ('LABOR'::character varying)::text, ('SAAS_ADMIN'::character varying)::text, ('ANIMAL_OWNER'::character varying)::text])))
+);
+
+-- A short-lived token issued after password verification but before the TOTP/backup
+-- code step, for users with MFA enabled. Deliberately separate from `sessions`
+-- (which represents an already-authenticated session) rather than overloading it
+-- with a "not yet authenticated" state.
+CREATE TABLE public.mfa_pending_logins (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    token character varying(255) NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
