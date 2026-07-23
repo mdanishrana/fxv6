@@ -1349,11 +1349,19 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                         ) : (
                                             <div>
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">Rs. {plan.pricePkr?.toLocaleString()}</span>
+                                                    <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">Rs. {plan.pricePkr != null ? Number(plan.pricePkr).toLocaleString() : ''}</span>
                                                     <span className="text-slate-500 dark:text-slate-400 text-sm">{plan.billingPeriod}</span>
                                                 </div>
                                                 {plan.annualPricePkr != null && (
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Rs. {plan.annualPricePkr.toLocaleString()} / year</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Rs. {Number(plan.annualPricePkr).toLocaleString()} / year
+                                                        {plan.pricePkr != null && Number(plan.annualPricePkr) === Math.round(Number(plan.pricePkr) * 12 * 0.8) && (
+                                                            <span className="ml-1 text-emerald-600 dark:text-emerald-400 font-semibold">(20% off)</span>
+                                                        )}
+                                                        {plan.pricePkr != null && Number(plan.annualPricePkr) >= Number(plan.pricePkr) * 12 && (
+                                                            <span className="ml-1 text-amber-600 dark:text-amber-400 font-semibold">(no discount - update this)</span>
+                                                        )}
+                                                    </p>
                                                 )}
                                             </div>
                                         )}
@@ -1744,6 +1752,31 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                 placeholder="Auto: 20% off monthly x 12"
                                             />
                                         </div>
+                                        {planForm.pricePkr !== '' && Number(planForm.pricePkr) > 0 && (() => {
+                                            const suggested = Math.round(Number(planForm.pricePkr) * 12 * 0.8);
+                                            const current = planForm.annualPricePkr === '' ? null : Number(planForm.annualPricePkr);
+                                            const matches = current !== null && current === suggested;
+                                            return (
+                                                <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                                    <span className={`text-xs ${matches ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                        {matches
+                                                            ? '= 20% off the monthly price'
+                                                            : current === null
+                                                                ? `20% off would be Rs. ${suggested.toLocaleString()}/yr`
+                                                                : `Not 20% off (that would be Rs. ${suggested.toLocaleString()}/yr)`}
+                                                    </span>
+                                                    {!matches && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPlanForm({ ...planForm, annualPricePkr: String(suggested) })}
+                                                            className="text-xs px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
+                                                        >
+                                                            Apply 20% off
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             )}

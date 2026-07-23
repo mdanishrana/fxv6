@@ -451,12 +451,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         {plans.map((plan) => {
                             // Annual pricing prefers the plan's real annualPricePkr (admin-set in
                             // the Plans tab) shown as its per-month equivalent, so a promotional
-                            // or non-standard rate actually reaches the public page. Only falls
-                            // back to a flat 20%-off estimate for a plan with no annual price set.
-                            const computedPrice = plan.pricePkr
+                            // or non-standard rate actually reaches the public page. Falls back to
+                            // a flat 20%-off estimate when no annual price is set OR the stored one
+                            // is no longer cheaper than monthly (stale after a monthly-price edit) -
+                            // the "-20%" badge must never show a price that isn't a discount.
+                            // Number() everywhere: the API returns Postgres numerics as strings.
+                            const monthly = plan.pricePkr != null ? Number(plan.pricePkr) : null;
+                            const annualPerMonth = plan.annualPricePkr != null ? Number(plan.annualPricePkr) / 12 : null;
+                            const computedPrice = monthly
                                 ? (isAnnual
-                                    ? Math.round(plan.annualPricePkr != null ? plan.annualPricePkr / 12 : plan.pricePkr * 0.8)
-                                    : plan.pricePkr)
+                                    ? Math.round(annualPerMonth !== null && annualPerMonth < monthly ? annualPerMonth : monthly * 0.8)
+                                    : monthly)
                                 : null;
                             const computedBillingPeriod = isAnnual ? '/month, billed annually' : plan.billingPeriod;
 
