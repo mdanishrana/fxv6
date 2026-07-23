@@ -370,6 +370,7 @@ export interface TenantCapacity {
   userUtilizationPct: number | null;
   daysToCattleLimit: number | null;
   animalsAddedThisMonth: number;
+  storageBytes: number;
 }
 
 export type ViewState = 'dashboard' | 'cattle' | 'medical' | 'vaccinations' | 'protocols' | 'feed' | 'inventory' | 'reports' | 'ai-advisor' | 'settings' | 'users' | 'qurbani' | 'logs' | 'payments' | 'suppliers' | 'labour' | 'breeding' | 'finance' | 'genetics' | 'billing';

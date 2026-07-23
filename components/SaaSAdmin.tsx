@@ -35,6 +35,13 @@ function summarizeUserAgent(ua?: string | null): string {
     return `${browser} / ${os}`;
 }
 
+function formatBytes(bytes: number): string {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
 export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLoginAsTenant, activeTab, setActiveTab }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
@@ -1169,7 +1176,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                         <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400 dark:text-slate-500" size={28} /></div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 w-fit mb-2"><Building2 size={18} /></div>
                                     <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{capacityReport.reduce((sum, r) => sum + r.cattleCount, 0)}</p>
@@ -1194,6 +1201,11 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                     <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400 w-fit mb-2"><Users size={18} /></div>
                                     <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{capacityReport.length}</p>
                                     <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">Total Farms</p>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                    <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg text-cyan-600 dark:text-cyan-400 w-fit mb-2"><HardDrive size={18} /></div>
+                                    <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{formatBytes(capacityReport.reduce((sum, r) => sum + (r.storageBytes || 0), 0))}</p>
+                                    <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide">DB Storage (Est.)</p>
                                 </div>
                             </div>
 
@@ -1221,6 +1233,7 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                             <th className="px-4 py-3">Tier</th>
                                             <th className="px-4 py-3">Animals</th>
                                             <th className="px-4 py-3">Users</th>
+                                            <th className="px-4 py-3">Storage (Est.)</th>
                                             <th className="px-4 py-3">Forecast</th>
                                             <th className="px-4 py-3 text-right">Action</th>
                                         </tr>
@@ -1250,6 +1263,9 @@ export const SaaSAdmin: React.FC<SaaSAdminProps> = ({ tenants, setTenants, onLog
                                                                 {row.userCount} / {row.userLimit} ({row.userUtilizationPct}%)
                                                             </span>
                                                         )}
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                                                        {formatBytes(row.storageBytes || 0)}
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
                                                         {row.daysToCattleLimit !== null ? `~${row.daysToCattleLimit}d to animal limit` : '-'}

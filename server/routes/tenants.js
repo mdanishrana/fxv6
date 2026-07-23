@@ -21,6 +21,34 @@ const getBackupDir = () => process.env.BACKUP_DIR || '/var/backups/farmxpert';
 const getBackupCmd = () => process.env.BACKUP_CMD || '/usr/local/bin/backup-farmxpert-db.sh';
 const BACKUP_RETENTION_DAYS = 14;
 
+// Estimated database storage per tenant: sums actual row sizes (pg_column_size)
+// of every tenant-scoped table, one GROUP BY query per table. An estimate - it
+// counts row data, not indexes or per-page overhead - but tracks real usage and
+// is cheap enough for an admin-panel report at this fleet size.
+async function getStorageByTenant() {
+    const tablesRes = await db.query(`
+        SELECT c.table_name
+        FROM information_schema.columns c
+        JOIN information_schema.tables t
+          ON t.table_name = c.table_name AND t.table_schema = c.table_schema
+        WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+    `);
+    const totals = {};
+    for (const { table_name } of tablesRes.rows) {
+        // table_name comes from information_schema, not user input; quoted defensively.
+        const r = await db.query(
+            `SELECT tenant_id, COALESCE(SUM(pg_column_size(x.*)), 0)::bigint AS bytes
+             FROM "${table_name.replace(/"/g, '""')}" x
+             WHERE tenant_id IS NOT NULL
+             GROUP BY tenant_id`
+        );
+        for (const row of r.rows) {
+            totals[row.tenant_id] = (totals[row.tenant_id] || 0) + Number(row.bytes);
+        }
+    }
+    return totals;
+}
+
 function listBackups(backupDir) {
     const files = fs.readdirSync(backupDir).filter(f => f.endsWith('.backup'));
     return files.map(filename => {
@@ -87,6 +115,7 @@ router.get('/capacity', authMiddleware, async (req, res) => {
     }
     try {
         const tenantsRes = await db.query('SELECT id, name, tier FROM tenants ORDER BY name');
+        const storageByTenant = await getStorageByTenant();
         const report = await Promise.all(tenantsRes.rows.map(async (t) => {
             const usage = await getTenantUsage(t.id);
             const daysToLimit = await forecastDaysToLimit(t.id, usage.cattleCount, usage.cattleLimit);
@@ -100,7 +129,8 @@ router.get('/capacity', authMiddleware, async (req, res) => {
                 tier: t.tier,
                 ...usage,
                 daysToCattleLimit: daysToLimit,
-                animalsAddedThisMonth: parseInt(addedRes.rows[0].count)
+                animalsAddedThisMonth: parseInt(addedRes.rows[0].count),
+                storageBytes: storageByTenant[t.id] || 0
             };
         }));
         res.json(report);
